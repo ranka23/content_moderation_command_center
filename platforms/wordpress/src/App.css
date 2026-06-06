@@ -1,0 +1,606 @@
+/* =========================================================================
+   CMCC Admin App Styles
+   Scoped under #cmcc-app to avoid conflicts with other WP admin styles
+   ========================================================================= */
+
+#cmcc-app {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    Oxygen-Sans, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
+  color: #1d2327;
+  line-height: 1.5;
+}
+
+#cmcc-app *,
+#cmcc-app *::before,
+#cmcc-app *::after {
+  box-sizing: border-box;
+}
+
+/* -------------------------------------------------------------------------
+   Tab Navigation
+   ------------------------------------------------------------------------- */
+
+#cmcc-app .cmcc-tab-nav {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid #c3c4c7;
+  margin-bottom: 20px;
+  background: #fff;
+}
+
+#cmcc-app .cmcc-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: #50575e;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease;
+  margin-bottom: -1px;
+}
+
+#cmcc-app .cmcc-tab:hover {
+  color: #007cba;
+}
+
+#cmcc-app .cmcc-tab-active,
+#cmcc-app .cmcc-tab:focus {
+  color: #007cba;
+  border-bottom-color: #007cba;
+}
+
+/* -------------------------------------------------------------------------
+   Tab Content
+   ------------------------------------------------------------------------- */
+
+#cmcc-app .cmcc-tab-content {
+  background: #fff;
+  border: 1px solid #c3c4c7;
+  border-top: none;
+  padding: 20px;
+  min-height: 400px;
+}
+
+#cmcc-app .cmcc-tab-panel {
+  animation: cmcc-fade-in 0.2s ease;
+}
+
+@keyframes cmcc-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* -------------------------------------------------------------------------
+   Loading / Empty States
+   ------------------------------------------------------------------------- */
+
+#cmcc-app .cmcc-loading,
+#cmcc-app .cmcc-empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: #757575;
+  font-size: 14px;
+}
+
+/* -------------------------------------------------------------------------
+   Queue Table (extends cmcc-queue-table from @cmcc/ui)
+   ------------------------------------------------------------------------- */
+
+#cmcc-app .cmcc-queue-table {
+  width: 100%;
+}
+
+#cmcc-app .cmcc-queue-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+#cmcc-app .cmcc-queue-filters {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+#cmcc-app .cmcc-queue-bulk-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+#cmcc-app .cmcc-queue-bulk-actions select,
+#cmcc-app .cmcc-queue-bulk-actions button {
+  padding: 6px 12px;
+  border: 1px solid #c3c4c7;
+  border-radius: 2px;
+  font-size: 13px;
+  background: #f6f7f7;
+  cursor: pointer;
+}
+
+#cmcc-app .cmcc-queue-bulk-actions button:hover {
+  background: #f0f0f1;
+}
+
+#cmcc-app .cmcc-queue-table-inner {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+#cmcc-app .cmcc-queue-table-inner th {
+  text-align: left;
+  padding: 8px 10px;
+  border-bottom: 1px solid #c3c4c7;
+  font-weight: 600;
+  color: #2c3338;
+  background: #f6f7f7;
+}
+
+#cmcc-app .cmcc-queue-table-inner td {
+  padding: 8px 10px;
+  border-bottom: 1px solid #f0f0f1;
+  vertical-align: top;
+}
+
+#cmcc-app .cmcc-queue-table-inner tr:hover td {
+  background: #f6f7f7;
+}
+
+#cmcc-app .cmcc-queue-title {
+  font-weight: 500;
+  margin-bottom: 2px;
+}
+
+#cmcc-app .cmcc-queue-excerpt {
+  color: #757575;
+  font-size: 12px;
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#cmcc-app .cmcc-queue-action-group {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+#cmcc-app .cmcc-queue-action-btn {
+  padding: 4px 8px;
+  border: 1px solid #c3c4c7;
+  border-radius: 2px;
+  font-size: 11px;
+  cursor: pointer;
+  background: #f6f7f7;
+  transition: background 0.1s ease;
+}
+
+#cmcc-app .cmcc-queue-action-btn:hover {
+  background: #e2e4e7;
+}
+
+#cmcc-app .cmcc-queue-action-btn.approve {
+  border-color: #46b450;
+  color: #46b450;
+}
+
+#cmcc-app .cmcc-queue-action-btn.approve:hover {
+  background: #46b450;
+  color: #fff;
+}
+
+#cmcc-app .cmcc-queue-action-btn.reject {
+  border-color: #dc3232;
+  color: #dc3232;
+}
+
+#cmcc-app .cmcc-queue-action-btn.reject:hover {
+  background: #dc3232;
+  color: #fff;
+}
+
+#cmcc-app .cmcc-queue-action-btn.spam {
+  border-color: #f56e28;
+  color: #f56e28;
+}
+
+#cmcc-app .cmcc-queue-action-btn.spam:hover {
+  background: #f56e28;
+  color: #fff;
+}
+
+#cmcc-app .cmcc-queue-action-btn.defer {
+  border-color: #007cba;
+  color: #007cba;
+}
+
+#cmcc-app .cmcc-queue-action-btn.defer:hover {
+  background: #007cba;
+  color: #fff;
+}
+
+#cmcc-app .cmcc-queue-loading,
+#cmcc-app .cmcc-queue-empty {
+  text-align: center;
+  padding: 60px 20px;
+  color: #757575;
+}
+
+#cmcc-app .cmcc-queue-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 0;
+  color: #757575;
+  font-size: 13px;
+}
+
+/* -------------------------------------------------------------------------
+   Analytics
+   ------------------------------------------------------------------------- */
+
+#cmcc-app .cmcc-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+#cmcc-app .cmcc-stat-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px;
+  background: #f6f7f7;
+  border: 1px solid #e2e4e7;
+  border-radius: 4px;
+  text-align: center;
+}
+
+#cmcc-app .cmcc-stat-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #757575;
+}
+
+#cmcc-app .cmcc-stat-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: #1d2327;
+}
+
+#cmcc-app .cmcc-stat-pending {
+  color: #f0ad4e;
+}
+
+#cmcc-app .cmcc-stat-spam {
+  color: #d9534f;
+}
+
+#cmcc-app .cmcc-stat-flagged {
+  color: #f56e28;
+}
+
+#cmcc-app .cmcc-analytics-section {
+  margin-bottom: 24px;
+}
+
+#cmcc-app .cmcc-analytics-section h3 {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #f0f0f1;
+  color: #1d2327;
+}
+
+#cmcc-app .cmcc-spam-ratio {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+#cmcc-app .cmcc-spam-ratio-bar {
+  flex: 1;
+  min-width: 200px;
+  height: 24px;
+  background: #f0f0f1;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+#cmcc-app .cmcc-spam-ratio-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #f0ad4e, #d9534f);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+  min-width: 2px;
+}
+
+#cmcc-app .cmcc-spam-ratio-text {
+  font-size: 13px;
+  color: #50575e;
+  white-space: nowrap;
+}
+
+#cmcc-app .cmcc-breakdown-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+#cmcc-app .cmcc-breakdown-table th {
+  text-align: left;
+  padding: 8px 10px;
+  border-bottom: 1px solid #c3c4c7;
+  font-weight: 600;
+  color: #2c3338;
+  background: #f6f7f7;
+}
+
+#cmcc-app .cmcc-breakdown-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid #f0f0f1;
+}
+
+/* -------------------------------------------------------------------------
+   Heatmap (supplements @cmcc/ui HeatmapChart)
+   ------------------------------------------------------------------------- */
+
+#cmcc-app .cmcc-heatmap-chart {
+  padding: 12px 0;
+}
+
+#cmcc-app .cmcc-heatmap-hour-labels {
+  display: flex;
+  padding-left: 40px;
+  margin-bottom: 4px;
+}
+
+#cmcc-app .cmcc-heatmap-hour-label {
+  flex: 1;
+  font-size: 9px;
+  color: #757575;
+  text-align: center;
+}
+
+#cmcc-app .cmcc-heatmap-grid {
+  display: flex;
+  gap: 0;
+}
+
+#cmcc-app .cmcc-heatmap-day-labels {
+  display: flex;
+  flex-direction: column;
+  width: 40px;
+  gap: 2px;
+}
+
+#cmcc-app .cmcc-heatmap-day-label {
+  height: 18px;
+  font-size: 10px;
+  color: #757575;
+  line-height: 18px;
+  text-align: right;
+  padding-right: 6px;
+}
+
+#cmcc-app .cmcc-heatmap-cells {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+#cmcc-app .cmcc-heatmap-cells > div {
+  display: flex;
+  gap: 2px;
+}
+
+#cmcc-app .cmcc-heatmap-cell {
+  width: 100%;
+  height: 18px;
+  font-size: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 2px;
+}
+
+#cmcc-app .cmcc-heatmap-legend {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding-left: 40px;
+}
+
+#cmcc-app .cmcc-heatmap-legend-label {
+  font-size: 11px;
+  color: #757575;
+}
+
+#cmcc-app .cmcc-heatmap-legend-bar {
+  width: 120px;
+  height: 12px;
+  border-radius: 3px;
+  overflow: hidden;
+  background: #f0f0f1;
+}
+
+#cmcc-app .cmcc-heatmap-legend-fill {
+  height: 100%;
+  width: 100%;
+}
+
+#cmcc-app .cmcc-heatmap-legend-labels {
+  display: flex;
+  justify-content: space-between;
+  flex: 1;
+  font-size: 10px;
+  color: #757575;
+}
+
+/* -------------------------------------------------------------------------
+   Activity Log Table
+   ------------------------------------------------------------------------- */
+
+#cmcc-app .cmcc-activity-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+#cmcc-app .cmcc-activity-table th {
+  text-align: left;
+  padding: 8px 10px;
+  border-bottom: 1px solid #c3c4c7;
+  font-weight: 600;
+  color: #2c3338;
+  background: #f6f7f7;
+}
+
+#cmcc-app .cmcc-activity-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid #f0f0f1;
+}
+
+#cmcc-app .cmcc-activity-table tr:hover td {
+  background: #f6f7f7;
+}
+
+#cmcc-app .cmcc-action-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+#cmcc-app .cmcc-action-approve {
+  background: #e2f0d9;
+  color: #237739;
+}
+
+#cmcc-app .cmcc-action-reject,
+#cmcc-app .cmcc-action-trash {
+  background: #fbe9e9;
+  color: #b32d2e;
+}
+
+#cmcc-app .cmcc-action-spam {
+  background: #fde8d7;
+  color: #c35b1a;
+}
+
+#cmcc-app .cmcc-action-defer {
+  background: #e5f5fa;
+  color: #007cba;
+}
+
+/* -------------------------------------------------------------------------
+   Pagination
+   ------------------------------------------------------------------------- */
+
+#cmcc-app .cmcc-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 0 8px;
+  color: #757575;
+  font-size: 13px;
+}
+
+#cmcc-app .cmcc-pagination-info {
+  font-size: 13px;
+  color: #50575e;
+}
+
+/* -------------------------------------------------------------------------
+   Settings Form (overrides for WP admin)
+   ------------------------------------------------------------------------- */
+
+#cmcc-app .cmcc-settings-form {
+  max-width: 700px;
+}
+
+#cmcc-app .cmcc-settings-form input[type='text'],
+#cmcc-app .cmcc-settings-form input[type='number'],
+#cmcc-app .cmcc-settings-form textarea,
+#cmcc-app .cmcc-settings-form select {
+  width: 100%;
+  padding: 6px 10px;
+  border: 1px solid #c3c4c7;
+  border-radius: 3px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+#cmcc-app .cmcc-settings-form input[type='checkbox'] {
+  margin: 0;
+}
+
+/* -------------------------------------------------------------------------
+   Responsive
+   ------------------------------------------------------------------------- */
+
+@media screen and (max-width: 782px) {
+  #cmcc-app .cmcc-tab-nav {
+    flex-wrap: wrap;
+  }
+
+  #cmcc-app .cmcc-tab {
+    flex: 1 1 auto;
+    justify-content: center;
+    font-size: 13px;
+    padding: 8px 12px;
+  }
+
+  #cmcc-app .cmcc-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  #cmcc-app .cmcc-queue-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  #cmcc-app .cmcc-queue-table-inner {
+    font-size: 12px;
+  }
+
+  #cmcc-app .cmcc-activity-table {
+    font-size: 12px;
+  }
+}
+
+@media screen and (max-width: 600px) {
+  #cmcc-app .cmcc-queue-table-inner th:nth-child(3),
+  #cmcc-app .cmcc-queue-table-inner td:nth-child(3),
+  #cmcc-app .cmcc-queue-table-inner th:nth-child(5),
+  #cmcc-app .cmcc-queue-table-inner td:nth-child(5),
+  #cmcc-app .cmcc-activity-table th:nth-child(6),
+  #cmcc-app .cmcc-activity-table td:nth-child(6),
+  #cmcc-app .cmcc-activity-table th:nth-child(7),
+  #cmcc-app .cmcc-activity-table td:nth-child(7),
+  #cmcc-app .cmcc-activity-table th:nth-child(8),
+  #cmcc-app .cmcc-activity-table td:nth-child(8) {
+    display: none;
+  }
+}

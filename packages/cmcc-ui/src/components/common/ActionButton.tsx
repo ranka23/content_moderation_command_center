@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import React, { useEffect } from 'react'
 
 export interface ActionButtonProps {
   variant: 'primary' | 'secondary' | 'danger' | 'ghost'

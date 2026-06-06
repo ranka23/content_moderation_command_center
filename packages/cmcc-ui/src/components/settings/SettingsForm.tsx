@@ -1,4 +1,4 @@
-import { useState, type ChangeEvent } from 'react'
+import React, { useState, type ChangeEvent } from 'react'
 
 export interface SettingsField {
   name: string
