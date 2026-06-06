@@ -1,0 +1,43 @@
+2026-06-06T07:01:05.814155Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".turbo/cookies/1.cookie")}
+2026-06-06T07:01:05.814214Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2026-06-06T07:01:10.214360Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("turbo.json")}
+2026-06-06T07:01:10.214424Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(All)
+2026-06-06T07:02:00.016352Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".turbo/cookies/2.cookie"), AnchoredSystemPathBuf(".turbo/cookies/4.cookie"), AnchoredSystemPathBuf(".turbo/cookies/3.cookie"), AnchoredSystemPathBuf("packages/cmcc-core/.turbo"), AnchoredSystemPathBuf("packages/cmcc-ui/.turbo")}
+2026-06-06T07:02:00.016426Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }, WorkspacePackage { name: Other("@cmcc/ui"), path: AnchoredSystemPathBuf("packages/cmcc-ui") }, WorkspacePackage { name: Other("@cmcc/core"), path: AnchoredSystemPathBuf("packages/cmcc-core") }}))
+2026-06-06T07:02:05.715785Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".turbo/cookies/5.cookie")}
+2026-06-06T07:02:05.715846Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2026-06-06T07:02:05.815926Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".turbo/cookies/6.cookie")}
+2026-06-06T07:02:05.815965Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2026-06-06T07:02:05.916481Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".turbo/cookies/9.cookie"), AnchoredSystemPathBuf(".turbo/cookies/8.cookie"), AnchoredSystemPathBuf(".turbo/cookies/7.cookie"), AnchoredSystemPathBuf("platforms/wordpress/.turbo")}
+2026-06-06T07:02:05.916524Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@cmcc/wordpress"), path: AnchoredSystemPathBuf("platforms/wordpress") }, WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2026-06-06T07:02:21.115850Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("turbo.json")}
+2026-06-06T07:02:21.115874Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(All)
+2026-06-06T07:02:33.016532Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("platforms/wordpress/package.json")}
+2026-06-06T07:02:33.016585Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@cmcc/wordpress"), path: AnchoredSystemPathBuf("platforms/wordpress") }}))
+2026-06-06T07:02:33.056079Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2026-06-06T07:02:36.716691Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("platforms/wordpress/package.json")}
+2026-06-06T07:02:36.716793Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@cmcc/wordpress"), path: AnchoredSystemPathBuf("platforms/wordpress") }}))
+2026-06-06T07:02:42.416631Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("platforms/wordpress/package.json")}
+2026-06-06T07:02:42.416665Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@cmcc/wordpress"), path: AnchoredSystemPathBuf("platforms/wordpress") }}))
+2026-06-06T07:02:49.816584Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".turbo/cookies/10.cookie")}
+2026-06-06T07:02:49.816620Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2026-06-06T07:02:50.117191Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("packages/cmcc-ui/.turbo"), AnchoredSystemPathBuf(".turbo/cookies/14.cookie"), AnchoredSystemPathBuf(".turbo/cookies/12.cookie"), AnchoredSystemPathBuf("packages/cmcc-core/.turbo"), AnchoredSystemPathBuf(".turbo/cookies/16.cookie"), AnchoredSystemPathBuf(".turbo/cookies/13.cookie"), AnchoredSystemPathBuf(".turbo/cookies/15.cookie"), AnchoredSystemPathBuf(".turbo/cookies/11.cookie")}
+2026-06-06T07:02:50.117256Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }, WorkspacePackage { name: Other("@cmcc/core"), path: AnchoredSystemPathBuf("packages/cmcc-core") }, WorkspacePackage { name: Other("@cmcc/ui"), path: AnchoredSystemPathBuf("packages/cmcc-ui") }}))
+2026-06-06T07:02:50.275536Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2026-06-06T07:02:50.275591Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2026-06-06T07:02:50.275879Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".turbo/cookies/17.cookie")}
+2026-06-06T07:02:50.275901Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2026-06-06T07:02:57.617314Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("platforms/wordpress/package.json")}
+2026-06-06T07:02:57.617337Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@cmcc/wordpress"), path: AnchoredSystemPathBuf("platforms/wordpress") }}))
+2026-06-06T07:03:04.017435Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("platforms/wordpress/package.json")}
+2026-06-06T07:03:04.017461Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@cmcc/wordpress"), path: AnchoredSystemPathBuf("platforms/wordpress") }}))
+2026-06-06T07:03:11.618160Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".turbo/cookies/18.cookie")}
+2026-06-06T07:03:11.618204Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2026-06-06T07:03:11.916958Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".turbo/cookies/19.cookie"), AnchoredSystemPathBuf(".turbo/cookies/20.cookie"), AnchoredSystemPathBuf(".turbo/cookies/21.cookie"), AnchoredSystemPathBuf(".turbo/cookies/23.cookie"), AnchoredSystemPathBuf(".turbo/cookies/22.cookie")}
+2026-06-06T07:03:11.917094Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2026-06-06T07:03:14.616729Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".turbo/cookies/24.cookie")}
+2026-06-06T07:03:14.616768Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2026-06-06T07:03:28.617790Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".turbo/cookies/25.cookie")}
+2026-06-06T07:03:28.618049Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2026-06-06T07:03:32.417535Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".turbo/cookies/26.cookie")}
+2026-06-06T07:03:32.417574Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
