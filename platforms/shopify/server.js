@@ -20,7 +20,9 @@ const path = require('path')
 const PORT = process.env.PORT || 3000
 const API_KEY = process.env.SHOPIFY_API_KEY
 const API_SECRET = process.env.SHOPIFY_API_SECRET
-const SCOPES = process.env.SCOPES || 'read_products,write_products,read_customers,read_content,write_content'
+const SCOPES =
+  process.env.SCOPES ||
+  'read_products,write_products,read_customers,read_content,write_content'
 const APP_URL = process.env.SHOPIFY_APP_URL || `http://localhost:${PORT}`
 
 // ── Session Store (placeholder) ────────────────────────────────────────────
@@ -48,7 +50,10 @@ app.use(express.urlencoded({ extended: true }))
 
 app.use((_req, res, next) => {
   res.set('X-Frame-Options', 'ALLOWALL')
-  res.set('Content-Security-Policy', "frame-ancestors 'self' https://*.myshopify.com https://admin.shopify.com;")
+  res.set(
+    'Content-Security-Policy',
+    "frame-ancestors 'self' https://*.myshopify.com https://admin.shopify.com;",
+  )
   next()
 })
 
@@ -65,13 +70,13 @@ app.get('/', (_req, res) => {
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>CMCC Content Moderation</title>
-  ${/* Polaris styles loaded from Shopify's CDN (not bundled) */}
+  <!-- Polaris styles loaded from Shopify's CDN (not bundled) -->
   <link rel="stylesheet" href="https://unpkg.com/@shopify/polaris@latest/build/esm/styles.css" />
   <link rel="stylesheet" href="/app.css" />
 </head>
 <body>
   <div id="app"></div>
-  ${/* React, ReactDOM, Polaris, and App Bridge loaded as externals */}
+  <!-- React, ReactDOM, Polaris, and App Bridge loaded as externals -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@shopify/polaris@latest/build/esm/index.js"></script>
@@ -95,7 +100,8 @@ app.get('/auth', (req, res) => {
   const state = crypto.randomBytes(16).toString('hex')
   const redirectUri = `${APP_URL}/auth/callback`
 
-  const authUrl = `https://${shop}/admin/oauth/authorize` +
+  const authUrl =
+    `https://${shop}/admin/oauth/authorize` +
     `?client_id=${API_KEY}` +
     `&scope=${encodeURIComponent(SCOPES)}` +
     `&redirect_uri=${encodeURIComponent(redirectUri)}` +
@@ -169,5 +175,7 @@ app.all('/api/*', async (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`CMCC Shopify App server listening on http://localhost:${PORT}`)
-  console.log(`Visit http://localhost:${PORT}/auth?shop=your-store.myshopify.com to start OAuth`)
+  console.log(
+    `Visit http://localhost:${PORT}/auth?shop=your-store.myshopify.com to start OAuth`,
+  )
 })

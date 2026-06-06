@@ -90,8 +90,9 @@ describe('HeatmapChart Component', () => {
       <HeatmapChart data={mockHeatmapData} onCellClick={onCellClickMock} />,
     )
     const cellElements = screen.getAllByText('1')
-    if (cellElements.length > 0) {
-      fireEvent.click(cellElements[0])
+    const cell = cellElements[0]
+    if (cell) {
+      fireEvent.click(cell)
       expect(onCellClickMock).toHaveBeenCalledWith(0, 1, 1)
     }
   })
@@ -102,8 +103,9 @@ describe('HeatmapChart Component', () => {
       <HeatmapChart data={mockHeatmapData} onCellClick={onCellClickMock} />,
     )
     const maxCells = screen.getAllByText('3')
-    if (maxCells.length > 0) {
-      fireEvent.click(maxCells[0])
+    const maxCell = maxCells[0]
+    if (maxCell) {
+      fireEvent.click(maxCell)
       expect(onCellClickMock).toHaveBeenCalledWith(0, 3, 3)
     }
   })
@@ -112,8 +114,9 @@ describe('HeatmapChart Component', () => {
     const onCellClickMock = jest.fn()
     render(<HeatmapChart data={mockHeatmapData} />)
     const cells = screen.getAllByText('1')
-    if (cells.length > 0) {
-      fireEvent.click(cells[0])
+    const cell = cells[0]
+    if (cell) {
+      fireEvent.click(cell)
       expect(onCellClickMock).not.toHaveBeenCalled()
     }
   })

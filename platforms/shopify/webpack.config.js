@@ -8,6 +8,7 @@ module.exports = (env, argv) => {
   return {
     mode: isProd ? 'production' : 'development',
     devtool: isProd ? false : 'eval-source-map',
+    bail: isProd,
     entry: './src/index.js',
     output: {
       path: path.resolve(__dirname, 'dist'),
@@ -28,6 +29,7 @@ module.exports = (env, argv) => {
         },
         {
           test: /\.css$/,
+          exclude: /node_modules/,
           use: [MiniCssExtractPlugin.loader, 'css-loader'],
         },
       ],
