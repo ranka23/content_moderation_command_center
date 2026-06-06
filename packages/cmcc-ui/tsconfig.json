@@ -33,12 +33,5 @@
     "allowUnusedLabels": false,
   },
   "include": ["src/**/*"],
-  "exclude": [
-    "node_modules",
-    "dist",
-    "**/*.test.ts",
-    "**/*.test.tsx",
-    "**/__tests__/**",
-    "**/__mocks__/**",
-  ],
+  "exclude": ["node_modules", "dist"],
 }
