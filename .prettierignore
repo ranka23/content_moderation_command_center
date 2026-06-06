@@ -1,0 +1,6 @@
+node_modules
+dist
+*.md
+coverage
+.eslintcache
+package-lock.json
