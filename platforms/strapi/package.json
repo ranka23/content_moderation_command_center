@@ -1,0 +1,27 @@
+{
+  "name": "@cmcc/strapi",
+  "version": "1.0.0",
+  "description": "CMCC Content Moderation Plugin for Strapi",
+  "keywords": [
+    "strapi",
+    "plugin",
+    "content-moderation",
+    "cmcc"
+  ],
+  "strapi": {
+    "name": "cmcc",
+    "displayName": "CMCC",
+    "description": "Content Moderation Command Center",
+    "kind": "plugin"
+  },
+  "dependencies": {
+    "@cmcc/core": "^1.0.0",
+    "@cmcc/ui": "^1.0.0",
+    "@strapi/design-system": "^1.6.0",
+    "@strapi/helper-plugin": "^4.0.0",
+    "@strapi/icons": "^1.6.0",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0",
+    "react-router-dom": "^5.3.0"
+  }
+}

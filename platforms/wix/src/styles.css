@@ -1,0 +1,335 @@
+/* =========================================================================
+   CMCC Wix App Styles
+   Scoped under .cmcc-wix-app to prevent leaking into the Wix dashboard
+   ========================================================================= */
+
+.cmcc-wix-app {
+  font-family:
+    'Barbara Sen',
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    Oxygen,
+    Ubuntu,
+    Cantarell,
+    'Helvetica Neue',
+    sans-serif;
+  background-color: #ffffff;
+  color: #1c1917;
+  min-height: 400px;
+}
+
+/* ---- Layout ---- */
+
+.cmcc-wix-app .cmcc-app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  border-bottom: 1px solid #e5e7eb;
+  background-color: #ffffff;
+}
+
+.cmcc-wix-app .cmcc-app-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1c1917;
+  margin: 0;
+}
+
+.cmcc-wix-app .cmcc-app-badges {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.cmcc-wix-app .cmcc-tab-bar {
+  display: flex;
+  border-bottom: 2px solid #e5e7eb;
+  background-color: #ffffff;
+  padding: 0 24px;
+  gap: 4px;
+}
+
+.cmcc-wix-app .cmcc-tab-btn {
+  padding: 12px 20px;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  background: transparent;
+  color: #6b7280;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    color 0.15s ease,
+    border-color 0.15s ease;
+  font-family: inherit;
+}
+
+.cmcc-wix-app .cmcc-tab-btn:hover {
+  color: #ff6b6b;
+}
+
+.cmcc-wix-app .cmcc-tab-btn.active {
+  color: #ff6b6b;
+  border-bottom-color: #ff6b6b;
+  font-weight: 600;
+}
+
+.cmcc-wix-app .cmcc-tab-content {
+  padding: 24px;
+}
+
+/* ---- Responsive grid ---- */
+
+.cmcc-wix-app .cmcc-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+}
+
+@media (min-width: 768px) {
+  .cmcc-wix-app .cmcc-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (min-width: 1024px) {
+  .cmcc-wix-app .cmcc-grid {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+}
+
+.cmcc-wix-app .cmcc-grid-full {
+  grid-column: 1 / -1;
+}
+
+.cmcc-wix-app .cmcc-card {
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 20px;
+}
+
+.cmcc-wix-app .cmcc-card-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1c1917;
+  margin: 0 0 16px 0;
+}
+
+/* ---- Loading state ---- */
+
+.cmcc-wix-app .cmcc-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 24px;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.cmcc-wix-app .cmcc-loading::after {
+  content: '';
+  width: 20px;
+  height: 20px;
+  margin-left: 10px;
+  border: 2px solid #e5e7eb;
+  border-top-color: #ff6b6b;
+  border-radius: 50%;
+  animation: cmcc-spin 0.6s linear infinite;
+}
+
+/* ---- Empty state ---- */
+
+.cmcc-wix-app .cmcc-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 24px;
+  color: #9ca3af;
+  text-align: center;
+}
+
+.cmcc-wix-app .cmcc-empty-icon {
+  font-size: 48px;
+  margin-bottom: 12px;
+}
+
+.cmcc-wix-app .cmcc-empty-text {
+  font-size: 16px;
+  margin: 0 0 4px 0;
+  color: #6b7280;
+}
+
+.cmcc-wix-app .cmcc-empty-sub {
+  font-size: 13px;
+  margin: 0;
+  color: #9ca3af;
+}
+
+/* ---- Error state ---- */
+
+.cmcc-wix-app .cmcc-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 24px;
+  text-align: center;
+}
+
+.cmcc-wix-app .cmcc-error-icon {
+  font-size: 48px;
+  margin-bottom: 12px;
+}
+
+.cmcc-wix-app .cmcc-error-text {
+  font-size: 16px;
+  font-weight: 600;
+  color: #dc2626;
+  margin: 0 0 4px 0;
+}
+
+.cmcc-wix-app .cmcc-error-detail {
+  font-size: 13px;
+  color: #6b7280;
+  margin: 0 0 16px 0;
+}
+
+/* ---- Analytics specific ---- */
+
+.cmcc-wix-app .cmcc-analytics-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.cmcc-wix-app .cmcc-stat-card {
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 16px;
+  text-align: center;
+}
+
+.cmcc-wix-app .cmcc-stat-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0 0 4px 0;
+}
+
+.cmcc-wix-app .cmcc-stat-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: #1c1917;
+  margin: 0;
+}
+
+.cmcc-wix-app .cmcc-stat-value.danger {
+  color: #dc2626;
+}
+
+.cmcc-wix-app .cmcc-stat-value.warning {
+  color: #f59e0b;
+}
+
+/* ---- Activity log ---- */
+
+.cmcc-wix-app .cmcc-activity-filters {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.cmcc-wix-app .cmcc-activity-filters select,
+.cmcc-wix-app .cmcc-activity-filters input {
+  padding: 6px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: inherit;
+  background-color: #ffffff;
+}
+
+.cmcc-wix-app .cmcc-activity-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.cmcc-wix-app .cmcc-activity-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.cmcc-wix-app .cmcc-activity-item:last-child {
+  border-bottom: none;
+}
+
+.cmcc-wix-app .cmcc-activity-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.cmcc-wix-app .cmcc-activity-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.cmcc-wix-app .cmcc-activity-action {
+  font-size: 13px;
+  color: #1c1917;
+  margin: 0 0 2px 0;
+}
+
+.cmcc-wix-app .cmcc-activity-time {
+  font-size: 11px;
+  color: #9ca3af;
+  margin: 0;
+}
+
+/* ---- Keyframes ---- */
+
+@keyframes cmcc-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ---- Wix coral accent overrides ---- */
+
+.cmcc-wix-app .cmcc-btn-primary {
+  background-color: #ff6b6b;
+  border: 1px solid #ff6b6b;
+  color: #ffffff;
+}
+
+.cmcc-wix-app .cmcc-btn-primary:hover {
+  background-color: #e85a5a;
+  border-color: #e85a5a;
+}
+
+.cmcc-wix-app .cmcc-btn-secondary {
+  background-color: #ffffff;
+  border: 1px solid #d1d5db;
+  color: #374151;
+}
+
+.cmcc-wix-app .cmcc-btn-secondary:hover {
+  background-color: #f9fafb;
+}
