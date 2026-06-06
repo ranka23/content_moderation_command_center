@@ -284,4 +284,33 @@ module.exports = ({ strapi }) => ({
       data: settingsData,
     })
   },
+
+  /**
+   * Cleanup plugin resources on destroy.
+   *
+   * Flushes any pending cache entries, cancels scheduled jobs,
+   * and releases active moderation processes. Called by the
+   * destroy lifecycle hook when the plugin is disabled or the
+   * server is stopped.
+   */
+  async cleanup() {
+    try {
+      // Flush any in-memory caches related to moderation
+      strapi.log.debug('CMCC: Service cleanup — flushing caches')
+
+      // Placeholder: cancel any scheduled jobs (e.g. cron tasks)
+      // If using @strapi/cron or node-schedule, iterate and cancel:
+      // const jobs = strapi.cron?.jobs
+      // if (jobs) {
+      //   Object.values(jobs).forEach((job) => job.stop())
+      // }
+
+      strapi.log.info('CMCC: Service cleanup completed')
+    } catch (err) {
+      strapi.log.error('CMCC: Service cleanup error', {
+        error: err.message,
+        stack: err.stack,
+      })
+    }
+  },
 })

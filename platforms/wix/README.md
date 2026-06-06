@@ -113,6 +113,47 @@ platforms/wix/
 └── README.md
 ```
 
+## Wix SDK Integration
+
+This app currently uses the **iframe hash-param approach** to receive Wix context
+(`instance`, `token`, `siteOwnerId`) from the Wix dashboard. This is a stable,
+well-supported pattern for Wix dashboard apps and avoids an unnecessary runtime
+dependency.
+
+### When to use @wix/sdk
+
+If you need features beyond what hash params provide — such as:
+
+- **Wix Data API** — query and mutate Wix site collections directly
+- **Wix Events API** — subscribe to Wix site lifecycle events
+- **Wix OAuth integration** — more granular permission scopes
+- **Wix Secrets API** — read app secrets without exposing them in the bundle
+
+Install the SDK as a runtime dependency:
+
+```bash
+npm install @wix/sdk
+```
+
+Then update `src/index.js` to initialize the SDK and pass it to the app:
+
+```javascript
+import { createClient, OAuthStrategy } from '@wix/sdk'
+
+const wixClient = createClient({
+  auth: OAuthStrategy({ clientId: process.env.WIX_CLIENT_ID }),
+})
+
+// Add wixClient to the App props
+root.render(
+  <App wixContext={wixContext} wixClient={wixClient} backendUrl={backendUrl} />
+)
+```
+
+Refer to the [Wix SDK documentation](https://dev.wix.com/docs/sdk) for
+full API details. The existing `wixContext` passthrough should remain in
+place as a fallback for environments where the SDK is not yet initialized.
+
 ## Troubleshooting
 
 **App does not render**

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react'
+import { Provider as AppBridgeProvider } from '@shopify/app-bridge-react'
 import {
   AppProvider,
   Page,
@@ -16,7 +17,8 @@ import {
   EmptyState,
   Frame,
 } from '@shopify/polaris'
-import '@shopify/polaris/build/esm/styles.css'
+// Polaris styles are loaded from Shopify's CDN when the app is embedded in
+// Shopify admin. Do NOT import them here — it would bloat the bundle by ~500KB.
 
 const API_BASE = '/api'
 
@@ -34,6 +36,14 @@ const THEME = {
     background: '#f6f6f7',
   },
   logo: null,
+}
+
+// Extract Shopify App Bridge config from URL params (provided by Shopify when
+// the app is embedded in an iframe inside Shopify admin).
+const appBridgeConfig = {
+  apiKey: new URLSearchParams(window.location.search).get('apiKey') || '',
+  host: new URLSearchParams(window.location.search).get('host') || '',
+  forceRedirect: true,
 }
 
 function App() {
@@ -457,31 +467,33 @@ function App() {
   ) : null
 
   return (
-    <AppProvider
-      theme={THEME}
-      i18n={{
-        Polaris: {
-          ResourceList: {
-            showing: 'Showing {itemsCount} {resource}',
+    <AppBridgeProvider config={appBridgeConfig}>
+      <AppProvider
+        theme={THEME}
+        i18n={{
+          Polaris: {
+            ResourceList: {
+              showing: 'Showing {itemsCount} {resource}',
+            },
           },
-        },
-      }}
-    >
-      <Frame>
-        <div className="cmcc-shopify-app">
-          <Page fullWidth title="CMCC Content Moderation">
-            <Tabs
-              tabs={TABS}
-              selected={selectedTab}
-              onSelect={setSelectedTab}
-              fitted
-            />
-            <div className="cmcc-content">{renderContent()}</div>
-          </Page>
-          {toastMarkup}
-        </div>
-      </Frame>
-    </AppProvider>
+        }}
+      >
+        <Frame>
+          <div className="cmcc-shopify-app">
+            <Page fullWidth title="CMCC Content Moderation">
+              <Tabs
+                tabs={TABS}
+                selected={selectedTab}
+                onSelect={setSelectedTab}
+                fitted
+              />
+              <div className="cmcc-content">{renderContent()}</div>
+            </Page>
+            {toastMarkup}
+          </div>
+        </Frame>
+      </AppProvider>
+    </AppBridgeProvider>
   )
 }
 

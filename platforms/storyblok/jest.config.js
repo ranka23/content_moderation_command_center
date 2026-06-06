@@ -14,9 +14,10 @@ module.exports = {
     ],
   },
   moduleNameMapper: {
-    '\\.(css|less|scss)$':
+    '\.(css|less|scss)$':
       '<rootDir>/../../packages/cmcc-ui/src/__mocks__/styleMock.js',
     '^@cmcc/ui$': '<rootDir>/__mocks__/cmcc-ui.jsx',
     '^@cmcc/core$': '<rootDir>/__mocks__/cmcc-core.js',
+    '^@storyblok/app-sdk$': '<rootDir>/__mocks__/@storyblok/app-sdk.js',
   },
 }

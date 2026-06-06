@@ -2,6 +2,15 @@ import '@testing-library/jest-dom'
 import { render, screen } from '@testing-library/react'
 import App from '../App'
 
+// Mock @shopify/app-bridge-react
+jest.mock('@shopify/app-bridge-react', () => ({
+  Provider: ({ children, config }) => (
+    <div data-testid="app-bridge-provider" data-config={JSON.stringify(config)}>
+      {children}
+    </div>
+  ),
+}))
+
 // Mock @shopify/polaris components
 jest.mock('@shopify/polaris', () => ({
   AppProvider: ({ children }) => (

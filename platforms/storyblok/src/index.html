@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CMCC Moderation — Storyblok</title>
+  <meta
+    http-equiv="Content-Security-Policy"
+    content="default-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; script-src 'self'; frame-ancestors https://app.storyblok.com;"
+  />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <!-- Built styles -->
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- React mount point -->
+  <div id="cmcc-app"></div>
+
+  <!--
+    The app bundle (index.js) includes React and ReactDOM.
+    If you switch to external mode, load React from CDN here:
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  -->
+
+  <!-- Built app bundle -->
+  <script src="index.js"></script>
+</body>
+</html>

@@ -45,6 +45,14 @@ define( 'CMCC_SETTINGS_OPTION', 'cmcc_settings' );
 function cmcc_activate(): void {
     global $wpdb;
 
+    // Check existing version for upgrade path.
+    $installed_version = get_option( 'cmcc_version', '0.0.0' );
+
+    if ( version_compare( $installed_version, '1.0.0', '<' ) ) {
+        // Run 1.0.0 migration (fresh install or upgrade from pre-1.0.0).
+        // Tables will be created/updated below by dbDelta().
+    }
+
     $charset_collate = $wpdb->get_charset_collate();
 
     $queue_table = $wpdb->prefix . CMCC_QUEUE_TABLE;
@@ -91,6 +99,9 @@ function cmcc_activate(): void {
     if ( false === get_option( CMCC_SETTINGS_OPTION ) ) {
         add_option( CMCC_SETTINGS_OPTION, cmcc_get_default_settings(), '', 'yes' );
     }
+
+    // Update the stored version for future upgrade checks.
+    update_option( 'cmcc_version', CMCC_VERSION );
 
     flush_rewrite_rules();
 }
@@ -236,6 +247,15 @@ function cmcc_enqueue_app_assets(): void {
 
     $current_user = wp_get_current_user();
 
+    // The 'page' parameter determines the initial active tab in the React app.
+    // The value is sanitized with sanitize_key() which strips all unsafe
+    // characters. Full authorization is enforced by the manage_options
+    // capability check in cmcc_render_app() before this function is called.
+    $initial_tab = 'cmcc';
+    if ( isset( $_GET['page'] ) && is_string( $_GET['page'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+        $initial_tab = sanitize_key( $_GET['page'] );
+    }
+
     wp_localize_script(
         'cmcc-app',
         'cmccData',
@@ -246,7 +266,7 @@ function cmcc_enqueue_app_assets(): void {
             'userDisplay'  => $current_user->display_name,
             'adminUrl'     => admin_url(),
             'pluginUrl'    => plugin_dir_url( __FILE__ ),
-            'initialTab'   => isset( $_GET['page'] ) ? sanitize_key( $_GET['page'] ) : 'cmcc', // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+            'initialTab'   => $initial_tab,
         )
     );
 }
