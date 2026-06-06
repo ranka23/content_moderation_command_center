@@ -6,15 +6,22 @@ import HeatmapChart from '../HeatmapChart'
 describe('HeatmapChart Component', () => {
   const mockHeatmapData: HeatmapData = {
     data: [
-      [0, 1, 2, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // Sunday
-      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // Monday
-      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // Tuesday
-      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // Wednesday
-      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // Thursday
-      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // Friday
-      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // Saturday
+      [0, 1, 2, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     ],
     maxCount: 3,
+  }
+
+  const emptyData: HeatmapData = {
+    data: Array(7)
+      .fill(0)
+      .map(() => Array(24).fill(0)),
+    maxCount: 0,
   }
 
   beforeEach(() => {
@@ -26,7 +33,7 @@ describe('HeatmapChart Component', () => {
     expect(screen.getByText(/activity level/i)).toBeInTheDocument()
   })
 
-  it('renders day labels', () => {
+  it('renders all 7 day labels', () => {
     render(<HeatmapChart data={mockHeatmapData} />)
     expect(screen.getByText('Sun')).toBeInTheDocument()
     expect(screen.getByText('Mon')).toBeInTheDocument()
@@ -37,37 +44,44 @@ describe('HeatmapChart Component', () => {
     expect(screen.getByText('Sat')).toBeInTheDocument()
   })
 
-  it('renders hour labels', () => {
+  it('renders all 24 hour labels', () => {
     render(<HeatmapChart data={mockHeatmapData} />)
-    expect(screen.getByText('0:00')).toBeInTheDocument()
-    expect(screen.getByText('1:00')).toBeInTheDocument()
-    expect(screen.getByText('2:00')).toBeInTheDocument()
-    expect(screen.getByText('23:00')).toBeInTheDocument()
+    for (let hour = 0; hour < 24; hour++) {
+      expect(screen.getByText(`${hour}:00`)).toBeInTheDocument()
+    }
   })
 
   it('displays cell counts correctly', () => {
     render(<HeatmapChart data={mockHeatmapData} />)
-
-    // Sunday row (index 0) has values [0, 1, 2, 3, ...]
-    expect(screen.getAllByText('1')[0]).toBeInTheDocument() // 1 at index 1
-    expect(screen.getAllByText('2')[0]).toBeInTheDocument() // 2 at index 2
-    expect(screen.getAllByText('3')[0]).toBeInTheDocument() // 3 at index 3
+    const ones = screen.getAllByText('1')
+    expect(ones.length).toBeGreaterThanOrEqual(1)
+    const twos = screen.getAllByText('2')
+    expect(twos.length).toBeGreaterThanOrEqual(1)
+    const threes = screen.getAllByText('3')
+    expect(threes.length).toBeGreaterThanOrEqual(1)
   })
 
-  it('handles empty heatmap data', () => {
-    const emptyData: HeatmapData = {
-      data: Array(7)
-        .fill(0)
-        .map(() => Array(24).fill(0)),
-      maxCount: 0,
-    }
-
+  it('handles empty heatmap data with all zeros', () => {
     render(<HeatmapChart data={emptyData} />)
-
-    // Since we didn't add roles, let's check that no numbers are displayed
     expect(screen.queryByText('1')).not.toBeInTheDocument()
     expect(screen.queryByText('2')).not.toBeInTheDocument()
     expect(screen.queryByText('3')).not.toBeInTheDocument()
+  })
+
+  it('handles undefined data gracefully', () => {
+    render(<HeatmapChart data={undefined as unknown as HeatmapData} />)
+    expect(screen.getByText(/no data available/i)).toBeInTheDocument()
+  })
+
+  it('handles null data gracefully', () => {
+    render(<HeatmapChart data={null as unknown as HeatmapData} />)
+    expect(screen.getByText(/no data available/i)).toBeInTheDocument()
+  })
+
+  it('handles data with empty array', () => {
+    const empty: HeatmapData = { data: [], maxCount: 0 }
+    render(<HeatmapChart data={empty} />)
+    expect(screen.getByText(/no data available/i)).toBeInTheDocument()
   })
 
   it('calls onCellClick when cell is clicked', () => {
@@ -75,27 +89,106 @@ describe('HeatmapChart Component', () => {
     render(
       <HeatmapChart data={mockHeatmapData} onCellClick={onCellClickMock} />,
     )
-
-    // Click on the cell at Sunday (day 0), hour 1 (should have count 1)
-    // We need to find the actual cell element - this is simplified
-    // In a real test, we'd find the specific cell by position
     const cellElements = screen.getAllByText('1')
     if (cellElements.length > 0) {
-      fireEvent.click(cellElements[0]!)
-      expect(onCellClickMock).toHaveBeenCalledWith(0, 1, 1) // day, hour, count
+      fireEvent.click(cellElements[0])
+      expect(onCellClickMock).toHaveBeenCalledWith(0, 1, 1)
     }
   })
 
-  it('respects showTooltip prop', () => {
-    // This would be tested by checking if title attribute is present
-    // For simplicity, we're just testing that it renders with different prop values
-    const { unmount } = render(
-      <HeatmapChart data={mockHeatmapData} showTooltip={false} />,
+  it('calls onCellClick with correct count for max value', () => {
+    const onCellClickMock = jest.fn()
+    render(
+      <HeatmapChart data={mockHeatmapData} onCellClick={onCellClickMock} />,
     )
-    expect(screen.getAllByText(/activity level/i).length).toBeGreaterThan(0)
+    const maxCells = screen.getAllByText('3')
+    if (maxCells.length > 0) {
+      fireEvent.click(maxCells[0])
+      expect(onCellClickMock).toHaveBeenCalledWith(0, 3, 3)
+    }
+  })
 
-    unmount()
+  it('does not call onCellClick when handler is not provided', () => {
+    const onCellClickMock = jest.fn()
+    render(<HeatmapChart data={mockHeatmapData} />)
+    const cells = screen.getAllByText('1')
+    if (cells.length > 0) {
+      fireEvent.click(cells[0])
+      expect(onCellClickMock).not.toHaveBeenCalled()
+    }
+  })
+
+  it('shows tooltip title when showTooltip is true', () => {
     render(<HeatmapChart data={mockHeatmapData} showTooltip={true} />)
-    expect(screen.getAllByText(/activity level/i).length).toBeGreaterThan(0)
+    const cells = screen.getAllByText('1')
+    if (cells.length > 0) {
+      expect(cells[0]).toHaveAttribute('title')
+    }
+  })
+
+  it('hides tooltip title when showTooltip is false', () => {
+    render(<HeatmapChart data={mockHeatmapData} showTooltip={false} />)
+    const cells = screen.getAllByText('1')
+    if (cells.length > 0) {
+      expect(cells[0]).not.toHaveAttribute('title')
+    }
+  })
+
+  it('color legend renders with correct labels', () => {
+    render(<HeatmapChart data={mockHeatmapData} />)
+    expect(screen.getByText(/activity level/i)).toBeInTheDocument()
+    expect(screen.getByText('Low')).toBeInTheDocument()
+    expect(screen.getByText('High')).toBeInTheDocument()
+  })
+
+  it('color intensity scales with count relative to maxCount', () => {
+    render(<HeatmapChart data={mockHeatmapData} />)
+    const zeroCell = screen.queryByText('0')
+    const oneCell = screen.queryByText('1')
+    const threeCell = screen.queryByText('3')
+    // Cells with value 0 should display empty string
+    expect(zeroCell).not.toBeInTheDocument()
+    // Cells with positive counts should be visible
+    expect(oneCell).toBeInTheDocument()
+    expect(threeCell).toBeInTheDocument()
+  })
+
+  it('shows pointer cursor when onCellClick is provided', () => {
+    render(<HeatmapChart data={mockHeatmapData} onCellClick={jest.fn()} />)
+    const cells = screen.getAllByText('1')
+    if (cells.length > 0) {
+      expect(cells[0]).toHaveStyle({ cursor: 'pointer' })
+    }
+  })
+
+  it('shows default cursor when onCellClick is not provided', () => {
+    render(<HeatmapChart data={mockHeatmapData} />)
+    const cells = screen.getAllByText('1')
+    if (cells.length > 0) {
+      expect(cells[0]).toHaveStyle({ cursor: 'default' })
+    }
+  })
+
+  it('passes theme prop without crashing', () => {
+    const theme = {
+      primaryColor: '#ff0000',
+      fontFamily: 'Arial',
+    }
+    render(<HeatmapChart data={mockHeatmapData} theme={theme} />)
+    expect(screen.getByText(/activity level/i)).toBeInTheDocument()
+  })
+
+  it('handles single row of data', () => {
+    const singleRow: HeatmapData = {
+      data: [
+        [
+          5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+          0,
+        ],
+      ],
+      maxCount: 5,
+    }
+    render(<HeatmapChart data={singleRow} />)
+    expect(screen.getByText('5')).toBeInTheDocument()
   })
 })

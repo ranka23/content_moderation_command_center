@@ -21,6 +21,7 @@ describe('SettingsForm Component', () => {
           label: 'Max Items',
           type: 'number',
           placeholder: '100',
+          required: true,
         },
       ],
     },
@@ -121,74 +122,99 @@ describe('SettingsForm Component', () => {
 
   it('shows the first section by default', () => {
     render(<SettingsForm {...defaultProps} />)
-    // General tab should be active
     const generalTab = screen.getByRole('tab', { name: /general/i })
     expect(generalTab).toHaveAttribute('aria-selected', 'true')
-
-    // General section fields should be visible
     expect(screen.getByLabelText(/site name/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/max items/i)).toBeInTheDocument()
   })
 
   it('switches tabs when clicking on a different tab', () => {
     render(<SettingsForm {...defaultProps} />)
-
-    // Click on Notifications tab
     fireEvent.click(screen.getByRole('tab', { name: /notifications/i }))
-
     const notificationsTab = screen.getByRole('tab', {
       name: /notifications/i,
     })
     expect(notificationsTab).toHaveAttribute('aria-selected', 'true')
-
-    // General tab should no longer be active
     const generalTab = screen.getByRole('tab', { name: /general/i })
     expect(generalTab).toHaveAttribute('aria-selected', 'false')
-
-    // Notifications fields should be visible
     expect(screen.getByLabelText(/email alerts/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/alert level/i)).toBeInTheDocument()
   })
 
-  it('renders text input fields', () => {
+  it('switches to advanced tab correctly', () => {
+    render(<SettingsForm {...defaultProps} />)
+    fireEvent.click(screen.getByRole('tab', { name: /advanced/i }))
+    const advancedTab = screen.getByRole('tab', {
+      name: /advanced/i,
+    })
+    expect(advancedTab).toHaveAttribute('aria-selected', 'true')
+    expect(screen.getByLabelText(/custom rules/i)).toBeInTheDocument()
+  })
+
+  it('renders text input field', () => {
     render(<SettingsForm {...defaultProps} />)
     const input = screen.getByLabelText(/site name/i)
     expect(input).toBeInTheDocument()
     expect(input).toHaveValue('My Site')
+    expect(input).toHaveAttribute('type', 'text')
   })
 
-  it('renders number input fields', () => {
+  it('renders number input field', () => {
     render(<SettingsForm {...defaultProps} />)
     const input = screen.getByLabelText(/max items/i)
     expect(input).toBeInTheDocument()
     expect(input).toHaveValue(50)
+    expect(input).toHaveAttribute('type', 'number')
   })
 
-  it('renders toggle fields', () => {
+  it('renders toggle field', () => {
     render(<SettingsForm {...defaultProps} />)
-    // Switch to notifications tab
     fireEvent.click(screen.getByRole('tab', { name: /notifications/i }))
-
     const toggle = screen.getByLabelText(/email alerts/i)
     expect(toggle).toBeInTheDocument()
     expect(toggle).toBeChecked()
   })
 
-  it('renders select fields with options', () => {
+  it('toggles toggle field on click', () => {
     render(<SettingsForm {...defaultProps} />)
-    // Switch to notifications tab
     fireEvent.click(screen.getByRole('tab', { name: /notifications/i }))
+    const toggle = screen.getByLabelText(/email alerts/i)
+    expect(toggle).toBeChecked()
+    fireEvent.click(toggle)
+    expect(toggle).not.toBeChecked()
+  })
 
+  it('renders select field with options', () => {
+    render(<SettingsForm {...defaultProps} />)
+    fireEvent.click(screen.getByRole('tab', { name: /notifications/i }))
     const select = screen.getByLabelText(/alert level/i)
     expect(select).toBeInTheDocument()
     expect(select).toHaveValue('info')
   })
 
-  it('renders textarea fields', () => {
+  it('renders all select options', () => {
     render(<SettingsForm {...defaultProps} />)
-    // Switch to advanced tab
-    fireEvent.click(screen.getByRole('tab', { name: /advanced/i }))
+    fireEvent.click(screen.getByRole('tab', { name: /notifications/i }))
+    const select = screen.getByLabelText(/alert level/i)
+    const options = Array.from(select.querySelectorAll('option'))
+    expect(options).toHaveLength(3)
+    expect(options[0]).toHaveValue('info')
+    expect(options[0]).toHaveTextContent('Info')
+    expect(options[1]).toHaveValue('warning')
+    expect(options[2]).toHaveValue('critical')
+  })
 
+  it('changes select field value', () => {
+    render(<SettingsForm {...defaultProps} />)
+    fireEvent.click(screen.getByRole('tab', { name: /notifications/i }))
+    const select = screen.getByLabelText(/alert level/i)
+    fireEvent.change(select, { target: { value: 'critical' } })
+    expect(select).toHaveValue('critical')
+  })
+
+  it('renders textarea field', () => {
+    render(<SettingsForm {...defaultProps} />)
+    fireEvent.click(screen.getByRole('tab', { name: /advanced/i }))
     const textarea = screen.getByLabelText(/custom rules/i)
     expect(textarea).toBeInTheDocument()
     expect(textarea).toHaveValue('')
@@ -199,36 +225,34 @@ describe('SettingsForm Component', () => {
     expect(screen.getByText(/the name of your site/i)).toBeInTheDocument()
   })
 
-  it('shows required indicator on required fields', () => {
+  it('shows required indicator on required text fields', () => {
     render(<SettingsForm {...defaultProps} />)
-    // Switch to advanced tab
-    fireEvent.click(screen.getByRole('tab', { name: /advanced/i }))
-
-    // The label should have an asterisk
-    const advancedTabPanel = screen.getByRole('tabpanel')
-    expect(advancedTabPanel.textContent).toContain('*')
+    const panel = screen.getByRole('tabpanel')
+    expect(panel.textContent).toContain('*')
   })
 
   it('validates field on blur', () => {
     render(<SettingsForm {...defaultProps} />)
-
     const input = screen.getByLabelText(/site name/i)
-    // Clear the value
     fireEvent.change(input, { target: { value: '' } })
     fireEvent.blur(input)
-
     expect(screen.getByText(/site name is required/i)).toBeInTheDocument()
   })
 
   it('shows error style on invalid fields', () => {
     render(<SettingsForm {...defaultProps} />)
-
     const input = screen.getByLabelText(/site name/i)
     fireEvent.change(input, { target: { value: '' } })
     fireEvent.blur(input)
-
-    // Input should have aria-invalid
     expect(input).toHaveAttribute('aria-invalid', 'true')
+  })
+
+  it('validates number field on blur', () => {
+    render(<SettingsForm {...defaultProps} />)
+    const input = screen.getByLabelText(/max items/i)
+    fireEvent.change(input, { target: { value: '0' } })
+    fireEvent.blur(input)
+    expect(screen.getByText(/must be at least 1/i)).toBeInTheDocument()
   })
 
   it('does not submit when validation fails', () => {
@@ -246,9 +270,7 @@ describe('SettingsForm Component', () => {
         }}
       />,
     )
-
     fireEvent.click(screen.getByRole('button', { name: /save changes/i }))
-
     expect(onSubmit).not.toHaveBeenCalled()
   })
 
@@ -267,9 +289,7 @@ describe('SettingsForm Component', () => {
         }}
       />,
     )
-
     fireEvent.click(screen.getByRole('button', { name: /save changes/i }))
-
     expect(onSubmit).toHaveBeenCalledTimes(1)
     expect(onSubmit).toHaveBeenCalledWith({
       siteName: 'My Site',
@@ -282,52 +302,49 @@ describe('SettingsForm Component', () => {
 
   it('detects dirty state after changing a field', () => {
     render(<SettingsForm {...defaultProps} />)
-
     const input = screen.getByLabelText(/site name/i)
     fireEvent.change(input, { target: { value: 'New Site Name' } })
-
-    // Reset button should be enabled when form is dirty
     const resetButton = screen.getByRole('button', { name: /reset/i })
     expect(resetButton).not.toBeDisabled()
   })
 
+  it('disables reset button when form is not dirty', () => {
+    render(<SettingsForm {...defaultProps} />)
+    const resetButton = screen.getByRole('button', { name: /reset/i })
+    expect(resetButton).toBeDisabled()
+  })
+
   it('resets to initial values on reset', () => {
     render(<SettingsForm {...defaultProps} />)
-
     const input = screen.getByLabelText(/site name/i)
     fireEvent.change(input, { target: { value: 'Changed' } })
     expect(input).toHaveValue('Changed')
-
     fireEvent.click(screen.getByRole('button', { name: /reset/i }))
-
     expect(input).toHaveValue('My Site')
   })
 
   it('shows submitting state when isSubmitting is true', () => {
     render(<SettingsForm {...defaultProps} isSubmitting />)
-
     expect(screen.getByRole('button', { name: /saving/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /saving/i })).toBeDisabled()
   })
 
-  it('disables reset button when form is not dirty', () => {
-    render(<SettingsForm {...defaultProps} />)
-
-    const resetButton = screen.getByRole('button', { name: /reset/i })
-    expect(resetButton).toBeDisabled()
-  })
-
-  it('uses custom submit label', () => {
+  it('shows custom submit label', () => {
     render(<SettingsForm {...defaultProps} submitLabel="Update Settings" />)
-
     expect(
       screen.getByRole('button', { name: /update settings/i }),
     ).toBeInTheDocument()
   })
 
+  it('shows default submit label', () => {
+    render(<SettingsForm {...defaultProps} />)
+    expect(
+      screen.getByRole('button', { name: /save changes/i }),
+    ).toBeInTheDocument()
+  })
+
   it('shows empty state when no sections provided', () => {
     render(<SettingsForm {...defaultProps} sections={[]} />)
-
     expect(
       screen.getByText(/no settings sections available/i),
     ).toBeInTheDocument()
@@ -335,35 +352,25 @@ describe('SettingsForm Component', () => {
 
   it('shows help text only when no error is present', () => {
     render(<SettingsForm {...defaultProps} />)
-
-    // Help text should be visible initially
     expect(screen.getByText(/the name of your site/i)).toBeInTheDocument()
-
     const input = screen.getByLabelText(/site name/i)
     fireEvent.change(input, { target: { value: '' } })
     fireEvent.blur(input)
-
-    // Help text should be replaced by error
     expect(screen.queryByText(/the name of your site/i)).not.toBeInTheDocument()
     expect(screen.getByText(/site name is required/i)).toBeInTheDocument()
   })
 
   it('renders correct tabpanel id', () => {
     render(<SettingsForm {...defaultProps} />)
-
     const panel = screen.getByRole('tabpanel')
     expect(panel).toHaveAttribute('id', 'cmcc-panel-general')
   })
 
-  it('shows tabpanel for active section only', () => {
+  it('shows only one tabpanel at a time', () => {
     render(<SettingsForm {...defaultProps} />)
-
-    // Only one tabpanel should be visible
     const panels = screen.getAllByRole('tabpanel')
     expect(panels).toHaveLength(1)
     expect(panels[0]).toHaveAttribute('id', 'cmcc-panel-general')
-
-    // Switch tab
     fireEvent.click(screen.getByRole('tab', { name: /notifications/i }))
     const newPanels = screen.getAllByRole('tabpanel')
     expect(newPanels).toHaveLength(1)
@@ -385,15 +392,9 @@ describe('SettingsForm Component', () => {
         }}
       />,
     )
-
     fireEvent.click(screen.getByRole('button', { name: /save changes/i }))
-
-    // Errors should show across all tabs
     expect(screen.getByText(/site name is required/i)).toBeInTheDocument()
     expect(screen.getByText(/must be at least 1/i)).toBeInTheDocument()
-
-    // Errors for fields in other tabs should be stored in state
-    // but not visible until we switch to those tabs
     expect(onSubmit).not.toHaveBeenCalled()
   })
 
@@ -401,14 +402,35 @@ describe('SettingsForm Component', () => {
     render(
       <SettingsForm
         {...defaultProps}
-        initialValues={{
-          ...initialValues,
-          maxItems: 0,
-        }}
+        initialValues={{ ...initialValues, maxItems: 0 }}
       />,
     )
-
     const input = screen.getByLabelText(/max items/i)
     expect(input).toHaveValue(0)
+  })
+
+  it('disables reset button when isSubmitting', () => {
+    render(<SettingsForm {...defaultProps} isSubmitting />)
+    expect(screen.getByRole('button', { name: /reset/i })).toBeDisabled()
+  })
+
+  it('disables submit button when isSubmitting', () => {
+    render(<SettingsForm {...defaultProps} isSubmitting />)
+    expect(screen.getByRole('button', { name: /saving/i })).toBeDisabled()
+  })
+
+  it('resets dirty fields state after reset', () => {
+    render(<SettingsForm {...defaultProps} />)
+    const input = screen.getByLabelText(/site name/i)
+    fireEvent.change(input, { target: { value: 'Changed' } })
+    expect(screen.getByRole('button', { name: /reset/i })).not.toBeDisabled()
+    fireEvent.click(screen.getByRole('button', { name: /reset/i }))
+    expect(screen.getByRole('button', { name: /reset/i })).toBeDisabled()
+  })
+
+  it('has correct form className', () => {
+    const { container } = render(<SettingsForm {...defaultProps} />)
+    const form = container.querySelector('form')
+    expect(form).toHaveClass('cmcc-settings-form')
   })
 })

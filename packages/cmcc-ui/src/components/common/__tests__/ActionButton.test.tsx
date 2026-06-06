@@ -20,50 +20,108 @@ describe('ActionButton Component', () => {
     expect(button).toBeInTheDocument()
     expect(button).not.toBeDisabled()
     expect(button).toHaveAttribute('type', 'button')
+    expect(button).toHaveAttribute('aria-disabled', 'false')
   })
 
-  it('renders with different variants', () => {
-    const variants: ActionButtonProps['variant'][] = [
-      'primary',
-      'secondary',
-      'danger',
-      'ghost',
-    ]
-
-    for (const variant of variants) {
-      const { unmount } = render(
-        <ActionButton {...baseProps} variant={variant}>
-          {variant}
-        </ActionButton>,
-      )
-      expect(screen.getByRole('button', { name: variant })).toBeInTheDocument()
-      unmount()
-    }
+  it('renders primary variant with correct styles', () => {
+    render(
+      <ActionButton {...baseProps} variant="primary">
+        Primary
+      </ActionButton>,
+    )
+    const button = screen.getByRole('button')
+    expect(button).toHaveStyle({
+      backgroundColor: '#2563eb',
+      color: '#ffffff',
+    })
   })
 
-  it('renders with different sizes', () => {
-    const sizes: ActionButtonProps['size'][] = ['sm', 'md', 'lg']
+  it('renders secondary variant with correct styles', () => {
+    render(
+      <ActionButton {...baseProps} variant="secondary">
+        Secondary
+      </ActionButton>,
+    )
+    const button = screen.getByRole('button')
+    expect(button).toHaveStyle({
+      backgroundColor: '#6b7280',
+      color: '#ffffff',
+    })
+  })
 
-    for (const size of sizes) {
-      const { unmount } = render(
-        <ActionButton {...baseProps} size={size}>
-          {size}
-        </ActionButton>,
-      )
-      expect(screen.getByRole('button', { name: size })).toBeInTheDocument()
-      unmount()
-    }
+  it('renders danger variant with correct styles', () => {
+    render(
+      <ActionButton {...baseProps} variant="danger">
+        Danger
+      </ActionButton>,
+    )
+    const button = screen.getByRole('button')
+    expect(button).toHaveStyle({
+      backgroundColor: '#dc2626',
+      color: '#ffffff',
+    })
+  })
+
+  it('renders ghost variant with correct styles', () => {
+    render(
+      <ActionButton {...baseProps} variant="ghost">
+        Ghost
+      </ActionButton>,
+    )
+    const button = screen.getByRole('button')
+    expect(button).toHaveStyle({
+      backgroundColor: 'transparent',
+      color: '#374151',
+    })
+  })
+
+  it('renders sm size with correct padding', () => {
+    render(
+      <ActionButton {...baseProps} size="sm">
+        Small
+      </ActionButton>,
+    )
+    expect(screen.getByRole('button')).toHaveStyle({
+      padding: '4px 12px',
+      fontSize: '12px',
+    })
+  })
+
+  it('renders md size with correct padding', () => {
+    render(
+      <ActionButton {...baseProps} size="md">
+        Medium
+      </ActionButton>,
+    )
+    expect(screen.getByRole('button')).toHaveStyle({
+      padding: '8px 16px',
+      fontSize: '14px',
+    })
+  })
+
+  it('renders lg size with correct padding', () => {
+    render(
+      <ActionButton {...baseProps} size="lg">
+        Large
+      </ActionButton>,
+    )
+    expect(screen.getByRole('button')).toHaveStyle({
+      padding: '12px 24px',
+      fontSize: '16px',
+    })
   })
 
   it('renders icon on the left by default', () => {
     render(
-      <ActionButton {...baseProps} icon={<span data-testid="test-icon" />}>
+      <ActionButton
+        {...baseProps}
+        icon={<span data-testid="test-icon">*</span>}
+      >
         With Icon
       </ActionButton>,
     )
     const icon = screen.getByTestId('test-icon')
     expect(icon).toBeInTheDocument()
-    // Icon is before the text
     const button = screen.getByRole('button')
     expect(button).toContainElement(icon)
   })
@@ -72,7 +130,7 @@ describe('ActionButton Component', () => {
     render(
       <ActionButton
         {...baseProps}
-        icon={<span data-testid="test-icon" />}
+        icon={<span data-testid="test-icon">*</span>}
         iconPosition="right"
       >
         With Icon
@@ -80,9 +138,22 @@ describe('ActionButton Component', () => {
     )
     const icon = screen.getByTestId('test-icon')
     expect(icon).toBeInTheDocument()
+    const button = screen.getByRole('button')
+    expect(button).toContainElement(icon)
   })
 
-  it('shows loading spinner and disables button when loading', () => {
+  it('shows loading spinner when loading', () => {
+    render(
+      <ActionButton {...baseProps} loading>
+        Loading
+      </ActionButton>,
+    )
+    const spinner = screen.getByRole('status')
+    expect(spinner).toBeInTheDocument()
+    expect(spinner).toHaveAttribute('aria-label', 'Loading')
+  })
+
+  it('disables button when loading', () => {
     render(
       <ActionButton {...baseProps} loading>
         Loading
@@ -92,16 +163,13 @@ describe('ActionButton Component', () => {
     expect(button).toBeDisabled()
     expect(button).toHaveAttribute('aria-busy', 'true')
     expect(button).toHaveAttribute('aria-disabled', 'true')
-    // Loading spinner should be present
-    const spinner = screen.getByRole('status')
-    expect(spinner).toBeInTheDocument()
   })
 
   it('hides icon when loading', () => {
     render(
       <ActionButton
         {...baseProps}
-        icon={<span data-testid="test-icon" />}
+        icon={<span data-testid="test-icon">*</span>}
         loading
       >
         Loading
@@ -143,14 +211,28 @@ describe('ActionButton Component', () => {
     expect(onClick).not.toHaveBeenCalled()
   })
 
-  it('applies custom className', () => {
+  it('sets aria-disabled when disabled', () => {
     render(
-      <ActionButton {...baseProps} className="custom-class">
-        Styled
+      <ActionButton {...baseProps} disabled>
+        Disabled
       </ActionButton>,
     )
     const button = screen.getByRole('button')
-    expect(button).toHaveClass('custom-class')
+    expect(button).toHaveAttribute('aria-disabled', 'true')
+  })
+
+  it('sets aria-disabled to false when not disabled or loading', () => {
+    render(<ActionButton {...baseProps}>Enabled</ActionButton>)
+    expect(screen.getByRole('button')).toHaveAttribute('aria-disabled', 'false')
+  })
+
+  it('sets aria-busy when loading', () => {
+    render(
+      <ActionButton {...baseProps} loading>
+        Loading
+      </ActionButton>,
+    )
+    expect(screen.getByRole('button')).toHaveAttribute('aria-busy', 'true')
   })
 
   it('renders with type submit', () => {
@@ -162,13 +244,18 @@ describe('ActionButton Component', () => {
     expect(screen.getByRole('button')).toHaveAttribute('type', 'submit')
   })
 
-  it('sets aria-disabled when disabled', () => {
+  it('renders with type button by default', () => {
+    render(<ActionButton {...baseProps}>Button</ActionButton>)
+    expect(screen.getByRole('button')).toHaveAttribute('type', 'button')
+  })
+
+  it('applies custom className', () => {
     render(
-      <ActionButton {...baseProps} disabled>
-        Disabled
+      <ActionButton {...baseProps} className="custom-class">
+        Styled
       </ActionButton>,
     )
-    expect(screen.getByRole('button')).toHaveAttribute('aria-disabled', 'true')
+    expect(screen.getByRole('button')).toHaveClass('custom-class')
   })
 
   it('hides icon from accessibility tree with aria-hidden', () => {
@@ -183,5 +270,24 @@ describe('ActionButton Component', () => {
     const icon = screen.getByTestId('test-icon')
     const iconContainer = icon.parentElement
     expect(iconContainer).toHaveAttribute('aria-hidden', 'true')
+  })
+
+  it('renders children text', () => {
+    render(<ActionButton {...baseProps}>Button Text</ActionButton>)
+    expect(screen.getByText('Button Text')).toBeInTheDocument()
+  })
+
+  it('applies reduced opacity when disabled', () => {
+    render(
+      <ActionButton {...baseProps} disabled>
+        Disabled
+      </ActionButton>,
+    )
+    expect(screen.getByRole('button')).toHaveStyle({ opacity: 0.6 })
+  })
+
+  it('applies full opacity when enabled', () => {
+    render(<ActionButton {...baseProps}>Enabled</ActionButton>)
+    expect(screen.getByRole('button')).toHaveStyle({ opacity: 1 })
   })
 })

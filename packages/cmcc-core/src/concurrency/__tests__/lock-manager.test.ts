@@ -41,6 +41,33 @@ describe('InMemoryLockManager', () => {
         expect(result).toBe(true)
       })
     })
+
+    it('should handle empty string item ID', () => {
+      const result = lockManager.acquireLock('', 'mod1')
+      expect(result).toBe(true)
+    })
+
+    it('should use default lock timeout when not provided', () => {
+      const result = lockManager.acquireLock('item1', 'mod1')
+      expect(result).toBe(true)
+      const info = lockManager.getLockInfo('item1')
+      expect(info.expiresAt).toBeGreaterThan(Date.now())
+    })
+
+    it('should handle very long timeout values', () => {
+      const result = lockManager.acquireLock('item1', 'mod1', 999999)
+      expect(result).toBe(true)
+      const info = lockManager.getLockInfo('item1')
+      expect(info.expiresAt).toBeGreaterThan(Date.now() + 86400000)
+    })
+
+    it('should handle negative timeout values', () => {
+      const result = lockManager.acquireLock('item1', 'mod1', -1)
+      expect(result).toBe(true)
+      // Negative timeout means lock expires immediately (in the past)
+      const info = lockManager.getLockInfo('item1')
+      expect(info.lockedBy).toBeNull()
+    })
   })
 
   describe('releaseLock', () => {
@@ -92,6 +119,12 @@ describe('InMemoryLockManager', () => {
         expect(info.expiresAt).toBeNull()
       })
     })
+
+    it('should return null info for non-existent item', () => {
+      const info = lockManager.getLockInfo('non-existent')
+      expect(info.lockedBy).toBeNull()
+      expect(info.expiresAt).toBeNull()
+    })
   })
 
   describe('cleanupExpiredLocks', () => {
@@ -110,6 +143,51 @@ describe('InMemoryLockManager', () => {
         expect(info1.lockedBy).toBeNull() // Should be cleaned up
         expect(info2.lockedBy).toBe('mod2') // Should still be locked
       })
+    })
+  })
+
+  describe('clearAllLocks', () => {
+    it('should clear all locks', () => {
+      lockManager.acquireLock('item1', 'mod1', 10)
+      lockManager.acquireLock('item2', 'mod2', 10)
+      lockManager.acquireLock('item3', 'mod1', 10)
+
+      lockManager.clearAllLocks()
+      expect(lockManager.getActiveLocks()).toEqual([])
+      expect(lockManager.getLockInfo('item1').lockedBy).toBeNull()
+      expect(lockManager.getLockInfo('item2').lockedBy).toBeNull()
+      expect(lockManager.getLockInfo('item3').lockedBy).toBeNull()
+    })
+
+    it('should preserve stats after clearAllLocks', () => {
+      lockManager.acquireLock('item1', 'mod1', 10)
+      lockManager.acquireLock('item2', 'mod2', 10)
+      lockManager.clearAllLocks()
+      const stats = lockManager.getStats()
+      expect(stats.totalAcquisitions).toBe(2)
+      expect(stats.activeLocks).toBe(0)
+    })
+
+    it('should not throw when clearing empty locks', () => {
+      expect(() => lockManager.clearAllLocks()).not.toThrow()
+    })
+  })
+
+  describe('stop', () => {
+    it('should clear the cleanup interval', () => {
+      lockManager.stop()
+      // Verify no crash on second stop
+      expect(() => lockManager.stop()).not.toThrow()
+    })
+
+    it('should allow creating a manager without auto cleanup', () => {
+      const noCleanupManager = new InMemoryLockManager({
+        defaultLockTimeout: 1,
+        cleanupIntervalSeconds: 0, // 0 means no cleanup
+      })
+      noCleanupManager.acquireLock('item1', 'mod1')
+      expect(noCleanupManager.getLockInfo('item1').lockedBy).toBe('mod1')
+      noCleanupManager.stop()
     })
   })
 
@@ -173,6 +251,17 @@ describe('InMemoryLockManager', () => {
       lockManager.acquireLock('item3', 'mod1', 10)
       const stats: LockManagerStats = lockManager.getStats()
       expect(stats.activeLocks).toBe(3)
+    })
+
+    it('should track rejection after release cycle', () => {
+      lockManager.acquireLock('item1', 'mod1')
+      lockManager.releaseLock('item1', 'mod1')
+      lockManager.acquireLock('item1', 'mod2')
+      lockManager.acquireLock('item1', 'mod1') // rejected
+      const stats = lockManager.getStats()
+      expect(stats.totalAcquisitions).toBe(2)
+      expect(stats.totalReleases).toBe(1)
+      expect(stats.totalRejections).toBe(1)
     })
   })
 
@@ -251,6 +340,33 @@ describe('InMemoryLockManager', () => {
       const locks1 = lockManager.getActiveLocks()
       const locks2 = lockManager.getActiveLocks()
       expect(locks1).toEqual(locks2)
+    })
+
+    it('should return empty when all locks expired and cleaned', () => {
+      lockManager.acquireLock('item1', 'mod1', 0.01)
+      return new Promise((resolve) => setTimeout(resolve, 20)).then(() => {
+        lockManager.clearAllLocks()
+        expect(lockManager.getActiveLocks()).toEqual([])
+      })
+    })
+  })
+
+  describe('custom cleanup interval', () => {
+    it('should work with very long cleanup interval', () => {
+      const longIntervalManager = new InMemoryLockManager({
+        defaultLockTimeout: 10,
+        cleanupIntervalSeconds: 3600, // 1 hour cleanup interval
+      })
+      longIntervalManager.acquireLock('item1', 'mod1')
+      expect(longIntervalManager.getActiveLocks()).toHaveLength(1)
+      longIntervalManager.stop()
+    })
+
+    it('should work with default constructor options', () => {
+      const defaultManager = new InMemoryLockManager()
+      defaultManager.acquireLock('item1', 'mod1')
+      expect(defaultManager.getActiveLocks()).toHaveLength(1)
+      defaultManager.stop()
     })
   })
 })
