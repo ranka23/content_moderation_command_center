@@ -1,0 +1,96 @@
+# CMCC Testing Environments
+#
+# Spin up WordPress or Strapi instances with the CMCC plugin pre-installed.
+#
+# Usage:
+#   docker compose up wordpress    # WordPress at http://localhost:8080
+#   docker compose up strapi       # Strapi at http://localhost:1337
+#   docker compose up cmcc-api     # Stub CMCC backend at http://localhost:3000
+
+name: cmcc
+
+services:
+  # ── WordPress ────────────────────────────────────────────────────────────
+  wordpress:
+    image: wordpress:6.7-php8.2-apache
+    ports:
+      - "8080:80"
+    environment:
+      WORDPRESS_DB_HOST: db
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: wordpress
+      WORDPRESS_DB_NAME: wordpress
+      WORDPRESS_CONFIG_EXTRA: |
+        define('WP_DEBUG', true);
+        define('WP_DEBUG_LOG', true);
+    volumes:
+      # Mount the CMCC WordPress plugin directly into the container
+      - ./platforms/wordpress:/var/www/html/wp-content/plugins/cmcc
+      # Persist WordPress uploads and other data
+      - wp_data:/var/www/html/wp-content
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  db:
+    image: mariadb:11
+    ports:
+      - "3307:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: wordpress
+      MYSQL_PASSWORD: wordpress
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # ── Strapi ───────────────────────────────────────────────────────────────
+  strapi:
+    image: node:20-alpine
+    working_dir: /app
+    ports:
+      - "1337:1337"
+    environment:
+      NODE_ENV: development
+      HOST: 0.0.0.0
+      PORT: 1337
+      DATABASE_FILENAME: /app/.tmp/data.db
+    volumes:
+      # Mount the CMCC Strapi plugin
+      - ./platforms/strapi:/app/src/plugins/cmcc
+      # Persist the Strapi project data (DB, uploaded files, etc.)
+      - strapi_data:/app
+    command: >
+      sh -c "
+        if [ ! -f /app/package.json ]; then
+          npx create-strapi-app@latest . --quickstart --no-run
+        fi &&
+        npm run build &&
+        npm run develop
+      "
+    restart: unless-stopped
+
+  # ── CMCC Backend API stub ────────────────────────────────────────────────
+  # A minimal Express server that returns mock data for manual front-end testing.
+  # Used by Storyblok and Wix platforms which require a backend API.
+  cmcc-api:
+    image: node:20-alpine
+    working_dir: /app
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./tools/test-api-stub:/app
+    command: ["node", "server.js"]
+    restart: unless-stopped
+
+volumes:
+  wp_data:
+  db_data:
+  strapi_data:

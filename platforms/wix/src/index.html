@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>CMCC Moderation — Wix</title>
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; script-src 'self' https://unpkg.com;"
+    />
+    <link rel="stylesheet" href="app.css" />
+  </head>
+  <body>
+    <div id="cmcc-wix-app-root"></div>
+
+    <!-- React and ReactDOM are externalized in the webpack config.
+       They must be loaded here before the app bundle. -->
+    <script
+      crossorigin
+      src="https://unpkg.com/react@18/umd/react.production.min.js"
+    ></script>
+    <script
+      crossorigin
+      src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"
+    ></script>
+
+    <!-- Built app bundle -->
+    <script src="app.js"></script>
+  </body>
+</html>

@@ -1,0 +1,12 @@
+{
+  "name": "@cmcc/test-api-stub",
+  "version": "1.0.0",
+  "private": true,
+  "description": "CMCC test API stub for manual front-end testing",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.0"
+  }
+}

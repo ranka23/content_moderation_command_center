@@ -8,3 +8,6 @@ coverage
 .env
 .env.*
 .turbo
+
+# Docker
+docker-data/
