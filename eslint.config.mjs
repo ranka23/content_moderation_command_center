@@ -15,6 +15,7 @@ export default tseslint.config(
       '**/coverage/**',
       '**/.eslintcache',
       '**/*.md',
+      'cmcc-strapi-app/**',
     ],
   },
 
@@ -103,6 +104,22 @@ export default tseslint.config(
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-non-null-assertion': 'off',
       'no-console': 'off',
+    },
+  },
+
+  // platforms/strapi .js files contain JSX (Strapi convention)
+  // Must come after the JS override so ecmaFeatures.jsx takes effect
+  {
+    files: ['platforms/strapi/**/*.js'],
+    languageOptions: {
+      parserOptions: {
+        ecmaFeatures: {
+          jsx: true,
+        },
+      },
+    },
+    rules: {
+      '@typescript-eslint/ban-ts-comment': 'off',
     },
   },
 )

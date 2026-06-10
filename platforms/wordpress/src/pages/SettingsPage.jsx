@@ -135,7 +135,7 @@ export default function SettingsPage({ settings, addToast }) {
           <Button variant="outline" size="sm" onClick={handleExport}>
             📥 Export Settings
           </Button>
-          <label className="tw-cursor-pointer tw-inline-flex tw-items-center tw-justify-center tw-rounded-md tw-text-sm tw-font-medium tw-transition-colors tw-h-9 tw-rounded-md tw-px-3 tw-text-xs tw-bg-white tw-text-gray-900 hover:tw-bg-gray-100 tw-border tw-border-gray-300">
+          <label className="tw-cursor-pointer tw-inline-flex tw-items-center tw-justify-center tw-rounded-md tw-text-xs tw-font-medium tw-transition-colors tw-h-9 tw-px-3 tw-bg-white tw-text-gray-900 hover:tw-bg-gray-100 tw-border tw-border-gray-300">
             📤 Import Settings
             <input
               type="file"

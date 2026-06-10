@@ -77,7 +77,9 @@ export function AiSettingsForm({
     ) {
       // Non-cloud engines don't need model fetching
       const nonCloudId = setTimeout(() => setAvailableModels([]), 0)
-      return () => clearTimeout(nonCloudId)
+      return (): void => {
+        clearTimeout(nonCloudId)
+      }
     }
 
     const engine: 'openai' | 'claude' | 'gemini' = config.engine
@@ -93,7 +95,7 @@ export function AiSettingsForm({
       if (!cancelled) setModelsLoading(true)
     }, 0)
 
-    ;(async () => {
+    ;(async (): Promise<void> => {
       try {
         const models = await fetchAvailableModels(
           engine,
@@ -132,7 +134,7 @@ export function AiSettingsForm({
       }
     })()
 
-    return () => {
+    return (): void => {
       cancelled = true
       clearTimeout(loadingId)
       clearTimeout(clearErrorId)
@@ -140,7 +142,7 @@ export function AiSettingsForm({
   }, [config.engine, config.apiKey]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Track engine changes for auto-selection logic
-  useEffect(() => {
+  useEffect((): (() => void) | void => {
     if (prevEngineRef.current !== config.engine) {
       initialDefaultSet.current = false
       // Clear models when switching away from cloud engines
@@ -152,10 +154,13 @@ export function AiSettingsForm({
         // Clearing models is deferred to avoid cascading renders
         const clearId = setTimeout(() => setAvailableModels([]), 0)
         prevEngineRef.current = config.engine
-        return () => clearTimeout(clearId)
+        return (): void => {
+          clearTimeout(clearId)
+        }
       }
     }
     prevEngineRef.current = config.engine
+    return undefined
   }, [config.engine])
 
   const updateField = <K extends keyof AiSettingsConfig>(
