@@ -87,6 +87,7 @@ function cmcc_hook_new_comment( int $comment_id, WP_Comment $comment ): void {
  * @param int|string $approved   Approval status (1, 0, 'spam').
  * @param array      $commentdata The comment data array.
  */
+if ( ! function_exists( 'cmcc_hook_comment_post' ) ) {
 function cmcc_hook_comment_post( int $comment_id, $approved, array $commentdata ): void {
     // We let wp_insert_comment handle it, but this catches any missed cases
     if ( did_action( 'wp_insert_comment' ) <= 0 ) {
@@ -95,6 +96,7 @@ function cmcc_hook_comment_post( int $comment_id, $approved, array $commentdata 
             cmcc_hook_new_comment( $comment_id, $comment );
         }
     }
+}
 }
 
 /**
@@ -147,8 +149,10 @@ function cmcc_hook_new_post( int $post_id, WP_Post $post, bool $update ): void {
  * @param WP_Post $post    The post object.
  * @param bool    $update  Whether this is an existing post being updated.
  */
+if ( ! function_exists( 'cmcc_hook_save_post' ) ) {
 function cmcc_hook_save_post( int $post_id, WP_Post $post, bool $update ): void {
     cmcc_hook_new_post( $post_id, $post, $update );
+}
 }
 
 /**

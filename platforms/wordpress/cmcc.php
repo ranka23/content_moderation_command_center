@@ -53,6 +53,9 @@ require_once __DIR__ . '/src/lib/reports.php';
 require_once __DIR__ . '/src/lib/collaboration.php';
 require_once __DIR__ . '/src/lib/user-reputation.php';
 require_once __DIR__ . '/src/lib/multi-platform.php';
+require_once __DIR__ . '/src/lib/notifications.php';
+require_once __DIR__ . '/src/lib/firewall-engine.php';
+require_once __DIR__ . '/src/lib/content-hooks.php';
 
 // --------------------------------------------------------------------------
 // Activation / Deactivation
