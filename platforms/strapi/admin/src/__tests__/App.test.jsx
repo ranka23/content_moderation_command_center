@@ -30,7 +30,7 @@ jest.mock('@strapi/design-system', () => ({
       })}
     </div>
   ),
-  Tabs: ({ children, onTabChange, selectedTabIndex }) => (
+  Tabs: ({ children, onTabChange, selectedTabIndex: _selectedTabIndex }) => (
     <div data-testid="tabs">
       {React.Children.map(children, (child, index) =>
         React.cloneElement(child, {
@@ -49,12 +49,8 @@ jest.mock('@strapi/design-system', () => ({
       {children}
     </button>
   ),
-  TabPanels: ({ children }) => (
-    <div data-testid="tab-panels">{children}</div>
-  ),
-  TabPanel: ({ children }) => (
-    <div data-testid="tab-panel">{children}</div>
-  ),
+  TabPanels: ({ children }) => <div data-testid="tab-panels">{children}</div>,
+  TabPanel: ({ children }) => <div data-testid="tab-panel">{children}</div>,
   Box: ({ children, paddingTop, ...props }) => (
     <div data-testid="box" data-padding-top={paddingTop} {...props}>
       {children}
@@ -103,7 +99,13 @@ jest.mock('@strapi/design-system', () => ({
     </div>
   ),
   GridItem: ({ children, col, s, xs, ...props }) => (
-    <div data-testid="grid-item" data-col={col} data-s={s} data-xs={xs} {...props}>
+    <div
+      data-testid="grid-item"
+      data-col={col}
+      data-s={s}
+      data-xs={xs}
+      {...props}
+    >
       {children}
     </div>
   ),
@@ -152,8 +154,12 @@ jest.mock('@strapi/helper-plugin', () => ({
 
 // Mock @cmcc/ui components
 jest.mock('@cmcc/ui', () => ({
-  QueueTable: ({ items, loading, onModerate, ...props }) => (
-    <div data-testid="queue-table" data-item-count={items.length} data-loading={loading}>
+  QueueTable: ({ items, loading, onModerate, ..._props }) => (
+    <div
+      data-testid="queue-table"
+      data-item-count={items.length}
+      data-loading={loading}
+    >
       <span>Queue Table ({items.length} items)</span>
       {items.map((item) => (
         <div key={item.id} data-testid="queue-item">
@@ -168,7 +174,7 @@ jest.mock('@cmcc/ui', () => ({
   HeatmapChart: ({ data }) => (
     <div data-testid="heatmap-chart" data-has-data={data && data.length > 0} />
   ),
-  SettingsForm: ({ initialData, onSubmit, loading }) => (
+  SettingsForm: ({ initialData: _initialData, onSubmit, loading }) => (
     <div data-testid="settings-form" data-loading={loading}>
       <button onClick={() => onSubmit({ autoModerate: true })}>
         Save Settings
@@ -176,7 +182,11 @@ jest.mock('@cmcc/ui', () => ({
     </div>
   ),
   ActionButton: ({ label, onClick, variant }) => (
-    <button data-testid="action-button" data-variant={variant} onClick={onClick}>
+    <button
+      data-testid="action-button"
+      data-variant={variant}
+      onClick={onClick}
+    >
       {label}
     </button>
   ),
@@ -220,7 +230,12 @@ const mockAnalyticsResponse = {
         { status: 'deferred', count: 2 },
       ],
       recentActivity: [
-        { id: 1, action: 'approved', moderatorId: 'mod-1', createdAt: '2024-01-01T00:00:00Z' },
+        {
+          id: 1,
+          action: 'approved',
+          moderatorId: 'mod-1',
+          createdAt: '2024-01-01T00:00:00Z',
+        },
       ],
     },
   },
@@ -271,7 +286,9 @@ describe('Strapi Admin Panel', () => {
     const { container } = render(<App />)
 
     await waitFor(() => {
-      expect(container.querySelector('[data-testid="layout"]')).toBeInTheDocument()
+      expect(
+        container.querySelector('[data-testid="layout"]'),
+      ).toBeInTheDocument()
     })
   })
 

@@ -16,8 +16,10 @@ export interface HeatmapChartProps {
 // Day labels (0-6 = Sunday-Saturday)
 const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
-// Hour labels (0-23)
-const HOUR_LABELS = Array.from({ length: 24 }, (_, i) => `${i}:00`)
+// Hour labels (0-23) — show every 4th hour to avoid crowding
+const HOUR_LABELS = Array.from({ length: 24 }, (_, i) =>
+  i % 4 === 0 ? `${i}:00` : '',
+)
 
 export const HeatmapChart: React.FC<HeatmapChartProps> = ({
   data,
@@ -26,10 +28,32 @@ export const HeatmapChart: React.FC<HeatmapChartProps> = ({
 }) => {
   // Handle undefined or invalid data
   if (!data || !Array.isArray(data.data) || data.data.length === 0) {
-    return <div className="cmcc-heatmap-chart">No data available</div>
+    return (
+      <div className="cmcc-heatmap-chart cmcc-heatmap-empty">
+        <span className="cmcc-heatmap-empty-icon">📊</span>
+        <p className="cmcc-heatmap-empty-text">No activity data yet</p>
+        <p className="cmcc-heatmap-empty-hint">
+          Moderation activity will appear here as actions are taken.
+        </p>
+      </div>
+    )
   }
 
   const { data: heatmapData, maxCount } = data
+
+  // Check if all cells are zero (empty data)
+  const allZero = heatmapData.every((row) => !row || row.every((c) => c === 0))
+  if (allZero) {
+    return (
+      <div className="cmcc-heatmap-chart cmcc-heatmap-empty">
+        <span className="cmcc-heatmap-empty-icon">📊</span>
+        <p className="cmcc-heatmap-empty-text">No activity data yet</p>
+        <p className="cmcc-heatmap-empty-hint">
+          Moderation activity will appear here as actions are taken.
+        </p>
+      </div>
+    )
+  }
 
   // Handle cell click
   const handleCellClick = (dayOfWeek: number, hour: number): void => {
@@ -41,14 +65,19 @@ export const HeatmapChart: React.FC<HeatmapChartProps> = ({
   }
 
   // Get color based on count and maxCount
+  // Uses a single-hue blue sequential palette for readability
   const getCellColor = (count: number): string => {
     const safeMaxCount = maxCount ?? 0
-    if (safeMaxCount === 0) return '#f0f0f1' // Light gray when no data
+    if (safeMaxCount === 0) return '#f0f0f1'
+    if (count === 0) return '#f0f0f1'
 
     const intensity = count / safeMaxCount
-    // Blue gradient: light blue to dark blue
-    const blueValue = Math.round(180 + intensity * 75) // 180 to 255
-    return `rgb(200, 230, ${blueValue})`
+    // Sequential blue palette: light → dark
+    if (intensity <= 0.2) return '#e3f0fa'
+    if (intensity <= 0.4) return '#abd0e6'
+    if (intensity <= 0.6) return '#6fa8d1'
+    if (intensity <= 0.8) return '#3b7cb8'
+    return '#1a4d8f'
   }
 
   // Format tooltip content
@@ -85,10 +114,10 @@ export const HeatmapChart: React.FC<HeatmapChartProps> = ({
             ))}
           </div>
 
-          {/* Heatmap cells */}
+          {/* Heatmap cells — each day is a row with 24 hour cells */}
           <div className="cmcc-heatmap-cells">
             {heatmapData.map((row: number[], dayIndex: number) => (
-              <React.Fragment key={dayIndex}>
+              <div key={dayIndex} className="cmcc-heatmap-row">
                 {row.map((count: number, hourIndex: number) => {
                   const color = getCellColor(count)
                   const tooltip = showTooltip
@@ -114,24 +143,21 @@ export const HeatmapChart: React.FC<HeatmapChartProps> = ({
                     </div>
                   )
                 })}
-              </React.Fragment>
+              </div>
             ))}
           </div>
         </div>
       </div>
 
-      {/* Color legend */}
+      {/* Color legend — gradient bar showing the full palette */}
       <div className="cmcc-heatmap-legend">
         <div className="cmcc-heatmap-legend-label">Activity Level</div>
         <div className="cmcc-heatmap-legend-bar">
-          <div
-            className="cmcc-heatmap-legend-fill"
-            style={{ backgroundColor: getCellColor(maxCount) }}
-          />
+          <div className="cmcc-heatmap-legend-gradient" />
         </div>
         <div className="cmcc-heatmap-legend-labels">
-          <span>Low</span>
-          <span>High</span>
+          <span>0</span>
+          <span>{maxCount}</span>
         </div>
       </div>
     </div>

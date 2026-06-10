@@ -1,13 +1,133 @@
+@tailwind components;
+@tailwind utilities;
+
 /* =========================================================================
-   CMCC Admin App Styles
+   CMCC Admin App Styles — WordPress Design System
    Scoped under #cmcc-app to avoid conflicts with other WP admin styles
    ========================================================================= */
 
 #cmcc-app {
+  /* ─── Design Tokens ──────────────────────────────────────────────── */
+  --cmcc-space-1: 4px;
+  --cmcc-space-2: 8px;
+  --cmcc-space-3: 12px;
+  --cmcc-space-4: 16px;
+  --cmcc-space-5: 20px;
+  --cmcc-space-6: 24px;
+  --cmcc-space-8: 32px;
+  --cmcc-space-10: 40px;
+  --cmcc-space-12: 48px;
+  --cmcc-space-16: 64px;
+
+  /* WordPress Admin Blue palette */
+  --cmcc-primary: #007cba;
+  --cmcc-primary-hover: #005a87;
+  --cmcc-primary-light: #e5f5ff;
+  --cmcc-primary-dark: #004b6e;
+  --cmcc-primary-600: #007cba;
+  --cmcc-primary-700: #005a87;
+  --cmcc-wp-blue: #2271b1;
+  --cmcc-wp-blue-hover: #135e96;
+
+  /* ─── Semantic Color Tokens ───────────────────────────────────── */
+  /* Light mode defaults (overridden in .dark) */
+  --cmcc-bg-primary: #fff;
+  --cmcc-bg-secondary: #f6f7f7;
+  --cmcc-bg-tertiary: #f0f0f1;
+  --cmcc-bg-card: #fff;
+  --cmcc-bg-input: #fff;
+  --cmcc-bg-table-stripe: #f6f7f7;
+  --cmcc-bg-table-hover: #f6f7f7;
+  --cmcc-bg-table-header: #f6f7f7;
+  --cmcc-bg-toolbar: #f6f7f7;
+  --cmcc-bg-badge: #f0f0f1;
+  --cmcc-bg-modal-overlay: rgba(0, 0, 0, 0.6);
+  --cmcc-bg-onboarding-overlay: rgba(0, 0, 0, 0.7);
+  --cmcc-bg-toast: #fff;
+  --cmcc-bg-code: #f6f7f7;
+  --cmcc-bg-disabled: #f0f0f1;
+  --cmcc-bg-selected: #edf2ff;
+  --cmcc-bg-row-flash: #fef8ee;
+
+  --cmcc-text-primary: #1d2327;
+  --cmcc-text-secondary: #50575e;
+  --cmcc-text-tertiary: #757575;
+  --cmcc-text-muted: #8c8f94;
+  --cmcc-text-disabled: #8c8f94;
+  --cmcc-text-inverse: #fff;
+  --cmcc-text-placeholder: #757575;
+  --cmcc-text-link: #2271b1;
+  --cmcc-text-heading: #1d2327;
+
+  --cmcc-border-primary: #c3c4c7;
+  --cmcc-border-secondary: #e2e4e7;
+  --cmcc-border-light: #f0f0f1;
+  --cmcc-border-input: #c3c4c7;
+  --cmcc-border-focus: #2271b1;
+  --cmcc-border-card: #e2e4e7;
+  --cmcc-border-table: #c3c4c7;
+  --cmcc-border-table-row: #f0f0f1;
+
+  --cmcc-success: #00a32a;
+  --cmcc-success-hover: #008a20;
+  --cmcc-success-bg: #e2f0d9;
+  --cmcc-success-text: #237739;
+  --cmcc-error: #d63638;
+  --cmcc-error-hover: #b32d2e;
+  --cmcc-error-bg: #fbe9e9;
+  --cmcc-error-text: #b32d2e;
+  --cmcc-warning: #f0ad4e;
+  --cmcc-warning-bg: #fef8ee;
+  --cmcc-warning-text: #b2620f;
+  --cmcc-spam: #f56e28;
+  --cmcc-spam-hover: #d54e21;
+  --cmcc-spam-bg: #fde8d7;
+  --cmcc-spam-text: #c35b1a;
+  --cmcc-info: #007cba;
+  --cmcc-info-bg: #e5f5fa;
+  --cmcc-info-text: #007cba;
+
+  /* ─── Spacing & Sizing ─────────────────────────────────────────── */
+  --cmcc-font-sans:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --cmcc-font-mono: 'SFMono-Regular', Consolas, monospace;
+  --cmcc-font-size-xs: 11px;
+  --cmcc-font-size-sm: 12px;
+  --cmcc-font-size-base: 13px;
+  --cmcc-font-size-md: 14px;
+  --cmcc-font-size-lg: 16px;
+  --cmcc-font-size-xl: 20px;
+  --cmcc-font-size-2xl: 23px;
+  --cmcc-font-size-3xl: 30px;
+  --cmcc-line-height-tight: 1.3;
+  --cmcc-line-height-normal: 1.5;
+  --cmcc-line-height-relaxed: 1.7;
+
+  /* ─── Shadows ──────────────────────────────────────────────────── */
+  --cmcc-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --cmcc-shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
+  --cmcc-shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+  --cmcc-shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.15);
+  --cmcc-shadow-modal: 0 8px 32px rgba(0, 0, 0, 0.2);
+  --cmcc-shadow-toast: 0 4px 12px rgba(0, 0, 0, 0.15);
+
+  /* ─── Border Radius ────────────────────────────────────────────── */
+  --cmcc-radius-sm: 3px;
+  --cmcc-radius-md: 4px;
+  --cmcc-radius-lg: 6px;
+  --cmcc-radius-xl: 8px;
+  --cmcc-radius-2xl: 12px;
+  --cmcc-radius-full: 9999px;
+
+  /* ─── Transitions ──────────────────────────────────────────────── */
+  --cmcc-transition-fast: 0.1s ease;
+  --cmcc-transition-normal: 0.2s ease;
+  --cmcc-transition-slow: 0.3s ease;
+
   font-family:
     -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen-Sans, Ubuntu,
     Cantarell, 'Helvetica Neue', sans-serif;
-  color: #1d2327;
+  color: var(--cmcc-text-primary);
   line-height: 1.5;
 }
 
@@ -17,9 +137,198 @@
   box-sizing: border-box;
 }
 
-/* -------------------------------------------------------------------------
-   Tab Navigation
-   ------------------------------------------------------------------------- */
+/* ─── Dark Mode Design Tokens ────────────────────────────────────────── */
+.dark #cmcc-app {
+  --cmcc-bg-primary: #1e293b;
+  --cmcc-bg-secondary: #1a1a2e;
+  --cmcc-bg-tertiary: #2a2a4a;
+  --cmcc-bg-card: #1e293b;
+  --cmcc-bg-input: #1a1a2e;
+  --cmcc-bg-table-stripe: #1a1a2e;
+  --cmcc-bg-table-hover: rgba(255, 255, 255, 0.03);
+  --cmcc-bg-table-header: #1a1a2e;
+  --cmcc-bg-toolbar: #1a1a2e;
+  --cmcc-bg-badge: #2a2a4a;
+  --cmcc-bg-modal-overlay: rgba(0, 0, 0, 0.7);
+  --cmcc-bg-onboarding-overlay: rgba(0, 0, 0, 0.8);
+  --cmcc-bg-toast: #1e293b;
+  --cmcc-bg-code: #1a1a2e;
+  --cmcc-bg-disabled: #2a2a4a;
+  --cmcc-bg-selected: rgba(96, 165, 250, 0.1);
+  --cmcc-bg-row-flash: rgba(251, 191, 36, 0.15);
+
+  --cmcc-text-primary: #e2e8f0;
+  --cmcc-text-secondary: #cbd5e1;
+  --cmcc-text-tertiary: #94a3b8;
+  --cmcc-text-muted: #64748b;
+  --cmcc-text-disabled: #4b5563;
+  --cmcc-text-inverse: #1d2327;
+  --cmcc-text-placeholder: #64748b;
+  --cmcc-text-link: #60a5fa;
+  --cmcc-text-heading: #e2e8f0;
+
+  --cmcc-border-primary: #334155;
+  --cmcc-border-secondary: #2a2a4a;
+  --cmcc-border-light: #2a2a4a;
+  --cmcc-border-input: #334155;
+  --cmcc-border-focus: #3b82f6;
+  --cmcc-border-card: #2a2a4a;
+  --cmcc-border-table: #334155;
+  --cmcc-border-table-row: #2a2a4a;
+
+  --cmcc-success: #16a34a;
+  --cmcc-success-hover: #15803d;
+  --cmcc-success-bg: rgba(22, 163, 74, 0.15);
+  --cmcc-success-text: #86efac;
+  --cmcc-error: #ef4444;
+  --cmcc-error-hover: #dc2626;
+  --cmcc-error-bg: rgba(239, 68, 68, 0.15);
+  --cmcc-error-text: #fca5a5;
+  --cmcc-warning: #f59e0b;
+  --cmcc-warning-bg: rgba(245, 158, 11, 0.15);
+  --cmcc-warning-text: #fde68a;
+  --cmcc-spam: #fb923c;
+  --cmcc-spam-hover: #ea580c;
+  --cmcc-spam-bg: rgba(251, 146, 60, 0.15);
+  --cmcc-spam-text: #fdba74;
+  --cmcc-info: #60a5fa;
+  --cmcc-info-bg: rgba(96, 165, 250, 0.15);
+  --cmcc-info-text: #93c5fd;
+
+  --cmcc-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --cmcc-shadow-md: 0 4px 6px rgba(0, 0, 0, 0.35);
+  --cmcc-shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.4);
+  --cmcc-shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.5);
+  --cmcc-shadow-modal: 0 8px 32px rgba(0, 0, 0, 0.5);
+  --cmcc-shadow-toast: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+/* ─── Elevation / Shadow Utility Classes ────────────────────────────── */
+#cmcc-app .cmcc-elevation-sm {
+  box-shadow: var(--cmcc-shadow-sm);
+}
+#cmcc-app .cmcc-elevation-md {
+  box-shadow: var(--cmcc-shadow-md);
+}
+#cmcc-app .cmcc-elevation-lg {
+  box-shadow: var(--cmcc-shadow-lg);
+}
+#cmcc-app .cmcc-elevation-xl {
+  box-shadow: var(--cmcc-shadow-xl);
+}
+
+/* ─── Border Radius Utility Classes ────────────────────────────────── */
+#cmcc-app .cmcc-rounded-sm {
+  border-radius: var(--cmcc-radius-sm);
+}
+#cmcc-app .cmcc-rounded-md {
+  border-radius: var(--cmcc-radius-md);
+}
+#cmcc-app .cmcc-rounded-lg {
+  border-radius: var(--cmcc-radius-lg);
+}
+#cmcc-app .cmcc-rounded-xl {
+  border-radius: var(--cmcc-radius-xl);
+}
+#cmcc-app .cmcc-rounded-2xl {
+  border-radius: var(--cmcc-radius-2xl);
+}
+#cmcc-app .cmcc-rounded-full {
+  border-radius: var(--cmcc-radius-full);
+}
+
+/* ─── Scrollbar Styles ──────────────────────────────────────────────── */
+#cmcc-app ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+#cmcc-app ::-webkit-scrollbar-track {
+  background: transparent;
+}
+#cmcc-app ::-webkit-scrollbar-thumb {
+  background: var(--cmcc-border-primary);
+  border-radius: var(--cmcc-radius-full);
+}
+#cmcc-app ::-webkit-scrollbar-thumb:hover {
+  background: var(--cmcc-text-muted);
+}
+
+/* ─── Top Bar ─────────────────────────────────────────────────────────── */
+
+#cmcc-app .cmcc-top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 0;
+  margin-bottom: 4px;
+}
+
+#cmcc-app .cmcc-top-bar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+#cmcc-app .cmcc-title {
+  font-size: 23px;
+  font-weight: 400;
+  margin: 0;
+  padding: 0;
+  color: #1d2327;
+  line-height: 1.3;
+}
+
+#cmcc-app .cmcc-title-icon {
+  margin-right: 8px;
+}
+
+#cmcc-app .cmcc-title-light {
+  font-weight: 300;
+  color: #787c82;
+}
+
+#cmcc-app .cmcc-top-bar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#cmcc-app .cmcc-theme-toggle {
+  background: #f0f0f1;
+  border: 1px solid #c3c4c7;
+  border-radius: 4px;
+  padding: 6px 10px;
+  font-size: 16px;
+  cursor: pointer;
+  line-height: 1;
+  transition: background 0.1s ease;
+}
+
+#cmcc-app .cmcc-theme-toggle:hover {
+  background: #dcdcde;
+}
+
+#cmcc-app .cmcc-donate-link {
+  color: var(--cmcc-primary, #007cba);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 4px;
+  transition: background 0.1s ease;
+  white-space: nowrap;
+}
+
+#cmcc-app .cmcc-donate-link:hover {
+  background: #e5f5ff;
+  text-decoration: underline;
+}
+
+.dark #cmcc-app .cmcc-donate-link:hover {
+  background: #1e293b;
+}
+
+/* ─── Tab Navigation ──────────────────────────────────────────────────── */
 
 #cmcc-app .cmcc-tab-nav {
   display: flex;
@@ -48,18 +357,16 @@
 }
 
 #cmcc-app .cmcc-tab:hover {
-  color: #007cba;
+  color: var(--cmcc-primary);
 }
 
 #cmcc-app .cmcc-tab-active,
 #cmcc-app .cmcc-tab:focus {
-  color: #007cba;
-  border-bottom-color: #007cba;
+  color: var(--cmcc-primary);
+  border-bottom-color: var(--cmcc-primary);
 }
 
-/* -------------------------------------------------------------------------
-   Tab Content
-   ------------------------------------------------------------------------- */
+/* ─── Tab Content ─────────────────────────────────────────────────────── */
 
 #cmcc-app .cmcc-tab-content {
   background: #fff;
@@ -82,9 +389,7 @@
   }
 }
 
-/* -------------------------------------------------------------------------
-   Loading / Empty States
-   ------------------------------------------------------------------------- */
+/* ─── Loading / Empty States ──────────────────────────────────────────── */
 
 #cmcc-app .cmcc-loading,
 #cmcc-app .cmcc-empty {
@@ -94,49 +399,246 @@
   font-size: 14px;
 }
 
-/* -------------------------------------------------------------------------
-   Queue Table (extends cmcc-queue-table from @cmcc/ui)
-   ------------------------------------------------------------------------- */
+/* ─── Queue Table ─────────────────────────────────────────────────────── */
 
 #cmcc-app .cmcc-queue-table {
   width: 100%;
 }
 
-#cmcc-app .cmcc-queue-header {
+/* ─── Queue Toolbar Top (U4 Fix: Refresh button) ────────────────────── */
+
+#cmcc-app .cmcc-queue-toolbar-top {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 8px;
+}
+
+/* ─── Toolbar ─────────────────────────────────────────────────────────── */
+
+#cmcc-app .cmcc-queue-toolbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
   gap: 12px;
   margin-bottom: 16px;
+  padding: 12px;
+  background: #f6f7f7;
+  border: 1px solid #c3c4c7;
+  border-radius: 4px;
 }
 
-#cmcc-app .cmcc-queue-filters {
+#cmcc-app .cmcc-queue-toolbar-left {
   display: flex;
-  gap: 16px;
+  gap: 8px;
   align-items: center;
   flex-wrap: wrap;
 }
 
-#cmcc-app .cmcc-queue-bulk-actions {
+#cmcc-app .cmcc-queue-toolbar-right {
   display: flex;
   gap: 8px;
   align-items: center;
 }
 
-#cmcc-app .cmcc-queue-bulk-actions select,
-#cmcc-app .cmcc-queue-bulk-actions button {
-  padding: 6px 12px;
+/* Search */
+#cmcc-app .cmcc-search-box {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+#cmcc-app .cmcc-search-icon {
+  font-size: 14px;
+  color: #757575;
+}
+
+#cmcc-app .cmcc-search-input {
+  padding: 6px 10px;
   border: 1px solid #c3c4c7;
-  border-radius: 2px;
+  border-radius: 3px;
   font-size: 13px;
-  background: #f6f7f7;
+  min-width: 200px;
+  background: #fff;
+  color: #1d2327;
+}
+
+#cmcc-app .cmcc-search-input:focus {
+  border-color: #2271b1;
+  box-shadow: 0 0 0 1px #2271b1;
+  outline: none;
+}
+
+#cmcc-app .cmcc-search-btn {
+  padding: 6px 12px;
+  border: 1px solid #2271b1;
+  border-radius: 3px;
+  font-size: 13px;
+  background: #2271b1;
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.1s ease;
+}
+
+#cmcc-app .cmcc-search-btn:hover {
+  background: #135e96;
+}
+
+#cmcc-app .cmcc-search-clear {
+  padding: 4px 8px;
+  border: none;
+  border-radius: 3px;
+  font-size: 13px;
+  background: transparent;
+  color: #757575;
   cursor: pointer;
 }
 
-#cmcc-app .cmcc-queue-bulk-actions button:hover {
+#cmcc-app .cmcc-search-clear:hover {
+  color: #d63638;
+}
+
+/* Filter selects */
+#cmcc-app .cmcc-filter-select,
+#cmcc-app .cmcc-bulk-select {
+  padding: 6px 24px 6px 10px;
+  border: 1px solid #c3c4c7;
+  border-radius: 3px;
+  font-size: 13px;
+  background: #fff
+    url('data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12"><path d="M6 8L1 3h10z" fill="%23757757"/></svg>')
+    no-repeat right 8px center;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  color: #1d2327;
+  min-width: 140px;
+}
+
+#cmcc-app .cmcc-bulk-select:disabled {
+  background-color: #f0f0f1;
+  color: #8c8f94;
+  cursor: not-allowed;
+}
+
+#cmcc-app .cmcc-filter-select:focus,
+#cmcc-app .cmcc-bulk-select:focus {
+  border-color: #2271b1;
+  box-shadow: 0 0 0 1px #2271b1;
+  outline: none;
+}
+
+/* ─── Buttons ─────────────────────────────────────────────────────────── */
+
+#cmcc-app .cmcc-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 14px;
+  border: 1px solid #c3c4c7;
+  border-radius: 3px;
+  font-size: 13px;
+  cursor: pointer;
+  transition:
+    background 0.1s ease,
+    border-color 0.1s ease;
+  text-decoration: none;
+  line-height: 1.4;
+}
+
+#cmcc-app .cmcc-btn-primary {
+  background: #2271b1;
+  border-color: #2271b1;
+  color: #fff;
+}
+
+#cmcc-app .cmcc-btn-primary:hover {
+  background: #135e96;
+  border-color: #135e96;
+}
+
+#cmcc-app .cmcc-btn-primary:disabled {
+  background: #8c8f94;
+  border-color: #8c8f94;
+  cursor: not-allowed;
+}
+
+#cmcc-app .cmcc-btn-secondary {
+  background: #f6f7f7;
+  border-color: #c3c4c7;
+  color: #2271b1;
+}
+
+#cmcc-app .cmcc-btn-secondary:hover {
   background: #f0f0f1;
 }
+
+#cmcc-app .cmcc-btn-approve {
+  background: #00a32a;
+  border-color: #00a32a;
+  color: #fff;
+}
+
+#cmcc-app .cmcc-btn-approve:hover {
+  background: #008a20;
+}
+
+#cmcc-app .cmcc-btn-reject {
+  background: #d63638;
+  border-color: #d63638;
+  color: #fff;
+}
+
+#cmcc-app .cmcc-btn-reject:hover {
+  background: #b32d2e;
+}
+
+#cmcc-app .cmcc-btn-spam {
+  background: #f56e28;
+  border-color: #f56e28;
+  color: #fff;
+}
+
+#cmcc-app .cmcc-btn-spam:hover {
+  background: #d54e21;
+}
+
+/* ─── Loading Overlay ─────────────────────────────────────────────────── */
+
+#cmcc-app .cmcc-queue-loading-overlay {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 40px;
+  color: #757575;
+  font-size: 14px;
+}
+
+#cmcc-app .cmcc-spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #c3c4c7;
+  border-top-color: #2271b1;
+  border-radius: 50%;
+  animation: cmcc-spin 0.6s linear infinite;
+}
+
+@keyframes cmcc-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ─── Table Wrapper ───────────────────────────────────────────────────── */
+
+#cmcc-app .cmcc-queue-table-wrapper {
+  overflow-x: auto;
+  border: 1px solid #c3c4c7;
+  border-radius: 4px;
+}
+
+/* ─── Inner Table ─────────────────────────────────────────────────────── */
 
 #cmcc-app .cmcc-queue-table-inner {
   width: 100%;
@@ -144,119 +646,577 @@
   font-size: 13px;
 }
 
+#cmcc-app .cmcc-queue-table-inner thead {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
 #cmcc-app .cmcc-queue-table-inner th {
   text-align: left;
-  padding: 8px 10px;
+  padding: 10px 12px;
   border-bottom: 1px solid #c3c4c7;
   font-weight: 600;
   color: #2c3338;
   background: #f6f7f7;
+  white-space: nowrap;
+  user-select: none;
+}
+
+#cmcc-app .cmcc-th-sortable {
+  cursor: pointer;
+}
+
+#cmcc-app .cmcc-th-sortable:hover {
+  background: #e2e4e7;
+}
+
+#cmcc-app .cmcc-th-content {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Sort icons */
+#cmcc-app .cmcc-sort-icon {
+  font-size: 10px;
+  line-height: 1;
+}
+
+#cmcc-app .cmcc-sort-icon-inactive {
+  color: #c3c4c7;
+}
+
+#cmcc-app .cmcc-th-sortable:hover .cmcc-sort-icon-inactive {
+  color: #787c82;
+}
+
+#cmcc-app .cmcc-sort-icon-active {
+  color: #2271b1;
 }
 
 #cmcc-app .cmcc-queue-table-inner td {
-  padding: 8px 10px;
+  padding: 10px 12px;
   border-bottom: 1px solid #f0f0f1;
-  vertical-align: top;
+  vertical-align: middle;
+  color: #1d2327;
 }
 
 #cmcc-app .cmcc-queue-table-inner tr:hover td {
   background: #f6f7f7;
 }
 
-#cmcc-app .cmcc-queue-title {
-  font-weight: 500;
-  margin-bottom: 2px;
+#cmcc-app .cmcc-row-selected td {
+  background: #edf2ff;
 }
 
-#cmcc-app .cmcc-queue-excerpt {
-  color: #757575;
-  font-size: 12px;
-  max-width: 300px;
+#cmcc-app .cmcc-row-changed td {
+  animation: cmcc-row-flash 2s ease;
+}
+
+/* ─── Smooth status change animation (prevents table jumping) ─────── */
+@keyframes cmcc-row-flash {
+  0% {
+    background-color: rgba(34, 113, 177, 0.15);
+    transform: scale(1.01);
+  }
+  40% {
+    background-color: rgba(34, 113, 177, 0.08);
+    transform: scale(1.005);
+  }
+  100% {
+    background-color: transparent;
+    transform: scale(1);
+  }
+}
+
+/* Fixed table layout prevents layout shift on content change */
+#cmcc-app .cmcc-queue-table-inner {
+  table-layout: fixed !important;
+}
+
+#cmcc-app .cmcc-queue-table-inner td {
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+
+/* ─── Checkbox ────────────────────────────────────────────────────────── */
+
+#cmcc-app .cmcc-checkbox-label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+#cmcc-app .cmcc-checkbox-label input[type='checkbox'] {
+  margin: 0;
+}
+
+/* ─── Type Icon ────────────────────────────────────────────────────────── */
+
+#cmcc-app .cmcc-type-icon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+/* ─── Title/Excerpt ────────────────────────────────────────────────────── */
+
+#cmcc-app .cmcc-td-title {
+  cursor: pointer;
+  max-width: 350px;
+}
+
+#cmcc-app .cmcc-td-title:hover .cmcc-item-title {
+  color: var(--cmcc-primary);
+}
+
+#cmcc-app .cmcc-item-title {
+  font-weight: 500;
+  margin-bottom: 2px;
+  color: #1d2327;
+  transition: color 0.1s ease;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-#cmcc-app .cmcc-queue-action-group {
+#cmcc-app .cmcc-item-excerpt {
+  color: #757575;
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ─── Author ───────────────────────────────────────────────────────────── */
+
+#cmcc-app .cmcc-author-name {
+  font-weight: 500;
+  color: #1d2327;
+  font-size: 13px;
+}
+
+#cmcc-app .cmcc-author-id {
+  font-size: 11px;
+  color: #8c8f94;
+  margin-top: 1px;
+}
+
+/* ─── Status Badge ─────────────────────────────────────────────────────── */
+
+#cmcc-app .cmcc-status-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  color: #fff;
+  white-space: nowrap;
+}
+
+/* ─── Spam Score Bar ───────────────────────────────────────────────────── */
+
+#cmcc-app .cmcc-td-score {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#cmcc-app .cmcc-score-bar-container {
+  width: 50px;
+  height: 6px;
+  background: #f0f0f1;
+  border-radius: 3px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+#cmcc-app .cmcc-score-bar {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+#cmcc-app .cmcc-score-text {
+  font-size: 12px;
+  font-weight: 500;
+  color: #50575e;
+  white-space: nowrap;
+}
+
+/* ─── Action Buttons ───────────────────────────────────────────────────── */
+
+#cmcc-app .cmcc-action-group {
   display: flex;
   gap: 4px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
 }
 
-#cmcc-app .cmcc-queue-action-btn {
+#cmcc-app .cmcc-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
   padding: 4px 8px;
   border: 1px solid #c3c4c7;
-  border-radius: 2px;
+  border-radius: 3px;
   font-size: 11px;
   cursor: pointer;
-  background: #f6f7f7;
-  transition: background 0.1s ease;
+  background: #fff;
+  color: #50575e;
+  transition: all 0.1s ease;
+  white-space: nowrap;
 }
 
-#cmcc-app .cmcc-queue-action-btn:hover {
-  background: #e2e4e7;
+#cmcc-app .cmcc-action-btn:hover {
+  background: #f0f0f1;
 }
 
-#cmcc-app .cmcc-queue-action-btn.approve {
-  border-color: #46b450;
-  color: #46b450;
+#cmcc-app .cmcc-action-read {
+  border-color: #2271b1;
+  color: #2271b1;
+  font-weight: 500;
 }
 
-#cmcc-app .cmcc-queue-action-btn.approve:hover {
-  background: #46b450;
+#cmcc-app .cmcc-action-read:hover {
+  background: #2271b1;
   color: #fff;
 }
 
-#cmcc-app .cmcc-queue-action-btn.reject {
-  border-color: #dc3232;
-  color: #dc3232;
+#cmcc-app .cmcc-action-approve {
+  min-width: 28px;
+  color: #00a32a;
+  border-color: #00a32a;
 }
 
-#cmcc-app .cmcc-queue-action-btn.reject:hover {
-  background: #dc3232;
+#cmcc-app .cmcc-action-approve:hover {
+  background: #00a32a;
   color: #fff;
 }
 
-#cmcc-app .cmcc-queue-action-btn.spam {
-  border-color: #f56e28;
+#cmcc-app .cmcc-action-reject {
+  min-width: 28px;
+  color: #d63638;
+  border-color: #d63638;
+}
+
+#cmcc-app .cmcc-action-reject:hover {
+  background: #d63638;
+  color: #fff;
+}
+
+#cmcc-app .cmcc-action-spam {
+  min-width: 28px;
   color: #f56e28;
+  border-color: #f56e28;
 }
 
-#cmcc-app .cmcc-queue-action-btn.spam:hover {
+#cmcc-app .cmcc-action-spam:hover {
   background: #f56e28;
   color: #fff;
 }
 
-#cmcc-app .cmcc-queue-action-btn.defer {
-  border-color: #007cba;
-  color: #007cba;
+#cmcc-app .cmcc-action-defer {
+  min-width: 28px;
+  color: var(--cmcc-primary);
+  border-color: var(--cmcc-primary);
 }
 
-#cmcc-app .cmcc-queue-action-btn.defer:hover {
-  background: #007cba;
+#cmcc-app .cmcc-action-defer:hover {
+  background: var(--cmcc-primary);
   color: #fff;
 }
 
-#cmcc-app .cmcc-queue-loading,
-#cmcc-app .cmcc-queue-empty {
-  text-align: center;
+/* ─── Empty State ──────────────────────────────────────────────────────── */
+
+#cmcc-app .cmcc-empty-row td {
   padding: 60px 20px;
+}
+
+#cmcc-app .cmcc-empty-state {
+  text-align: center;
   color: #757575;
 }
 
-#cmcc-app .cmcc-queue-pagination {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 16px;
-  padding: 16px 0;
-  color: #757575;
+#cmcc-app .cmcc-empty-icon {
+  font-size: 40px;
+  display: block;
+  margin-bottom: 12px;
+}
+
+#cmcc-app .cmcc-empty-state p {
+  margin: 4px 0;
+  font-size: 14px;
+}
+
+#cmcc-app .cmcc-empty-hint {
+  color: #8c8f94;
   font-size: 13px;
 }
 
-/* -------------------------------------------------------------------------
-   Analytics
-   ------------------------------------------------------------------------- */
+/* ─── Pagination Bar ───────────────────────────────────────────────────── */
+
+#cmcc-app .cmcc-pagination-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 16px 0 4px;
+}
+
+#cmcc-app .cmcc-pagination-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #50575e;
+  font-size: 13px;
+}
+
+#cmcc-app .cmcc-pagination-info {
+  font-size: 13px;
+  color: #50575e;
+  white-space: nowrap;
+}
+
+#cmcc-app .cmcc-pagination-separator {
+  color: #c3c4c7;
+}
+
+#cmcc-app .cmcc-per-page-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #50575e;
+}
+
+#cmcc-app .cmcc-per-page-select {
+  padding: 4px 20px 4px 8px;
+  border: 1px solid #c3c4c7;
+  border-radius: 3px;
+  font-size: 13px;
+  background: #fff
+    url('data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 10 10"><path d="M5 7L1 3h8z" fill="%23757577"/></svg>')
+    no-repeat right 6px center;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  color: #1d2327;
+}
+
+#cmcc-app .cmcc-per-page-select:focus {
+  border-color: #2271b1;
+  box-shadow: 0 0 0 1px #2271b1;
+  outline: none;
+}
+
+#cmcc-app .cmcc-pagination-right {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+#cmcc-app .cmcc-page-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+  padding: 4px 8px;
+  border: 1px solid #c3c4c7;
+  border-radius: 3px;
+  background: #f6f7f7;
+  color: #50575e;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.1s ease;
+  line-height: 1;
+}
+
+#cmcc-app .cmcc-page-btn:hover:not(:disabled) {
+  background: #e2e4e7;
+  color: #1d2327;
+}
+
+#cmcc-app .cmcc-page-btn:disabled {
+  color: #c3c4c7;
+  cursor: not-allowed;
+  background: #f6f7f7;
+}
+
+#cmcc-app .cmcc-page-numbers {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin: 0 4px;
+}
+
+#cmcc-app .cmcc-page-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+  padding: 4px 6px;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  background: transparent;
+  color: #2271b1;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.1s ease;
+  font-weight: 500;
+}
+
+#cmcc-app .cmcc-page-num:hover {
+  background: #f0f0f1;
+  border-color: #c3c4c7;
+}
+
+#cmcc-app .cmcc-page-active {
+  background: #2271b1;
+  border-color: #2271b1;
+  color: #fff;
+  font-weight: 600;
+}
+
+#cmcc-app .cmcc-page-active:hover {
+  background: #135e96;
+  border-color: #135e96;
+  color: #fff;
+}
+
+#cmcc-app .cmcc-page-ellipsis {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+  color: #757575;
+  font-size: 14px;
+  letter-spacing: 2px;
+}
+
+/* ─── Modal ────────────────────────────────────────────────────────────── */
+
+#cmcc-app .cmcc-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.6);
+  padding: 20px;
+}
+
+#cmcc-app .cmcc-modal {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  max-width: 680px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+#cmcc-app .cmcc-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid #f0f0f1;
+}
+
+#cmcc-app .cmcc-modal-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+  padding-right: 20px;
+  color: #1d2327;
+  line-height: 1.4;
+}
+
+#cmcc-app .cmcc-modal-close {
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: #757575;
+  cursor: pointer;
+  padding: 4px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+#cmcc-app .cmcc-modal-close:hover {
+  color: #d63638;
+}
+
+#cmcc-app .cmcc-modal-body {
+  padding: 20px 24px;
+}
+
+#cmcc-app .cmcc-modal-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f0f0f1;
+}
+
+#cmcc-app .cmcc-modal-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  color: #fff;
+}
+
+#cmcc-app .cmcc-modal-type,
+#cmcc-app .cmcc-modal-author,
+#cmcc-app .cmcc-modal-date,
+#cmcc-app .cmcc-modal-score {
+  font-size: 12px;
+  color: #50575e;
+}
+
+#cmcc-app .cmcc-modal-content {
+  font-size: 14px;
+  line-height: 1.7;
+  color: #1d2327;
+}
+
+#cmcc-app .cmcc-modal-content p {
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+#cmcc-app .cmcc-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 16px 24px 20px;
+  border-top: 1px solid #f0f0f1;
+}
+
+#cmcc-app .cmcc-modal-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-evenly;
+  padding: 1rem 0;
+  border-top: 1px solid #ccc;
+}
+
+/* ─── Analytics ────────────────────────────────────────────────────────── */
 
 #cmcc-app .cmcc-stats-grid {
   display: grid;
@@ -269,10 +1229,10 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
-  padding: 16px;
+  padding: 20px;
   background: #f6f7f7;
   border: 1px solid #e2e4e7;
-  border-radius: 4px;
+  border-radius: 6px;
   text-align: center;
 }
 
@@ -284,7 +1244,7 @@
 }
 
 #cmcc-app .cmcc-stat-value {
-  font-size: 28px;
+  font-size: 30px;
   font-weight: 700;
   color: #1d2327;
 }
@@ -292,11 +1252,9 @@
 #cmcc-app .cmcc-stat-pending {
   color: #f0ad4e;
 }
-
 #cmcc-app .cmcc-stat-spam {
   color: #d9534f;
 }
-
 #cmcc-app .cmcc-stat-flagged {
   color: #f56e28;
 }
@@ -364,9 +1322,7 @@
   border-bottom: 1px solid #f0f0f1;
 }
 
-/* -------------------------------------------------------------------------
-   Heatmap (supplements @cmcc/ui HeatmapChart)
-   ------------------------------------------------------------------------- */
+/* ─── Heatmap ──────────────────────────────────────────────────────────── */
 
 #cmcc-app .cmcc-heatmap-chart {
   padding: 12px 0;
@@ -383,6 +1339,12 @@
   font-size: 9px;
   color: #757575;
   text-align: center;
+  /* Hide empty labels (every hour not divisible by 4) */
+  visibility: visible;
+}
+
+#cmcc-app .cmcc-heatmap-hour-label:empty {
+  visibility: hidden;
 }
 
 #cmcc-app .cmcc-heatmap-grid {
@@ -413,19 +1375,31 @@
   flex: 1;
 }
 
-#cmcc-app .cmcc-heatmap-cells > div {
+#cmcc-app .cmcc-heatmap-row {
   display: flex;
   gap: 2px;
 }
 
 #cmcc-app .cmcc-heatmap-cell {
-  width: 100%;
+  flex: 1;
   height: 18px;
   font-size: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 2px;
+  color: #fff;
+  font-weight: 600;
+  /* Subtle border for empty cells to distinguish them */
+  border: 1px solid transparent;
+  background-clip: padding-box;
+  transition: transform 0.1s ease;
+}
+
+#cmcc-app .cmcc-heatmap-cell:hover {
+  transform: scale(1.15);
+  z-index: 1;
+  border-color: #50575e;
 }
 
 #cmcc-app .cmcc-heatmap-legend {
@@ -439,6 +1413,7 @@
 #cmcc-app .cmcc-heatmap-legend-label {
   font-size: 11px;
   color: #757575;
+  white-space: nowrap;
 }
 
 #cmcc-app .cmcc-heatmap-legend-bar {
@@ -449,22 +1424,183 @@
   background: #f0f0f1;
 }
 
-#cmcc-app .cmcc-heatmap-legend-fill {
+#cmcc-app .cmcc-heatmap-legend-gradient {
   height: 100%;
   width: 100%;
+  background: linear-gradient(
+    to right,
+    #e3f0fa 0%,
+    #abd0e6 25%,
+    #6fa8d1 50%,
+    #3b7cb8 75%,
+    #1a4d8f 100%
+  );
 }
 
 #cmcc-app .cmcc-heatmap-legend-labels {
   display: flex;
   justify-content: space-between;
   flex: 1;
+  min-width: 40px;
   font-size: 10px;
   color: #757575;
 }
 
-/* -------------------------------------------------------------------------
-   Activity Log Table
-   ------------------------------------------------------------------------- */
+/* ─── Heatmap Empty State ──────────────────────────────────────────── */
+
+#cmcc-app .cmcc-heatmap-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  text-align: center;
+}
+
+#cmcc-app .cmcc-heatmap-empty-icon {
+  font-size: 36px;
+  margin-bottom: 8px;
+}
+
+#cmcc-app .cmcc-heatmap-empty-text {
+  font-size: 14px;
+  font-weight: 500;
+  color: #50575e;
+  margin: 0 0 4px;
+}
+
+#cmcc-app .cmcc-heatmap-empty-hint {
+  font-size: 12px;
+  color: #8c8f94;
+  margin: 0;
+}
+
+/* ─── Charts ────────────────────────────────────────────────────────────── */
+
+#cmcc-app .cmcc-charts-row {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+#cmcc-app .cmcc-chart-card {
+  flex: 1;
+  min-width: 280px;
+  background: #fff;
+  border: 1px solid #e2e4e7;
+  border-radius: 6px;
+  padding: 16px;
+}
+
+#cmcc-app .cmcc-chart-card-half {
+  flex: 0 0 calc(50% - 8px);
+  min-width: 240px;
+}
+
+@media screen and (max-width: 782px) {
+  #cmcc-app .cmcc-chart-card-half {
+    flex: 1 1 100%;
+  }
+}
+
+#cmcc-app .cmcc-chart-container {
+  width: 100%;
+}
+
+#cmcc-app .cmcc-chart-title {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0 0 12px;
+  color: #1d2327;
+}
+
+#cmcc-app .cmcc-chart-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+#cmcc-app .cmcc-chart-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  color: #8c8f94;
+  font-size: 13px;
+  text-align: center;
+}
+
+/* ─── Enhanced Content Breakdown Table ───────────────────────────────── */
+
+#cmcc-app .cmcc-breakdown-wrapper {
+  overflow-x: auto;
+  border: 1px solid #e2e4e7;
+  border-radius: 4px;
+}
+
+#cmcc-app .cmcc-breakdown-table-enhanced {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+#cmcc-app .cmcc-breakdown-table-enhanced th {
+  text-align: left;
+  padding: 8px 6px;
+  border-bottom: 1px solid #c3c4c7;
+  font-weight: 600;
+  color: #2c3338;
+  background: #f6f7f7;
+  white-space: nowrap;
+  font-size: 11px;
+}
+
+#cmcc-app .cmcc-breakdown-table-enhanced td {
+  padding: 6px;
+  border-bottom: 1px solid #f0f0f1;
+  vertical-align: middle;
+}
+
+#cmcc-app .cmcc-breakdown-table-enhanced tbody tr:hover td {
+  background: #f6f7f7;
+}
+
+#cmcc-app .cmcc-bd-type {
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+#cmcc-app .cmcc-bd-num {
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+#cmcc-app .cmcc-bd-pct {
+  color: #8c8f94;
+  font-size: 10px;
+}
+
+#cmcc-app .cmcc-bd-approved {
+  color: #16a34a;
+}
+#cmcc-app .cmcc-bd-pending {
+  color: #ca8a04;
+}
+#cmcc-app .cmcc-bd-spam {
+  color: #dc2626;
+}
+#cmcc-app .cmcc-bd-flagged {
+  color: #ea580c;
+}
+#cmcc-app .cmcc-bd-rejected {
+  color: #6b7280;
+}
+#cmcc-app .cmcc-bd-deferred {
+  color: #0891b2;
+}
+
+/* ─── Activity Log Table ───────────────────────────────────────────────── */
 
 #cmcc-app .cmcc-activity-table {
   width: 100%;
@@ -517,12 +1653,25 @@
 
 #cmcc-app .cmcc-action-defer {
   background: #e5f5fa;
-  color: #007cba;
+  color: var(--cmcc-primary);
 }
 
-/* -------------------------------------------------------------------------
-   Pagination
-   ------------------------------------------------------------------------- */
+#cmcc-app .cmcc-action-flag {
+  background: #fef8ee;
+  color: #b2620f;
+}
+
+#cmcc-app .cmcc-action-mark-as-spam {
+  background: #fde8d7;
+  color: #c35b1a;
+}
+
+#cmcc-app .cmcc-action-approve-all {
+  background: #e2f0d9;
+  color: #237739;
+}
+
+/* ─── Pagination (simple) ──────────────────────────────────────────────── */
 
 #cmcc-app .cmcc-pagination {
   display: flex;
@@ -539,9 +1688,7 @@
   color: #50575e;
 }
 
-/* -------------------------------------------------------------------------
-   Settings Form (overrides for WP admin)
-   ------------------------------------------------------------------------- */
+/* ─── Settings Form ────────────────────────────────────────────────────── */
 
 #cmcc-app .cmcc-settings-form {
   max-width: 700px;
@@ -563,9 +1710,134 @@
   margin: 0;
 }
 
-/* -------------------------------------------------------------------------
-   Responsive
-   ------------------------------------------------------------------------- */
+/* ─── Settings: Validation Error States (UX5 Fix) ──────────────────────── */
+
+#cmcc-app .cmcc-settings-form input.cmcc-field-error,
+#cmcc-app .cmcc-settings-form textarea.cmcc-field-error,
+#cmcc-app .cmcc-settings-form select.cmcc-field-error {
+  border-color: #d63638;
+  box-shadow: 0 0 0 1px #d63638;
+  background-color: #fff8f8;
+}
+
+#cmcc-app .cmcc-field-error-message {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+  font-size: 12px;
+  color: #d63638;
+  font-weight: 500;
+  animation: cmcc-shake-in 0.3s ease;
+}
+
+/* Focus-visible ring for accessibility */
+#cmcc-app .cmcc-settings-form input:focus-visible,
+#cmcc-app .cmcc-settings-form textarea:focus-visible,
+#cmcc-app .cmcc-settings-form select:focus-visible,
+#cmcc-app button:focus-visible,
+#cmcc-app .cmcc-btn:focus-visible,
+#cmcc-app .cmcc-tab:focus-visible {
+  outline: 2px solid #2271b1;
+  outline-offset: 1px;
+}
+
+@keyframes cmcc-shake-in {
+  0% {
+    transform: translateX(-4px);
+    opacity: 0;
+  }
+  50% {
+    transform: translateX(4px);
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* ─── Skeleton Loader Styles ───────────────────────────────────────────── */
+
+#cmcc-app .cmcc-skeleton {
+  background: linear-gradient(90deg, #f0f0f1 25%, #e2e4e7 50%, #f0f0f1 75%);
+  background-size: 200% 100%;
+  animation: cmcc-shimmer 1.5s infinite;
+  border-radius: var(--cmcc-radius-sm);
+  display: inline-block;
+  line-height: 1;
+}
+
+#cmcc-app .cmcc-skeleton-text {
+  height: 13px;
+  margin-bottom: 8px;
+  width: 100%;
+}
+
+#cmcc-app .cmcc-skeleton-text:last-child {
+  width: 60%;
+}
+
+#cmcc-app .cmcc-skeleton-heading {
+  height: 20px;
+  width: 40%;
+  margin-bottom: 12px;
+}
+
+#cmcc-app .cmcc-skeleton-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--cmcc-radius-full);
+  flex-shrink: 0;
+}
+
+#cmcc-app .cmcc-skeleton-button {
+  height: 32px;
+  width: 80px;
+  border-radius: var(--cmcc-radius-sm);
+}
+
+#cmcc-app .cmcc-skeleton-badge {
+  height: 20px;
+  width: 60px;
+  border-radius: var(--cmcc-radius-full);
+}
+
+#cmcc-app .cmcc-skeleton-card {
+  height: 120px;
+  width: 100%;
+  border-radius: var(--cmcc-radius-lg);
+  margin-bottom: 16px;
+}
+
+#cmcc-app .cmcc-skeleton-table-row {
+  height: 44px;
+  width: 100%;
+  margin-bottom: 4px;
+}
+
+/* Skeleton container with explicit dimensions to prevent layout shift */
+#cmcc-app .cmcc-skeleton-container {
+  position: relative;
+  overflow: hidden;
+  min-height: 120px;
+}
+
+@keyframes cmcc-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* ─── Dark Mode Skeleton ────────────────────────────────────────────── */
+.dark #cmcc-app .cmcc-skeleton {
+  background: linear-gradient(90deg, #2a2a4a 25%, #3a3a5a 50%, #2a2a4a 75%);
+  background-size: 200% 100%;
+}
+
+/* ─── Responsive ───────────────────────────────────────────────────────── */
 
 @media screen and (max-width: 782px) {
   #cmcc-app .cmcc-tab-nav {
@@ -583,9 +1855,28 @@
     grid-template-columns: repeat(2, 1fr);
   }
 
-  #cmcc-app .cmcc-queue-header {
+  #cmcc-app .cmcc-queue-toolbar {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  #cmcc-app .cmcc-queue-toolbar-left,
+  #cmcc-app .cmcc-queue-toolbar-right {
+    flex-wrap: wrap;
+  }
+
+  #cmcc-app .cmcc-search-input {
+    min-width: 140px;
+  }
+
+  #cmcc-app .cmcc-pagination-bar {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  #cmcc-app .cmcc-pagination-right {
+    flex-wrap: wrap;
+    justify-content: center;
   }
 
   #cmcc-app .cmcc-queue-table-inner {
@@ -594,6 +1885,10 @@
 
   #cmcc-app .cmcc-activity-table {
     font-size: 12px;
+  }
+
+  #cmcc-app .cmcc-td-title {
+    max-width: 200px;
   }
 }
 
@@ -610,4 +1905,1614 @@
   #cmcc-app .cmcc-activity-table td:nth-child(8) {
     display: none;
   }
+
+  #cmcc-app .cmcc-modal {
+    max-width: 100%;
+    margin: 10px;
+    max-height: 95vh;
+  }
+
+  #cmcc-app .cmcc-modal-header {
+    padding: 16px;
+  }
+
+  #cmcc-app .cmcc-modal-body {
+    padding: 16px;
+  }
+}
+
+/* ─── Toast Notifications (U8 Fix) ─────────────────────────────────────── */
+
+#cmcc-app .cmcc-toast-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 100001;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 400px;
+}
+
+#cmcc-app .cmcc-toast {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  font-size: 13px;
+  font-weight: 500;
+  color: #fff;
+  cursor: pointer;
+  animation: cmcc-toast-in 0.3s ease;
+  transition: opacity 0.2s ease;
+}
+
+#cmcc-app .cmcc-toast:hover {
+  opacity: 0.9;
+}
+
+@keyframes cmcc-toast-in {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+#cmcc-app .cmcc-toast-success {
+  background: #00a32a;
+}
+
+#cmcc-app .cmcc-toast-error {
+  background: #d63638;
+}
+
+#cmcc-app .cmcc-toast-icon {
+  font-size: 16px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+#cmcc-app .cmcc-toast-message {
+  flex: 1;
+}
+
+/* ─── Activity Log Toolbar (U6/U8 fixes) ──────────────────────────────── */
+
+#cmcc-app .cmcc-activity-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+#cmcc-app .cmcc-table-wrapper {
+  overflow-x: auto;
+  border: 1px solid #c3c4c7;
+  border-radius: 4px;
+}
+
+#cmcc-app .cmcc-moderator-name {
+  font-weight: 500;
+  color: #1d2327;
+}
+
+/* ─── Action badge for deactivate-users (B4 fix) ──────────────────────── */
+
+#cmcc-app .cmcc-action-deactivate-users {
+  background: #f0f0f1;
+  color: #50575e;
+}
+
+/* ─── Loading state improvement (B6 fix) ──────────────────────────────── */
+
+#cmcc-app .cmcc-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+/* ─── Empty state icon ────────────────────────────────────────────────── */
+
+#cmcc-app .cmcc-empty-icon {
+  font-size: 40px;
+  display: block;
+  margin-bottom: 12px;
+}
+
+/* ─── Mobile pagination fix (UX4 Fix) ────────────────────────────────── */
+
+@media screen and (max-width: 600px) {
+  #cmcc-app .cmcc-toast-container {
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    max-width: none;
+  }
+
+  #cmcc-app .cmcc-pagination-left {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  #cmcc-app .cmcc-pagination-info {
+    font-size: 12px;
+  }
+
+  #cmcc-app .cmcc-pagination-bar {
+    gap: 8px;
+  }
+
+  #cmcc-app .cmcc-page-btn {
+    min-width: 28px;
+    height: 28px;
+    font-size: 12px;
+  }
+
+  #cmcc-app .cmcc-page-num {
+    min-width: 28px;
+    height: 28px;
+    font-size: 12px;
+  }
+}
+
+/* ─── Mobile: Very Small Screens (< 400px) ──────────────────────────── */
+@media screen and (max-width: 400px) {
+  #cmcc-app .cmcc-stats-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  #cmcc-app .cmcc-stat-card {
+    padding: 12px 8px;
+  }
+
+  #cmcc-app .cmcc-stat-value {
+    font-size: 22px;
+  }
+
+  #cmcc-app .cmcc-pagination-bar {
+    flex-direction: column;
+    gap: 6px;
+    padding: 12px 0 4px;
+  }
+
+  #cmcc-app .cmcc-pagination-left {
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+
+  #cmcc-app .cmcc-pagination-right {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 2px;
+  }
+
+  #cmcc-app .cmcc-page-numbers {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  #cmcc-app .cmcc-page-btn {
+    min-width: 24px;
+    height: 24px;
+    padding: 2px 4px;
+    font-size: 11px;
+  }
+
+  #cmcc-app .cmcc-page-num {
+    min-width: 24px;
+    height: 24px;
+    padding: 2px 4px;
+    font-size: 11px;
+  }
+
+  #cmcc-app .cmcc-per-page-label {
+    font-size: 12px;
+  }
+
+  #cmcc-app .cmcc-chart-card {
+    min-width: 100%;
+  }
+
+  #cmcc-app .cmcc-modal {
+    margin: 4px;
+    border-radius: 6px;
+  }
+
+  #cmcc-app .cmcc-modal-header {
+    padding: 12px;
+  }
+
+  #cmcc-app .cmcc-modal-body {
+    padding: 12px;
+  }
+
+  #cmcc-app .cmcc-modal-footer {
+    padding: 12px;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  #cmcc-app .cmcc-top-bar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  #cmcc-app .cmcc-top-bar-right {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  #cmcc-app .cmcc-onboarding-card {
+    padding: var(--cmcc-space-6) var(--cmcc-space-4);
+  }
+}
+
+/* ─── Dark Mode Overrides ────────────────────────────────────────────── */
+.dark #cmcc-app {
+  color: #e0e0e0;
+}
+
+.dark #cmcc-app .cmcc-top-bar {
+  border-bottom-color: #2a2a4a;
+}
+
+.dark #cmcc-app .cmcc-tab {
+  color: #9ca3af;
+}
+
+.dark #cmcc-app .cmcc-tab-active {
+  color: #60a5fa;
+  border-bottom-color: #60a5fa;
+}
+
+.dark #cmcc-app .cmcc-stat-card {
+  background: #16213e;
+  border-color: #2a2a4a;
+}
+
+.dark #cmcc-app .cmcc-stat-label {
+  color: #9ca3af;
+}
+
+.dark #cmcc-app .cmcc-stat-value {
+  color: #e0e0e0;
+}
+
+.dark #cmcc-app .cmcc-analytics-section h3 {
+  color: #e0e0e0;
+  border-bottom-color: #2a2a4a;
+}
+
+.dark #cmcc-app .cmcc-chart-container {
+  background: #16213e;
+  border-color: #2a2a4a;
+}
+
+.dark #cmcc-app .cmcc-chart-title {
+  color: #e0e0e0;
+}
+
+.dark #cmcc-app .cmcc-breakdown-table {
+  background: #16213e;
+}
+
+.dark #cmcc-app .cmcc-breakdown-table th {
+  background: #1a1a2e;
+  color: #9ca3af;
+  border-bottom-color: #2a2a4a;
+}
+
+.dark #cmcc-app .cmcc-breakdown-table td {
+  color: #e0e0e0;
+  border-bottom-color: #2a2a4a;
+}
+
+.dark #cmcc-app .cmcc-queue-table-wrapper {
+  border-color: #2a2a4a;
+}
+
+.dark #cmcc-app .cmcc-queue-table-inner th {
+  background: #1a1a2e;
+  color: #9ca3af;
+  border-bottom-color: #2a2a4a;
+}
+
+.dark #cmcc-app .cmcc-queue-table-inner td {
+  color: #e0e0e0;
+  border-bottom-color: #2a2a4a;
+}
+
+.dark #cmcc-app .cmcc-queue-row:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.dark #cmcc-app .cmcc-row-selected {
+  background: rgba(96, 165, 250, 0.1) !important;
+}
+
+.dark #cmcc-app .cmcc-empty-state p {
+  color: #9ca3af;
+}
+
+.dark #cmcc-app .cmcc-activity-table {
+  background: #16213e;
+}
+
+.dark #cmcc-app .cmcc-activity-table th {
+  background: #1a1a2e;
+  color: #9ca3af;
+  border-bottom-color: #2a2a4a;
+}
+
+.dark #cmcc-app .cmcc-activity-table td {
+  color: #e0e0e0;
+  border-bottom-color: #2a2a4a;
+}
+
+.dark #cmcc-app .cmcc-pagination-bar {
+  border-top-color: #2a2a4a;
+}
+
+.dark #cmcc-app .cmcc-pagination-info {
+  color: #9ca3af;
+}
+
+.dark #cmcc-app .cmcc-page-btn {
+  color: #9ca3af;
+  border-color: #2a2a4a;
+}
+
+.dark #cmcc-app .cmcc-page-btn:hover {
+  background: #2a2a4a;
+}
+
+.dark #cmcc-app .cmcc-page-active {
+  background: #2563eb;
+  color: white;
+  border-color: #2563eb;
+}
+
+.dark #cmcc-app .cmcc-filter-select {
+  background: #16213e;
+  color: #e0e0e0;
+  border-color: #2a2a4a;
+}
+
+.dark #cmcc-app .cmcc-search-input {
+  background: #16213e;
+  color: #e0e0e0;
+  border-color: #2a2a4a;
+}
+
+.dark #cmcc-app .cmcc-bulk-select {
+  background: #16213e;
+  color: #e0e0e0;
+  border-color: #2a2a4a;
+}
+
+.dark #cmcc-app .cmcc-sort-icon-inactive {
+  color: #4b5563;
+}
+
+.dark #cmcc-app .cmcc-sort-icon-active {
+  color: #60a5fa;
+}
+
+.dark #cmcc-app .cmcc-toast-container {
+  /* Toast is now handled by Tailwind classes */
+}
+
+.dark #cmcc-app .cmcc-modal-overlay {
+  background: rgba(0, 0, 0, 0.7);
+}
+
+.dark #cmcc-app .cmcc-modal-content {
+  background: #16213e;
+  border-color: #2a2a4a;
+}
+
+.dark #cmcc-app .cmcc-modal-actions {
+  border-top-color: #2a2a4a;
+}
+
+/* Dark mode for Reports tab cards */
+.dark #cmcc-app .tw-rounded-lg {
+  border-color: #2a2a4a !important;
+}
+
+.dark #cmcc-app .tw-bg-gray-50 {
+  background-color: #1a1a2e !important;
+}
+
+.dark #cmcc-app .tw-text-gray-500 {
+  color: #94a3b8 !important;
+}
+
+.dark #cmcc-app .tw-text-gray-600 {
+  color: #cbd5e1 !important;
+}
+
+.dark #cmcc-app .tw-text-gray-400 {
+  color: #64748b !important;
+}
+
+.dark #cmcc-app .tw-bg-white {
+  background-color: #1e1e36 !important;
+}
+
+.dark #cmcc-app .tw-border-gray-200 {
+  border-color: #2a2a4a !important;
+}
+
+.dark #cmcc-app .tw-border-gray-100 {
+  border-color: #2a2a4a !important;
+}
+
+.dark #cmcc-app .tw-border-gray-300 {
+  border-color: #3a3a5a !important;
+}
+
+.dark #cmcc-app button.tw-bg-white {
+  background-color: #1e1e36 !important;
+  color: #e2e8f0 !important;
+}
+
+.dark #cmcc-app button.tw-bg-white:hover {
+  background-color: #2a2a4a !important;
+}
+
+.dark #cmcc-app .tw-bg-black\/40 {
+  background-color: rgba(0, 0, 0, 0.7) !important;
+}
+
+.dark #cmcc-app .tw-bg-gray-100 {
+  background-color: #2a2a4a !important;
+}
+
+.dark #cmcc-app .tw-border-gray-200 {
+  border-color: #2a2a4a !important;
+}
+
+.dark #cmcc-app .tw-shadow-sm,
+.dark #cmcc-app .tw-shadow-lg,
+.dark #cmcc-app .tw-shadow-xl {
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.4) !important;
+}
+
+.dark #cmcc-app .tw-text-gray-900 {
+  color: #e2e8f0 !important;
+}
+
+/* Dark mode for SlideOutPanel */
+.dark #cmcc-app [role='dialog'] {
+  background-color: #1a1a2e !important;
+  border-color: #2a2a4a !important;
+}
+
+.dark #cmcc-app [role='dialog'] .tw-border-b {
+  border-color: #2a2a4a !important;
+}
+
+.dark #cmcc-app [role='dialog'] .tw-text-gray-500 {
+  color: #94a3b8 !important;
+}
+
+.dark #cmcc-app [role='dialog'] .tw-text-gray-600 {
+  color: #cbd5e1 !important;
+}
+
+.dark #cmcc-app [role='dialog'] .tw-border-t {
+  border-color: #2a2a4a !important;
+}
+
+/* Dark mode for confirmation modal */
+.dark #cmcc-app .tw-bg-white.tw-rounded-lg.tw-shadow-xl {
+  background-color: #1e1e36 !important;
+}
+
+.dark #cmcc-app button.tw-border.tw-border-gray-300 {
+  background-color: #2a2a4a !important;
+  color: #e2e8f0 !important;
+  border-color: #3a3a5a !important;
+}
+
+.dark #cmcc-app button.tw-border.tw-border-gray-300:hover {
+  background-color: #3a3a5a !important;
+}
+
+/* Dark mode for Table component in reports */
+.dark #cmcc-app .tw-bg-blue-600.tw-text-white {
+  background-color: #1d4ed8 !important;
+}
+
+.dark #cmcc-app .tw-bg-blue-600.tw-text-white:hover {
+  background-color: #1e40af !important;
+}
+
+/* Dark mode for labels/import buttons */
+.dark #cmcc-app label.tw-cursor-pointer {
+  background-color: #1e1e36 !important;
+  color: #e2e8f0 !important;
+  border-color: #3a3a5a !important;
+}
+
+.dark #cmcc-app label.tw-cursor-pointer:hover {
+  background-color: #2a2a4a !important;
+}
+
+/* Dark mode skeleton pulse */
+.dark #cmcc-app .tw-bg-gray-200 {
+  background-color: #2a2a4a !important;
+}
+
+/* Dark mode for QuickFilterBar */
+.dark #cmcc-app .tw-bg-white.tw-text-gray-600 {
+  background-color: #1e1e36 !important;
+  color: #cbd5e1 !important;
+}
+
+.dark #cmcc-app button.tw-border.tw-border-gray-200 {
+  border-color: #2a2a4a !important;
+}
+
+.dark #cmcc-app button.tw-border.tw-border-gray-200:hover {
+  background-color: #2a2a4a !important;
+}
+
+.dark #cmcc-app .tw-bg-primary-600.tw-text-white.tw-border-primary-600 {
+  background-color: #2563eb !important;
+}
+
+/* Dark mode for ProgressBar */
+.dark #cmcc-app .tw-bg-gray-200.tw-rounded-full {
+  background-color: #2a2a4a !important;
+}
+
+/* Dark mode for ConfirmationModal */
+.dark #cmcc-app [role='alertdialog'] {
+  background-color: #1a1a2e !important;
+}
+
+.dark #cmcc-app [role='alertdialog'] #cmcc-confirm-message {
+  color: #cbd5e1 !important;
+}
+
+/* Dark mode for ModerationNotes */
+.dark #cmcc-app .tw-text-gray-700 {
+  color: #cbd5e1 !important;
+}
+
+.dark #cmcc-app .tw-bg-gray-50 {
+  background-color: #1a1a2e !important;
+}
+
+.dark #cmcc-app .tw-text-gray-500 {
+  color: #94a3b8 !important;
+}
+
+.dark #cmcc-app .tw-border-gray-200 {
+  border-color: #2a2a4a !important;
+}
+
+.dark #cmcc-app .tw-border-gray-100 {
+  border-color: #2a2a4a !important;
+}
+
+.dark #cmcc-app .tw-bg-gray-100.tw-text-gray-500 {
+  background-color: #2a2a4a !important;
+  color: #94a3b8 !important;
+}
+
+.dark #cmcc-app .tw-bg-gray-50.tw-text-gray-400 {
+  background-color: #1a1a2e !important;
+  color: #64748b !important;
+}
+
+/* Dark mode for ActivityFeed */
+.dark #cmcc-app .tw-text-gray-800 {
+  color: #e2e8f0 !important;
+}
+
+.dark #cmcc-app .tw-text-gray-600 {
+  color: #cbd5e1 !important;
+}
+
+.dark #cmcc-app .tw-text-gray-400 {
+  color: #64748b !important;
+}
+
+.dark #cmcc-app .tw-text-gray-700 {
+  color: #e2e8f0 !important;
+}
+
+.dark #cmcc-app .tw-bg-red-50 {
+  background-color: rgba(220, 38, 38, 0.1) !important;
+}
+
+/* Dark mode for SettingsForm tabs */
+.dark #cmcc-app button[role='tab'] {
+  color: #9ca3af !important;
+}
+
+.dark #cmcc-app button[role='tab'][aria-selected='true'] {
+  color: #60a5fa !important;
+  border-bottom-color: #60a5fa !important;
+}
+
+/* Dark mode for SettingsForm inputs */
+.dark #cmcc-app .cmcc-settings-form input[type='text'],
+.dark #cmcc-app .cmcc-settings-form input[type='number'],
+.dark #cmcc-app .cmcc-settings-form textarea,
+.dark #cmcc-app .cmcc-settings-form select {
+  background-color: #1a1a2e !important;
+  color: #e0e0e0 !important;
+  border-color: #2a2a4a !important;
+}
+
+.dark #cmcc-app .cmcc-settings-form label {
+  color: #cbd5e1 !important;
+}
+
+.dark #cmcc-app .cmcc-settings-form label span {
+  color: #cbd5e1 !important;
+}
+
+.dark #cmcc-app .cmcc-settings-form input[type='checkbox'] {
+  accent-color: #60a5fa !important;
+}
+
+.dark #cmcc-app button.cmcc-btn-secondary {
+  background-color: #2a2a4a !important;
+  color: #e2e8f0 !important;
+  border-color: #3a3a5a !important;
+}
+
+/* Dark mode for Table header in analytics */
+.dark #cmcc-app .tw-text-xs.tw-font-semibold.tw-text-gray-600 {
+  color: #94a3b8 !important;
+}
+
+.dark #cmcc-app .tw-bg-gray-50 {
+  background-color: #1a1a2e !important;
+}
+
+/* ─── Dark Mode: Assignment & Saved Filter Inputs (Sections 8, 9, 10) ─── */
+
+.dark #cmcc-app input#cmcc-save-filter-input,
+.dark #cmcc-app input#cmcc-assign-input,
+.dark #cmcc-app input#cmcc-assign-due,
+.dark #cmcc-app select#cmcc-assign-priority {
+  background-color: #1e293b !important;
+  border-color: #334155 !important;
+  color: #e2e8f0 !important;
+}
+
+.dark #cmcc-app input#cmcc-save-filter-input:focus,
+.dark #cmcc-app input#cmcc-assign-input:focus,
+.dark #cmcc-app input#cmcc-assign-due:focus {
+  border-color: #3b82f6 !important;
+  outline: none;
+  box-shadow: 0 0 0 1px #3b82f6;
+}
+
+.dark #cmcc-app button.cmcc-btn-primary {
+  background-color: #2563eb !important;
+}
+
+.dark #cmcc-app button.cmcc-btn-primary:hover {
+  background-color: #1d4ed8 !important;
+}
+
+/* Dark mode toast fixes */
+.dark #cmcc-app .tw-bg-green-600 {
+  background-color: #16a34a !important;
+}
+
+.dark #cmcc-app .tw-bg-red-600 {
+  background-color: #dc2626 !important;
+}
+
+.dark #cmcc-app .tw-bg-gray-800 {
+  background-color: #1e293b !important;
+}
+
+/* Dark mode slide-out panel */
+.dark #cmcc-app .tw-bg-white {
+  background-color: #1e293b !important;
+}
+
+.dark #cmcc-app .tw-border-gray-100 {
+  border-color: #334155 !important;
+}
+
+.dark #cmcc-app .tw-border-gray-200 {
+  border-color: #334155 !important;
+}
+
+.dark #cmcc-app .tw-text-gray-400 {
+  color: #94a3b8 !important;
+}
+
+.dark #cmcc-app .tw-text-gray-500 {
+  color: #94a3b8 !important;
+}
+
+.dark #cmcc-app .tw-text-gray-600 {
+  color: #cbd5e1 !important;
+}
+
+.dark #cmcc-app .tw-text-gray-700 {
+  color: #e2e8f0 !important;
+}
+
+.dark #cmcc-app .tw-bg-gray-50 {
+  background-color: #1a1a2e !important;
+}
+
+/* Dark mode DateRangePicker popover */
+.dark #cmcc-app .tw-bg-background {
+  background-color: #1e293b !important;
+}
+
+.dark #cmcc-app .tw-border-border {
+  border-color: #334155 !important;
+}
+
+.dark #cmcc-app .tw-text-muted-foreground {
+  color: #94a3b8 !important;
+}
+
+.dark #cmcc-app .hover\:tw-bg-muted:hover {
+  background-color: #334155 !important;
+}
+
+.dark #cmcc-app .tw-bg-primary-100 {
+  background-color: #1e3a5f !important;
+}
+
+.dark #cmcc-app .tw-text-primary-800 {
+  color: #93c5fd !important;
+}
+
+.dark #cmcc-app .tw-bg-muted {
+  background-color: #334155 !important;
+}
+
+/* Dark mode for the confirmation modal */
+.dark #cmcc-app .cmcc-modal {
+  background-color: #1e293b !important;
+  border: 1px solid #334155;
+}
+
+/* ─── Dark Mode: Missing selectors ────────────────────────────────── */
+
+.dark #cmcc-app .cmcc-top-bar-left h1 {
+  color: #e2e8f0;
+}
+
+.dark #cmcc-app .cmcc-theme-toggle {
+  background: #1e293b;
+  border-color: #334155;
+  color: #cbd5e1;
+}
+
+.dark #cmcc-app .cmcc-modal-header {
+  border-bottom-color: #2a2a4a;
+}
+
+.dark #cmcc-app .cmcc-modal-body {
+  color: #e0e0e0;
+}
+
+.dark #cmcc-app .cmcc-modal-footer {
+  border-top-color: #2a2a4a;
+}
+
+.dark #cmcc-app .cmcc-action-group .cmcc-action-btn {
+  background: #1a1a2e;
+  border-color: #2a2a4a;
+  color: #9ca3af;
+}
+
+.dark #cmcc-app .cmcc-action-group .cmcc-action-btn:hover {
+  background: #2a2a4a;
+}
+
+.dark #cmcc-app .cmcc-action-approve {
+  color: #4ade80;
+  border-color: #4ade80;
+}
+
+.dark #cmcc-app .cmcc-action-approve:hover {
+  background: #16a34a;
+  color: #fff;
+}
+
+.dark #cmcc-app .cmcc-action-reject {
+  color: #f87171;
+  border-color: #f87171;
+}
+
+.dark #cmcc-app .cmcc-action-reject:hover {
+  background: #dc2626;
+  color: #fff;
+}
+
+.dark #cmcc-app .cmcc-action-spam {
+  color: #fb923c;
+  border-color: #fb923c;
+}
+
+.dark #cmcc-app .cmcc-action-spam:hover {
+  background: #ea580c;
+  color: #fff;
+}
+
+.dark #cmcc-app .cmcc-action-defer {
+  color: #60a5fa;
+  border-color: #60a5fa;
+}
+
+.dark #cmcc-app .cmcc-action-defer:hover {
+  background: #2563eb;
+  color: #fff;
+}
+
+.dark #cmcc-app .cmcc-spam-ratio-bar {
+  background: #1a1a2e;
+}
+
+.dark #cmcc-app .cmcc-spam-ratio-fill {
+  background: linear-gradient(90deg, #f59e0b, #ef4444);
+}
+
+.dark #cmcc-app .cmcc-score-bar-container {
+  background: #1a1a2e;
+}
+
+.dark #cmcc-app .cmcc-score-bar {
+  opacity: 0.9;
+}
+
+.dark #cmcc-app .cmcc-heatmap-cell {
+  border-color: #2a2a4a;
+}
+
+.dark #cmcc-app .cmcc-heatmap-cell:hover {
+  border-color: #60a5fa;
+}
+
+.dark #cmcc-app .cmcc-heatmap-legend {
+  color: #9ca3af;
+}
+
+.dark #cmcc-app .cmcc-heatmap-legend-label {
+  color: #9ca3af;
+}
+
+/* ─── Dark Mode: Additional Missing Overrides ──────────────────────── */
+
+.dark #cmcc-app .cmcc-title {
+  color: #e2e8f0;
+}
+
+.dark #cmcc-app .cmcc-title-light {
+  color: #94a3b8;
+}
+
+.dark #cmcc-app .cmcc-tab-nav {
+  background: #1a1a2e;
+  border-bottom-color: #2a2a4a;
+}
+
+.dark #cmcc-app .cmcc-tab-content {
+  background: #1e293b;
+  border-color: #2a2a4a;
+  color: #e2e8f0;
+}
+
+.dark #cmcc-app .cmcc-tab-panel {
+  color: #e2e8f0;
+}
+
+.dark #cmcc-app .cmcc-queue-toolbar {
+  background: #1a1a2e;
+  border-color: #2a2a4a;
+}
+
+.dark #cmcc-app .cmcc-author-name {
+  color: #e2e8f0;
+}
+
+.dark #cmcc-app .cmcc-author-id {
+  color: #64748b;
+}
+
+.dark #cmcc-app .cmcc-item-title {
+  color: #e2e8f0;
+}
+
+.dark #cmcc-app .cmcc-item-excerpt {
+  color: #94a3b8;
+}
+
+.dark #cmcc-app .cmcc-score-text {
+  color: #94a3b8;
+}
+
+.dark #cmcc-app .cmcc-per-page-select {
+  background-color: #1a1a2e;
+  color: #e0e0e0;
+  border-color: #2a2a4a;
+}
+
+.dark #cmcc-app .cmcc-per-page-label {
+  color: #94a3b8;
+}
+
+.dark #cmcc-app .cmcc-page-ellipsis {
+  color: #64748b;
+}
+
+.dark #cmcc-app .cmcc-modal-title {
+  color: #e2e8f0;
+}
+
+.dark #cmcc-app .cmcc-modal-type,
+.dark #cmcc-app .cmcc-modal-author,
+.dark #cmcc-app .cmcc-modal-date,
+.dark #cmcc-app .cmcc-modal-score {
+  color: #94a3b8;
+}
+
+.dark #cmcc-app .cmcc-modal-close {
+  color: #94a3b8;
+}
+
+.dark #cmcc-app .cmcc-modal-close:hover {
+  color: #f87171;
+}
+
+.dark #cmcc-app .cmcc-modal-badge {
+  color: #fff;
+}
+
+.dark #cmcc-app .cmcc-status-badge {
+  color: #fff;
+}
+
+.dark #cmcc-app .cmcc-heatmap-hour-label {
+  color: #64748b;
+}
+
+.dark #cmcc-app .cmcc-heatmap-day-label {
+  color: #64748b;
+}
+
+.dark #cmcc-app .cmcc-heatmap-legend-labels {
+  color: #64748b;
+}
+
+.dark #cmcc-app .cmcc-heatmap-empty-text {
+  color: #94a3b8;
+}
+
+.dark #cmcc-app .cmcc-heatmap-empty-hint {
+  color: #64748b;
+}
+
+.dark #cmcc-app .cmcc-chart-card {
+  background: #1e293b;
+  border-color: #2a2a4a;
+}
+
+.dark #cmcc-app .cmcc-chart-empty {
+  color: #64748b;
+}
+
+.dark #cmcc-app .cmcc-breakdown-wrapper {
+  border-color: #2a2a4a;
+}
+
+.dark #cmcc-app .cmcc-breakdown-table-enhanced th {
+  background: #1a1a2e;
+  color: #94a3b8;
+  border-bottom-color: #2a2a4a;
+}
+
+.dark #cmcc-app .cmcc-breakdown-table-enhanced td {
+  color: #e0e0e0;
+  border-bottom-color: #2a2a4a;
+}
+
+.dark #cmcc-app .cmcc-breakdown-table-enhanced tbody tr:hover td {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.dark #cmcc-app .cmcc-bd-approved {
+  color: #4ade80;
+}
+
+.dark #cmcc-app .cmcc-bd-pending {
+  color: #facc15;
+}
+
+.dark #cmcc-app .cmcc-bd-spam {
+  color: #f87171;
+}
+
+.dark #cmcc-app .cmcc-bd-flagged {
+  color: #fb923c;
+}
+
+.dark #cmcc-app .cmcc-bd-rejected {
+  color: #9ca3af;
+}
+
+.dark #cmcc-app .cmcc-bd-deferred {
+  color: #22d3ee;
+}
+
+.dark #cmcc-app .cmcc-bd-pct {
+  color: #64748b;
+}
+
+.dark #cmcc-app .cmcc-action-badge {
+  color: #fff;
+}
+
+.dark #cmcc-app .cmcc-action-approve {
+  background: rgba(22, 163, 74, 0.15);
+  color: #86efac;
+}
+
+.dark #cmcc-app .cmcc-action-reject,
+.dark #cmcc-app .cmcc-action-trash {
+  background: rgba(239, 68, 68, 0.15);
+  color: #fca5a5;
+}
+
+.dark #cmcc-app .cmcc-action-spam {
+  background: rgba(251, 146, 60, 0.15);
+  color: #fdba74;
+}
+
+.dark #cmcc-app .cmcc-action-defer {
+  background: rgba(96, 165, 250, 0.15);
+  color: #93c5fd;
+}
+
+.dark #cmcc-app .cmcc-action-flag {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fde68a;
+}
+
+.dark #cmcc-app .cmcc-action-mark-as-spam {
+  background: rgba(251, 146, 60, 0.15);
+  color: #fdba74;
+}
+
+.dark #cmcc-app .cmcc-action-approve-all {
+  background: rgba(22, 163, 74, 0.15);
+  color: #86efac;
+}
+
+.dark #cmcc-app .cmcc-action-deactivate-users {
+  background: #2a2a4a;
+  color: #94a3b8;
+}
+
+.dark #cmcc-app .cmcc-search-icon {
+  color: #64748b;
+}
+
+.dark #cmcc-app .cmcc-search-clear {
+  color: #94a3b8;
+}
+
+.dark #cmcc-app .cmcc-search-clear:hover {
+  color: #f87171;
+}
+
+.dark #cmcc-app .cmcc-table-wrapper {
+  border-color: #2a2a4a;
+}
+
+.dark #cmcc-app .cmcc-moderator-name {
+  color: #e2e8f0;
+}
+
+.dark #cmcc-app .cmcc-loading,
+.dark #cmcc-app .cmcc-empty {
+  color: #94a3b8;
+}
+
+.dark #cmcc-app .cmcc-empty-hint {
+  color: #64748b;
+}
+
+.dark #cmcc-app .cmcc-empty-icon {
+  color: #64748b;
+}
+
+.dark #cmcc-app .cmcc-queue-loading-overlay {
+  color: #94a3b8;
+}
+
+.dark #cmcc-app .cmcc-spinner {
+  border-color: #2a2a4a;
+  border-top-color: #60a5fa;
+}
+
+.dark #cmcc-app .cmcc-pagination {
+  color: #94a3b8;
+}
+
+.dark #cmcc-app .cmcc-settings-form input.cmcc-field-error,
+.dark #cmcc-app .cmcc-settings-form textarea.cmcc-field-error,
+.dark #cmcc-app .cmcc-settings-form select.cmcc-field-error {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 1px #ef4444;
+  background-color: rgba(239, 68, 68, 0.05);
+}
+
+.dark #cmcc-app .cmcc-field-error-message {
+  color: #fca5a5;
+}
+
+.dark #cmcc-app .cmcc-search-btn {
+  background-color: #2563eb;
+  border-color: #2563eb;
+}
+
+.dark #cmcc-app .cmcc-search-btn:hover {
+  background-color: #1d4ed8;
+}
+
+.dark #cmcc-app .cmcc-btn-primary {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #fff;
+}
+
+.dark #cmcc-app .cmcc-btn-primary:hover {
+  background: #1d4ed8;
+  border-color: #1d4ed8;
+}
+
+.dark #cmcc-app .cmcc-btn-primary:disabled {
+  background: #4b5563;
+  border-color: #4b5563;
+}
+
+.dark #cmcc-app .cmcc-btn-secondary {
+  background: #2a2a4a;
+  border-color: #3a3a5a;
+  color: #94a3b8;
+}
+
+.dark #cmcc-app .cmcc-btn-secondary:hover {
+  background: #3a3a5a;
+}
+
+.dark #cmcc-app .cmcc-btn-approve {
+  background: #16a34a;
+  border-color: #16a34a;
+}
+
+.dark #cmcc-app .cmcc-btn-approve:hover {
+  background: #15803d;
+}
+
+.dark #cmcc-app .cmcc-btn-reject {
+  background: #ef4444;
+  border-color: #ef4444;
+}
+
+.dark #cmcc-app .cmcc-btn-reject:hover {
+  background: #dc2626;
+}
+
+.dark #cmcc-app .cmcc-btn-spam {
+  background: #fb923c;
+  border-color: #fb923c;
+}
+
+.dark #cmcc-app .cmcc-btn-spam:hover {
+  background: #ea580c;
+}
+
+.dark #cmcc-app .cmcc-toast-success {
+  background: #16a34a;
+}
+
+.dark #cmcc-app .cmcc-toast-error {
+  background: #ef4444;
+}
+
+.dark #cmcc-app .cmcc-queue-table-inner thead {
+  /* Ensure sticky header works in dark mode */
+  z-index: 1;
+}
+
+.dark #cmcc-app .cmcc-queue-table-inner th {
+  background: #1a1a2e;
+}
+
+.dark #cmcc-app .cmcc-th-sortable:hover {
+  background: #2a2a4a;
+}
+
+.dark #cmcc-app .cmcc-queue-table-inner tr:hover td {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.dark #cmcc-app .cmcc-row-selected td {
+  background: rgba(96, 165, 250, 0.1) !important;
+}
+
+.dark #cmcc-app .cmcc-row-changed td {
+  animation: cmcc-row-flash-dark 2s ease-out;
+}
+
+@keyframes cmcc-row-flash-dark {
+  0% {
+    background-color: rgba(251, 191, 36, 0.2);
+  }
+  50% {
+    background-color: rgba(251, 191, 36, 0.1);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+.dark #cmcc-app .cmcc-checkbox-label input[type='checkbox'] {
+  accent-color: #60a5fa;
+}
+
+.dark #cmcc-app .cmcc-pagination-separator {
+  color: #334155;
+}
+
+.dark #cmcc-app .cmcc-stat-pending {
+  color: #f59e0b;
+}
+
+.dark #cmcc-app .cmcc-stat-spam {
+  color: #ef4444;
+}
+
+.dark #cmcc-app .cmcc-stat-flagged {
+  color: #fb923c;
+}
+
+.dark #cmcc-app .cmcc-spam-ratio-text {
+  color: #94a3b8;
+}
+
+.dark #cmcc-app .cmcc-activity-toolbar {
+  /* Inherits dark colors from parent */
+}
+
+/* ─── Dark Mode: Onboarding ───────────────────────────────────────── */
+
+.dark #cmcc-app .cmcc-onboarding-card {
+  background: #1e293b;
+}
+
+.dark #cmcc-app .cmcc-onboarding-card h3 {
+  color: #e2e8f0;
+}
+
+.dark #cmcc-app .cmcc-onboarding-card p {
+  color: #94a3b8;
+}
+
+.dark #cmcc-app .cmcc-onboarding-step {
+  background: #334155;
+}
+
+.dark #cmcc-app .cmcc-onboarding-step.active {
+  background: #60a5fa;
+}
+
+.dark #cmcc-app .cmcc-onboarding-step.completed {
+  background: #16a34a;
+}
+
+.dark #cmcc-app .cmcc-onboarding-progress {
+  background: #334155;
+}
+
+.dark #cmcc-app .cmcc-onboarding-skip {
+  color: #94a3b8;
+}
+
+.dark #cmcc-app .cmcc-onboarding-skip:hover {
+  color: #e2e8f0;
+}
+
+/* ─── Onboarding / Tutorial Overlay ──────────────────────────────────── */
+
+#cmcc-app .cmcc-onboarding-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100002;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 20px;
+  animation: cmcc-fade-in 0.3s ease;
+}
+
+#cmcc-app .cmcc-onboarding-card {
+  background: #fff;
+  border-radius: var(--cmcc-radius-xl);
+  box-shadow: var(--cmcc-shadow-xl);
+  max-width: 480px;
+  width: 100%;
+  padding: var(--cmcc-space-8);
+  text-align: center;
+  animation: cmcc-onboarding-slide-up 0.4s ease;
+}
+
+@keyframes cmcc-onboarding-slide-up {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+#cmcc-app .cmcc-onboarding-card h3 {
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0 0 var(--cmcc-space-2);
+  color: #1d2327;
+}
+
+#cmcc-app .cmcc-onboarding-card p {
+  font-size: 14px;
+  color: #50575e;
+  margin: 0 0 var(--cmcc-space-6);
+  line-height: 1.6;
+}
+
+#cmcc-app .cmcc-onboarding-steps {
+  display: flex;
+  justify-content: center;
+  gap: var(--cmcc-space-2);
+  margin-bottom: var(--cmcc-space-6);
+}
+
+#cmcc-app .cmcc-onboarding-step {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #c3c4c7;
+  transition: all 0.2s ease;
+}
+
+#cmcc-app .cmcc-onboarding-step.active {
+  background: var(--cmcc-primary);
+  transform: scale(1.3);
+}
+
+#cmcc-app .cmcc-onboarding-step.completed {
+  background: #00a32a;
+}
+
+#cmcc-app .cmcc-onboarding-progress {
+  width: 100%;
+  height: 4px;
+  background: #f0f0f1;
+  border-radius: var(--cmcc-radius-sm);
+  overflow: hidden;
+  margin-bottom: var(--cmcc-space-4);
+}
+
+#cmcc-app .cmcc-onboarding-progress::after {
+  content: '';
+  display: block;
+  height: 100%;
+  width: 0%;
+  background: var(--cmcc-primary);
+  border-radius: var(--cmcc-radius-sm);
+  transition: width 0.3s ease;
+}
+
+#cmcc-app .cmcc-onboarding-skip {
+  background: none;
+  border: none;
+  color: #757575;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+
+#cmcc-app .cmcc-onboarding-skip:hover {
+  color: #1d2327;
+}
+
+/* ─── Empty State Enhancements ────────────────────────────────────────── */
+
+#cmcc-app .cmcc-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--cmcc-space-10) var(--cmcc-space-4);
+  animation: cmcc-fade-in 0.4s ease;
+}
+
+#cmcc-app .cmcc-empty-state svg {
+  display: block;
+  margin: 0 auto var(--cmcc-space-4);
+  max-width: 160px;
+  height: auto;
+}
+
+@keyframes cmcc-empty-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+#cmcc-app .cmcc-empty-state svg {
+  animation: cmcc-empty-float 3s ease-in-out infinite;
+}
+
+/* ─── Responsive improvements ──────────────────────────────────────────── */
+
+@media screen and (max-width: 600px) {
+  #cmcc-app .cmcc-settings-form {
+    max-width: 100%;
+  }
+
+  #cmcc-app .cmcc-settings-form input[type='text'],
+  #cmcc-app .cmcc-settings-form input[type='number'],
+  #cmcc-app .cmcc-settings-form textarea,
+  #cmcc-app .cmcc-settings-form select {
+    font-size: 16px;
+  }
+
+  #cmcc-app .cmcc-stats-grid {
+    grid-template-columns: 1fr;
+    gap: var(--cmcc-space-3);
+  }
+
+  #cmcc-app .cmcc-chart-card {
+    padding: var(--cmcc-space-3);
+  }
+}
+
+/* ─── Responsive: Multi-Platform Hub Grid ──────────────────────────────── */
+
+#cmcc-app .cmcc-hub-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+@media screen and (max-width: 600px) {
+  #cmcc-app .cmcc-hub-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ─── Responsive: Reports Tab Layout ───────────────────────────────────── */
+@media screen and (max-width: 782px) {
+  #cmcc-app .cmcc-reports-layout {
+    flex-direction: column;
+  }
+
+  #cmcc-app .cmcc-reports-sidebar {
+    width: 100%;
+    margin-bottom: 16px;
+  }
+
+  #cmcc-app .cmcc-reports-main {
+    width: 100%;
+  }
+}
+
+/* ─── Responsive: Slide-Out Panel ──────────────────────────────────────── */
+@media screen and (max-width: 600px) {
+  #cmcc-app [role='dialog'] {
+    max-width: 100% !important;
+    width: 100% !important;
+    border-radius: 0 !important;
+  }
+}
+
+/* ─── Progress Bar (Dark Mode Friendly) ────────────────────────────────── */
+#cmcc-app .cmcc-progress-bar {
+  height: 8px;
+  background: #f0f0f1;
+  border-radius: var(--cmcc-radius-full);
+  overflow: hidden;
+}
+
+#cmcc-app .cmcc-progress-bar-fill {
+  height: 100%;
+  background: var(--cmcc-primary);
+  border-radius: var(--cmcc-radius-full);
+  transition: width 0.3s ease;
+}
+
+.dark #cmcc-app .cmcc-progress-bar {
+  background: #2a2a4a;
+}
+
+.dark #cmcc-app .cmcc-progress-bar-fill {
+  background: #60a5fa;
+}
+
+/* ─── Toast: Dark Mode Variations (info/warning) ────────────────────────── */
+#cmcc-app .cmcc-toast-info {
+  background: var(--cmcc-primary);
+}
+
+#cmcc-app .cmcc-toast-warning {
+  background: #f56e28;
+}
+
+.dark #cmcc-app .cmcc-toast-info {
+  background: #2563eb;
+}
+
+.dark #cmcc-app .cmcc-toast-warning {
+  background: #ea580c;
+}
+
+/* ─── Focus-visible global accessibility ───────────────────────────────── */
+#cmcc-app *:focus-visible {
+  outline: 2px solid var(--cmcc-wp-blue);
+  outline-offset: 1px;
+}
+
+/* ─── Smooth transitions for theme switching (only on theme-aware properties) ── */
+#cmcc-app,
+#cmcc-app .cmcc-top-bar,
+#cmcc-app .cmcc-tab,
+#cmcc-app .cmcc-tab-nav,
+#cmcc-app .cmcc-tab-content,
+#cmcc-app .cmcc-stat-card,
+#cmcc-app .cmcc-chart-card,
+#cmcc-app .cmcc-queue-toolbar,
+#cmcc-app .cmcc-queue-table-wrapper,
+#cmcc-app .cmcc-modal,
+#cmcc-app .cmcc-modal-header,
+#cmcc-app .cmcc-modal-body,
+#cmcc-app .cmcc-modal-footer,
+#cmcc-app .cmcc-theme-toggle,
+#cmcc-app .cmcc-onboarding-card,
+#cmcc-app .cmcc-search-input,
+#cmcc-app .cmcc-filter-select,
+#cmcc-app .cmcc-bulk-select,
+#cmcc-app .cmcc-per-page-select {
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    box-shadow 0.2s ease;
 }

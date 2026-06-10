@@ -9,9 +9,10 @@
 #  make lint               Lint all source files
 #
 #  make serve-api          Start the CMCC backend API stub (port 3000)
-#  make serve-storyblok    Build + serve Storyblok app (port 5000)
-#  make serve-wix          Build + serve Wix app (port 5000)
-#  make serve-shopify      Build + start Shopify Express server (port 3000)
+#  make serve-platforms    Start standalone dev server for all platforms (port 4000)
+#  make serve-storyblok    Build + serve Storyblok app (port 5002)
+#  make serve-wix          Build + serve Wix app (port 5001)
+#  make serve-shopify      Build + start Shopify Express server (port 3001)
 #
 #  make tunnel             Expose localhost via ngrok (requires ngrok CLI)
 #  make docker-wordpress   Boot WordPress test environment (port 8080)
@@ -26,11 +27,19 @@ SHELL := bash
 
 # ── Build & Test ──────────────────────────────────────────────────────────
 
-.PHONY: build test lint
+.PHONY: build test lint build-all
 
 build:
-	@echo "=== Building all packages and platforms ==="
+	@echo "=== Building packages (cmcc-core, cmcc-ui) ==="
 	turbo run build
+
+build-all: build
+	@echo "=== Building all platforms ==="
+	@cd platforms/wordpress && npm run build 2>/dev/null || echo "WordPress: skip"
+	@cd platforms/storyblok && npx webpack --mode development 2>/dev/null || echo "Storyblok: skip"
+	@cd platforms/wix && npx webpack --mode development 2>/dev/null || echo "Wix: skip"
+	@cd platforms/shopify && npx webpack --mode development 2>/dev/null || echo "Shopify: skip"
+	@echo "Done."
 
 test:
 	@echo "=== Running all tests ==="
@@ -40,9 +49,33 @@ lint:
 	@echo "=== Linting ==="
 	turbo run lint
 
-# ── API Stub ──────────────────────────────────────────────────────────────
+# ── Docker (All Platforms) ────────────────────────────────────────────────
 
-.PHONY: serve-api
+.PHONY: docker-up docker-down docker-build
+
+docker-up: build-all
+	@echo "=== Starting all CMCC platforms via Docker ==="
+	docker compose up -d
+	@echo ""
+	@echo "  WordPress: http://localhost:8080/wp-admin  (admin/admin)"
+	@echo "  Strapi:    http://localhost:1337/admin"
+	@echo "  Storyblok: http://localhost:4000/storyblok/"
+	@echo "  Wix:       http://localhost:4000/wix/"
+	@echo "  Shopify:   http://localhost:4000/shopify/"
+	@echo "  Test Hub:  http://localhost:4000/"
+	@echo ""
+
+docker-down:
+	@echo "=== Stopping all CMCC Docker services ==="
+	docker compose down
+
+docker-build:
+	@echo "=== Rebuilding Docker images ==="
+	docker compose build
+
+# ── Local (without Docker) ────────────────────────────────────────────────
+
+.PHONY: serve-api serve-dev
 
 serve-api:
 	@echo "=== Starting CMCC Test API Stub on http://localhost:3000 ==="
@@ -51,33 +84,40 @@ serve-api:
 	fi
 	cd tools/test-api-stub && node server.js
 
+serve-dev:
+	@echo "=== Starting CMCC Dev Server on http://localhost:4000 ==="
+	@echo "Make sure the API stub is running: make serve-api"
+	node tools/dev-server.js
+
 # ── Storyblok ─────────────────────────────────────────────────────────────
 
 .PHONY: serve-storyblok
 
 serve-storyblok: build
-	@echo "=== Serving Storyblok app on http://localhost:5000 ==="
-	@echo "Create an HTTPS tunnel with:  make tunnel PORT=5000"
-	npx serve platforms/storyblok/dist -l 5000
+	@echo "=== Serving Storyblok app on http://localhost:5002 ==="
+	@echo "Create an HTTPS tunnel with:  make tunnel PORT=5002"
+	# Copy index.html alongside the built assets (webpack only copies JS/CSS)
+	@cp platforms/storyblok/src/index.html platforms/storyblok/dist/index.html 2>/dev/null || true
+	npx serve platforms/storyblok/dist --listen 5002
 
 # ── Wix ───────────────────────────────────────────────────────────────────
 
 .PHONY: serve-wix
 
 serve-wix: build
-	@echo "=== Serving Wix app on http://localhost:5000 ==="
-	@echo "Create an HTTPS tunnel with:  make tunnel PORT=5000"
+	@echo "=== Serving Wix app on http://localhost:5001 ==="
+	@echo "Create an HTTPS tunnel with:  make tunnel PORT=5001"
 	# Copy index.html alongside the built assets (webpack only copies JS/CSS)
 	@cp platforms/wix/src/index.html platforms/wix/dist/index.html 2>/dev/null || true
-	npx serve platforms/wix/dist -l 5000
+	npx serve platforms/wix/dist -l 5001
 
 # ── Shopify ────────────────────────────────────────────────────────────────
 
 .PHONY: serve-shopify
 
 serve-shopify: build
-	@echo "=== Starting Shopify Express server on http://localhost:3000 ==="
-	@echo "Create an HTTPS tunnel with:  make tunnel PORT=3000"
+	@echo "=== Starting Shopify Express server on http://localhost:3001 ==="
+	@echo "Create an HTTPS tunnel with:  make tunnel PORT=3001"
 	@cd platforms/shopify && node server.js
 
 # ── Tunnel (ngrok) ─────────────────────────────────────────────────────────
@@ -112,6 +152,23 @@ docker-down:
 	docker compose down
 
 # ── Cleanup ───────────────────────────────────────────────────────────────
+
+.PHONY: tunnel tunnel-all clean
+
+tunnel:
+	@if [ -z "$(PORT)" ]; then \
+		echo "Usage: make tunnel PORT=5002"; \
+		echo "  PORT 5002 = Storyblok"; \
+		echo "  PORT 5001 = Wix"; \
+		echo "  PORT 3001 = Shopify"; \
+		exit 1; \
+	fi
+	@echo "=== Creating tunnel for localhost:$(PORT) ==="
+	npx localtunnel --port $(PORT)
+
+tunnel-all:
+	@echo "=== Creating tunnels for all SaaS platforms ==="
+	bash tunnel-all.sh
 
 .PHONY: clean
 

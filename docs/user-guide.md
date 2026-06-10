@@ -31,26 +31,42 @@ Content moderation at scale is hard. Comments, reviews, forum posts, form entrie
 ### Architecture at a Glance
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                    CMCC Backend (API)                    │
-│  Queue Management │ Spam Firewall │ Reputation System   │
-│  Analytics Engine │ Activity Logger                     │
-├──────────────────────┬──────────────────────────────────┤
-│      @cmcc/core      │          @cmcc/ui                │
-│  Shared business     │  Headless React components       │
-│  logic & data        │  with platform-adapted theming   │
-│  processing          │                                  │
-├──────────┬───────────┴──────────┬──────────┬────────────┤
-│ WordPress│ Strapi   │ Storyblok │   Wix    │  Shopify   │
-│ Plugin   │ Plugin   │ App       │   App    │  App       │
-└──────────┴──────────┴───────────┴──────────┴────────────┘
+┌──────────────────────────────────────────────────────────────────┐
+│                    CMCC Backend Layers                            │
+│  Queue Management │ Spam Firewall │ Reputation System             │
+│  Analytics Engine │ Activity Logger │ Webhook Engine              │
+├──────────────────────┬───────────────────────────────────────────┤
+│      @cmcc/core      │          @cmcc/ui                         │
+│  Shared business     │  Headless React components                │
+│  logic & data        │  with platform-adapted theming            │
+│  processing          │                                           │
+├──────────┬───────────┴──────────┬──────────┬─────────────────────┤
+│ WordPress│ Strapi   │ Storyblok │   Wix    │  Shopify            │
+│ Plugin   │ Plugin   │ Express   │   Velo   │  App (with         │
+│          │          │ Middleware│  Modules │  Express server)    │
+│          │          │ (mount on │ (built-  │                     │
+│          │          │  existing │  into    │                     │
+│          │          │  server)  │  Wix)    │                     │
+└──────────┴──────────┴───────────┴──────────┴─────────────────────┘
 ```
+
+**Key differences from previous architecture:**
+
+| Platform | Before (separate server) | After (embedded) |
+|---|---|---|
+| **Storyblok** | `node server/index.js` runs a standalone Express server on port 3002 | Embeddable Express middleware — mount on your existing Next.js/Nuxt/Express server with `app.use('/api/cmcc', cmccModeration({...}))` |
+| **Wix** | `node server/index.js` runs a standalone Express server on port 3003 | Wix Velo modules using `wix-data`, `wix-cron`, and `wix-http-functions` — no separate server needed |
+| **Strapi** | Strapi plugin (unchanged) | ✅ Already correct |
+| **Shopify** | Shopify App (unchanged) | ✅ Already correct |
+| **WordPress** | WordPress plugin (unchanged) | ✅ Already correct |
 
 ---
 
 ## Common Features (Across All Platforms)
 
 All CMCC installations share the same core set of features and interaction patterns. The visual styling adapts to each platform's design system, but the workflows are identical.
+
+> **First-time users:** When you open CMCC for the first time, an onboarding tutorial overlay appears highlighting key areas of the interface — the queue, quick filters, and main actions. You can dismiss the tutorial at any time, or re-trigger it from the Help menu. Your progress is saved locally so you won't see it again once completed.
 
 ---
 
@@ -124,7 +140,59 @@ A confirmation modal appears before bulk actions are executed. You'll receive a 
 
 Filters persist in the URL so you can bookmark specific views. The queue table is sortable by any column.
 
-When no items match your filters: "No items match your filters. Try adjusting your criteria."
+When no items match your filters: "No items match your filters. Try adjusting criteria."
+
+#### Quick Filter Bar
+
+The Quick Filter Bar is located at the top of the Queue tab (Design Modernization, Section 8). It provides one-click preset filters for rapid queue filtering:
+
+| Preset | Icon | Description |
+|---|---|---|
+| **All** | — | Clear all filters, show full queue |
+| **Last Hour** | 🕐 | Items submitted in the last 60 minutes |
+| **Today** | 📅 | Items submitted today |
+| **This Week** | 📆 | Items submitted this week |
+| **Pending Only** | ⏳ | Show only items needing review |
+| **High Spam Score** | 🚫 | Items with high spam probability |
+| **Flagged** | ⚠️ | Items that have been flagged |
+
+Click a preset to apply its filter combination. Click it again or click **All** to clear. Quick filters can be combined with the standard filter controls below.
+
+#### Bulk Operations Progress
+
+When performing bulk actions on multiple queue items, a **Progress Bar** appears showing the operation status (in progress, completed) with a percentage indicator. This provides visual feedback for large bulk operations (Section 8 - Modern UI Patterns).
+
+#### Keyboard Shortcuts
+
+CMCC provides keyboard shortcuts for power users to moderate content quickly without reaching for the mouse. Press `?` at any time to toggle the keyboard shortcuts help modal.
+
+| Key | Action | Context |
+|-----|--------|---------|
+| `A` | **Approve** the selected/focused item | Queue item row or detail panel |
+| `R` | **Reject** the selected/focused item | Queue item row or detail panel |
+| `S` | **Mark as Spam** the selected/focused item | Queue item row or detail panel |
+| `D` | **Defer** the selected/focused item | Queue item row or detail panel |
+| `V` | **View** item details (open slide-out panel) | Queue item row |
+| `F` | **Focus search** input | Anywhere in the Queue tab |
+| `?` | **Toggle** keyboard shortcuts help modal | Anywhere |
+| `Esc` | **Close** modal, panel, or dropdown | Any open overlay |
+
+Shortcuts are only active when the CMCC interface has focus (not when typing in a text input or textarea). The `?` shortcut works in all contexts, including text inputs, so you can always bring up the help reference.
+
+#### Saved Filters (Section 10.1 - Advanced Queue Management)
+
+Save your frequently used filter combinations for quick access:
+
+1. **Set your filters** — Choose Content Type, Status, Date Range, and enter a search term
+2. **Name the filter** — Type a name in the "Name this filter..." input box below the filter controls
+3. **Save** — Click the **+ Save Filter** button or press **Enter**
+4. **Apply** — Select a saved filter from the **Saved Filters...** dropdown to restore the filter combination
+5. **Delete** — Saved filters accumulate in the dropdown; they persist in your browser's local storage
+
+Saved filters are stored locally in your browser (localStorage) and are scoped to the Queue page. Use them to:
+- Switch between "Comments I need to review" and "High-priority flagged posts"
+- Share filter combinations with team members by giving them the filter name + parameters
+- Bookmark common moderation workflows
 
 ---
 
@@ -219,84 +287,342 @@ Activity log entries are automatically pruned based on the configured retention 
 
 ### Settings
 
-The Settings panel is organized into tabbed sections.
+The Settings panel is organized into multiple collapsible sections. Each section contains related configuration fields.
 
 #### General Settings
 
 | Setting | Description | Default |
 |---|---|---|
-| **Enable CMCC** | Master toggle for the moderation system | On |
-| **Items per page** | Queue page size | 25 |
-| **Default view** | Which status tab to show on load | Pending |
-| **Auto-refresh** | Automatically poll for new items | On, every 30s |
-| **Reputation tracking** | Enable user scoring | On |
-| **Approved item score** | Points awarded when content is approved | +1 |
-| **Rejected/spam item score** | Points deducted for spam/rejected | -2 |
-| **Deactivation score** | Score threshold that triggers auto-deactivation | -10 |
-| **Score decay rate** | Points recovered per inactive period | 1 point / 7 days after 30 days |
-| **Dark mode** | Toggle dark theme | Off |
-| **Compact queue view** | Denser table rows | Off |
-| **Show avatars** | Display user avatars in queue | On |
+| **Auto Moderate** | Automatically moderate items based on firewall rules | Off |
+| **Moderation Behavior** | How auto-moderated items are handled: Flag, Spam, or Discard | Flag |
+| **Queue Page Size** | Number of items shown per page in the queue | 25 |
+| **Language** | UI language | English |
 
 #### Spam Firewall
 
 The Spam Firewall automatically screens incoming content before it reaches the queue.
 
-**Enable/Disable:** Master toggle for the entire firewall.
-
 **Global Action:** When a rule triggers, choose what happens:
-
 - **Flag for review** — Mark as "flagged" and keep in queue for moderator review
-- **Silently discard** — Delete the content immediately (no record in queue)
-- **Send to spam** — Move to spam folder (comments only, if platform supports it)
+- **Mark as spam** — Move to spam folder
+- **Discard silently** — Delete the content immediately
 
 **Configurable Rules:**
 
 | Rule | Description | Default |
 |---|---|---|
-| **Max links** | Maximum number of links allowed per submission | 3 |
-| **Blacklisted keywords** | Keywords that auto-flag content. Supports wildcards (`\*free\*`, `\*viagra\*`). One per line. | Empty |
-| **Blacklisted IPs** | IP addresses or CIDR ranges to block | Empty |
+| **Max links** | Maximum number of links allowed per submission | 5 |
+| **Blacklisted keywords** | Keywords that auto-flag content. Supports wildcats (`*free*`, `*viagra*`). One per line. | Empty |
 | **Blacklisted email domains** | Email domains (e.g., `spamdomain.com`) to block | Empty |
-| **Country blocking** | Block content from selected countries (uses GeoLite2 database) | None |
-| **Submit time check** | Block content submitted too quickly (bots). Minimum time: 5 seconds | On |
-| **Duplicate detection** | Detect exact or near-duplicate submissions. Lookback period: 30 days | On |
-
-Each rule has its own enable toggle and threshold input. Hover over the help tooltip for more detail on any rule.
+| **Minimum submit time** | Minimum seconds before a form can be submitted (honeypot) | 3 |
+| **Duplicate detection** | Detect exact or near-duplicate submissions | On |
+| **Duplicate lookback days** | How far back to check for duplicates | 7 |
 
 #### Notifications
 
 | Setting | Description | Default |
 |---|---|---|
 | **Email alerts** | Enable email notifications for queue activity | On |
-| **Pending queue threshold** | Trigger email when pending items exceed this count | 50 |
-| **Notify moderators** | Who receives notifications (multiselect) | All admins/moderators |
-| **From email** | Sender address for notification emails | Platform default |
-| **Reply-to** | Reply-to address | Admin email |
-| **Daily digest** | Enable daily summary email | On |
-| **Digest time** | When to send the daily digest | 8:00 AM |
-| **Digest includes** | Queue totals, spam ratio, top offenders | All three |
-| **In-app alerts** | Dashboard notification badges | On |
-| **Anomaly indicators** | Show alert indicators on anomalies | On |
-| **Alert persistence** | How long alerts stay visible | Until dismissed |
+| **Alert threshold** | Trigger notifications when pending items exceed this count | 10 |
+| **Notify moderators** | Send notifications to moderators | On |
 
-#### Advanced Settings
+#### Appearance & Display
 
-| Setting / Action | Description |
+Customize the look and feel of the CMCC interface:
+
+| Setting | Description | Options |
+|---|---|---|
+| **Theme** | UI color scheme | Light, Dark, System |
+| **Queue View** | Layout style for the queue | Table, Cards, Compact |
+| **Items Per Page** | Number of items per page | 10 / 25 / 50 / 100 |
+| **Date Format** | How dates are displayed | Relative, Absolute, Both |
+| **Timezone** | Timezone for logs and analytics | Multiple timezones |
+
+#### Integrations
+
+Configure which content sources are automatically imported into the moderation queue:
+
+| Setting | Description |
 |---|---|
-| **Table prefix** | Read-only display of the database table prefix used |
-| **Optimize Tables** | Run database optimization on CMCC tables |
-| **Repair Tables** | Run database repair on CMCC tables |
-| **Clear All Data** | Wipe all CMCC data (with confirmation modal) |
-| **Audit log retention** | Number of days to keep activity log entries (default: 90) |
-| **Debug logging** | Enable verbose debug logs for troubleshooting |
-| **Download Log** | Download the current debug log file |
+| **Auto-Import Comments** | Automatically add new comments to the queue |
+| **Auto-Import Posts** | Automatically add new posts to the queue |
+| **Auto-Import WooCommerce Reviews** | Add WooCommerce product reviews |
+| **Auto-Import bbPress** | Add bbPress topics and replies |
+| **Auto-Import BuddyPress** | Add BuddyPress activity updates |
+| **Auto-Import Gravity Forms** | Add Gravity Forms form entries |
+| **Webhook URL** | Receive real-time moderation events via webhook |
 
-> **Note:** Multisite-specific options (network moderation, super admin permissions) are visible only when running WordPress in Multisite mode.
+#### Advanced Auto Moderation
 
-#### About Tab
+Fine-tune the automatic moderation engine with granular controls:
 
-Shows version information (CMCC, CMS platform, PHP/Node versions, database version), license details, and links to documentation, support, and upgrade options.
+**AI Detection:**
+| Setting | Description |
+|---|---|
+| **AI Spam Detection Engine** | None, Local ML, OpenAI, Claude, or Custom API |
+| **AI API Endpoint** | URL for custom AI moderation API |
+| **AI API Key** | API key for the AI service |
+| **Spam Score Threshold (Flag)** | Score above which items are flagged (0-100) |
+| **Spam Score Threshold (Spam)** | Score above which items are marked as spam (0-100) |
+| **Spam Score Threshold (Discard)** | Score above which items are silently discarded (0-100) |
+
+**Link Settings:**
+| Setting | Description |
+|---|---|
+| **Max Links Allowed** | Links before flagging |
+| **Block All Links** | Automatically flag any content with links |
+| **Allowlist Domains** | Domains exempt from link checks |
+| **Block Shortened URLs** | Flag content with URL shorteners (bit.ly, tinyurl, etc.) |
+| **Check Link Reputation** | Check links against external reputation services |
+
+**Keyword & Pattern Settings:**
+| Setting | Description |
+|---|---|
+| **Whitelisted Keywords** | Keywords that override blacklist matches |
+| **Regex Patterns** | Custom regex for advanced matching |
+| **ALL CAPS Detection** | Flag content with >70% capital letters |
+| **Repeated Character Detection** | Flag content with excessive repetition |
+| **Language Filter** | All, English Only, or Block Specific Languages |
+
+**User Behavior Settings:**
+| Setting | Description |
+|---|---|
+| **Min Account Age (Hours)** | Accounts younger than this get extra scrutiny |
+| **Block Disposable Emails** | Auto-block content from disposable email domains |
+| **Max Posts Per Hour** | Rate limiting per user |
+| **Banned IP Ranges** | CIDR notation, one per line |
+| **Banned Country Codes** | ISO country codes for geo-blocking |
+| **VPN/Proxy Detection** | Flag content from known VPN/proxy IPs |
+
+**Timing & Frequency:**
+| Setting | Description |
+|---|---|
+| **Cooldown Between Posts (Seconds)** | Minimum time between posts from same user |
+| **Duplicate Detection Window (Days)** | Lookback period for duplicate detection |
+| **Duplicate Similarity Threshold** | Content similarity % for flagging (0-100) |
+| **Weekend/Off-Hours Sensitivity** | Apply stricter rules during nights and weekends |
+
+**Automated Actions:**
+| Setting | Description |
+|---|---|
+| **Default Action** | Flag, Mark Spam, or Discard when rules triggered |
+| **Auto-Approve Threshold** | Spam score below this auto-approves (default: 10) |
+| **Notify on Auto-Discard** | Send alert when content is auto-discarded |
+| **Auto-Ban After N Violations** | Automatically ban users after X spam submissions |
+| **Ban Duration** | Temporary (24h, 7d, 30d) or Permanent |
+| **Learning Mode** | Record all rule evaluations without taking action (audit mode) |
+
+#### Moderator Management
+
+| Setting | Description | Default |
+|---|---|---|
+| **Secondary Approval Required** | Require a second moderator for high-risk actions | Off |
+| **Action Confirmation Required** | Show confirmation before approve/reject/spam | On |
+
+#### Data Retention
+
+| Setting | Description | Default |
+|---|---|---|
+| **Activity Log Retention (Days)** | Log entries older than this are purged | 90 |
+| **Archived Item Retention (Days)** | Archived items older than this are purged | 365 |
+| **Auto-Purge Schedule** | How often to run cleanup | Weekly |
+| **Export Before Purge** | Auto-export data before deletion | On |
+
+#### API & Webhooks
+
+| Setting | Description |
+|---|---|
+| **Webhook URL for New Items** | POST new queue items to external URL |
+| **Webhook URL for Approvals** | POST approved items |
+| **Webhook URL for Spam** | POST spam items |
+| **API Rate Limiting** | Requests per minute |
+| **Custom API Secret** | For webhook verification |
+
+#### Backup & Restore
+
+- **Scheduled Backups**: None, Daily, or Weekly
+- **Export Settings**: Download all settings as a JSON file
+- **Import Settings**: Upload a JSON file to restore settings
+
+---
+
+### Reports & Compliance
+
+The Reports tab provides a centralized hub for reporting, compliance, reputation management, and collaboration tools. It is organized into several sub-tabs:
+
+| Sub-tab | Description |
+|---------|-------------|
+| **Activity Report** | Moderation activity CSV/PDF export with date range and action type filters |
+| **Compliance Audit** | Full audit trail CSV export for regulatory compliance |
+| **User Reputation** | Searchable user list with trust levels, spam ratios, and reputation history |
+| **Moderator Performance** | Approval/rejection/spam metrics per moderator |
+| **Activity Feed** | Real-time feed of all moderation actions across the team |
+| **Multi-Platform Hub** | Connection status dashboard for all supported platforms |
+
+#### Report Sub-tabs Overview
+
+Each sub-tab provides a specific view into your moderation data:
+
+| Sub-tab | Key Features |
+|---------|-------------|
+| **Activity Report** | Interactive sortable table of all moderation actions; CSV and PDF export with date range and action type filters; search by keyword, moderator, or content type |
+| **Compliance Audit** | Immutable audit log with moderator details, timestamps, previous/new statuses, and notes; GDPR Article 30 compliant; CSV export |
+| **User Reputation** | Filterable user table with trust levels, spam ratios, and click-through to reputation history timeline |
+| **Moderator Performance** | Per-moderator metrics: total actions, approvals, rejections, spam marks; workload distribution visualization |
+| **Activity Feed** | Real-time feed of all moderation events (actions, notes, assignments, escalations); WebSocket with polling fallback; auto-scroll |
+| **Multi-Platform Hub** | Platform health indicators for WordPress, Shopify, Storyblok, Strapi, and Wix; cross-platform settings shortcuts |
+
+Available exports and tools include:
+
+- **Moderation Activity Report** — Full CSV download of all moderation actions with filters
+- **Compliance Audit Log** — CSV download with complete audit trail for regulatory compliance
+- **Scheduled Reports** — Automate recurring report generation and delivery
+
+#### Moderation Activity Report
+
+Export a full report of all moderation activity with date range and type filters:
+
+- **CSV Export** — Click the **Export CSV** button above the report table to download a detailed CSV of all moderation actions
+- **PDF Export** — Click the **Export PDF** button to generate a formatted PDF report suitable for compliance review
+- **Filters** — Use the date range picker and action type dropdowns to narrow the report scope before exporting
+
+The report table itself is interactive: sort by any column, search by keyword, or filter by moderator, action type, or date range.
+
+#### Scheduled Reports
+
+Automate recurring report generation to keep your team informed without manual effort:
+
+| Setting | Description |
+|---|---|
+| **Frequency** | Daily, Weekly, or Monthly |
+| **Report Type** | Moderation Activity or Compliance Audit Log |
+| **Recipients** | One or more email addresses (comma-separated) |
+| **Format** | CSV attachment delivered via email |
+| **Last Sent** | Timestamp of the most recent delivery |
+
+To set up a scheduled report, navigate to **Reports → Scheduled Reports** and click **Add Schedule**. Choose your report type, frequency, and recipients, then click **Save Schedule**.
+
+#### Compliance Audit Log
+
+Export the complete compliance audit trail as a CSV file for regulatory record-keeping:
+
+- **CSV Download** — Click **Export Audit Log** to download the full audit trail
+- **Moderator actions** with accurate timestamps
+- **Item details** — Content type, title, previous status, and new status
+- **Moderator notes** and metadata for each action
+- **Immutable log** — Entries cannot be deleted or altered once created
+
+The audit log is designed to satisfy regulatory requirements including GDPR Article 30 record-keeping.
+
+#### User Reputation Dashboard
+
+The User Reputation Dashboard provides a searchable, filterable table of all users with their reputation scores and trust levels. Access it from the **Reports → User Reputation** sub-tab.
+
+| Column | Description |
+|---|---|
+| **User** | The user's identifier (click to view full reputation history) |
+| **Trust Level** | Trusted, New, Regular, Suspicious, Verified, or Blocked |
+| **Total Items** | Total content items submitted |
+| **Spam** | Number of spam submissions |
+| **Approved** | Number of approved submissions |
+| **Spam Ratio** | Percentage of submissions flagged as spam |
+| **Last Active** | Timestamp of the user's most recent activity |
+
+Trust levels are auto-assigned based on spam ratio:
+
+| Trust Level | Spam Ratio | Badge Color | Description |
+|-------------|-----------|-------------|-------------|
+| **Verified** | < 2% | Dark Green | Highly trusted users with long positive history |
+| **Trusted** | < 5% | Green | Reliable users with consistent good behavior |
+| **Regular** | 5-15% | Blue | Normal users, no major concerns |
+| **New** | 5-20% | Yellow | Recently registered or low activity |
+| **Suspicious** | 20-50% | Orange | Needs monitoring — elevated spam risk |
+| **Blocked** | > 50% | Red | High-risk accounts, content auto-blocked |
+
+Each user's trust level is displayed prominently in the dashboard with a color-coded badge. Click any user row to view their **Reputation History** — a timeline of reputation changes showing score adjustments, reasons, and the moderator who made changes.
+
+The spam ratio is calculated automatically from the user's submission history and updates in real time as new content is moderated.
+
+#### Moderator Performance
+
+Track moderator effectiveness with performance analytics showing total actions, approvals, rejections, and spam marks per moderator. This helps team leads understand workload distribution and identify training needs.
+
+#### Activity Feed
+
+The Activity Feed shows real-time moderation actions as they happen, powered by a persistent WebSocket connection. All connected moderators see updates instantly without page refreshes (Section 10.6 - Collaboration Features):
+
+- **Moderator actions** — Approve, reject, spam, flag, defer events (type: `action`)
+- **Moderation notes** — Notes added to items (type: `note`)
+- **Item assignments** — Items assigned to moderators (type: `assignment`)
+- **Escalations** — Items escalated due to spam score or unreviewed time (type: `escalation`)
+- **Team changes** — Moderator team membership updates (type: `team_change`)
+- **Relative timestamps** — "2m ago", "1h ago", "3d ago"
+- **Loading/error states** — Skeleton loading and retry on failure
+- **Auto-scroll** — New entries appear at the top with a smooth animation
+
+The feed is accessible from the **Reports** tab and updates automatically via WebSocket. If the connection drops, the feed falls back to periodic polling every 30 seconds.
+
+**Conflict Detection:** The activity feed also powers conflict detection. If two moderators attempt to action the same item simultaneously, a warning modal appears notifying both users of the conflict, showing who actioned the item first and what action was taken.
+
+#### Collaboration Features
+
+##### Moderation Notes (Section 10.6)
+
+Moderators can leave notes on individual queue items for internal communication:
+
+| Feature | Description |
+|---|---|
+| **Note Types** | General, Question, Instruction, Resolution |
+| **Internal Notes** | Visible only to moderators, not content authors |
+| **Newest First** | Notes are displayed in reverse chronological order |
+| **Persistent Storage** | Notes are stored server-side with 30-day retention |
+
+To add a note, open the item detail panel (click the 👁️ icon) and scroll to the **Moderation Notes** section. Select the note type, mark it as internal if needed, and click **Add Note**.
+
+#### Item Assignment (Section 10.1)
+
+Queue items can be assigned to specific moderators with priority and due dates using the assignment UI in the detail slide-out panel:
+
+- **Open the detail panel** — Click the 👁️ (eye) icon on any queue item to open the right-hand slide-out panel
+- **Find the Assignment section** — Scroll down in the panel, below the action buttons and item details, to the **Assignment** card
+- **Select a moderator** — The **Assign To** field provides a searchable dropdown of all active moderators on your team
+- **Set a due date** — Use the date picker to set an SLA deadline; overdue assignments are highlighted in red
+- **Set priority** — Choose Low, Normal, High, or Critical using the segmented button control
+- **Save** — Click **Save Assignment** to submit; the panel refreshes to show the assignment details
+
+The assignment card in the slide-out panel displays the current assignment status at a glance:
+
+| Field | Description |
+|---|---|
+| **Assigned To** | Current assignee, or "Unassigned" |
+| **Priority** | Displayed as a colored badge (gray for Low, blue for Normal, orange for High, red for Critical) |
+| **Due Date** | Shown with days remaining; overdue items show "Overdue by X days" in red |
+| **Assigned By** | The moderator who made the assignment |
+| **Assigned At** | Timestamp of when the assignment was created |
+
+All assignments are logged in the activity log with:
+- Who assigned the item
+- Who was assigned
+- The priority level and due date
+- A timestamp of the assignment
+
+Use assignments to:
+- Distribute workload across your moderation team with the visual workload view
+- Track SLA compliance with color-coded due date indicators
+- Prioritize critical content with priority levels
+- Maintain an audit trail of responsibility
+
+#### Multi-Platform Hub
+
+The Multi-Platform Hub provides a central dashboard showing the connection status of all supported platforms:
+
+- **WordPress** — Always connected as the host platform
+- **Shopify** — Connect via the Shopify app (see Shopify section)
+- **Storyblok** — Connect via the Storyblok app
+- **Strapi** — Connect via the Strapi plugin
+- **Wix** — Connect via the Wix app
+
+The hub displays each platform's health status and provides quick access to cross-platform moderation settings.
 
 ---
 
@@ -343,10 +669,18 @@ The WordPress plugin registers the following REST API endpoints under the `cmcc/
 | `GET` | `/wp-json/cmcc/v1/queue` | List queue items (paginated, filterable) |
 | `POST` | `/wp-json/cmcc/v1/queue/:id/action` | Moderate a single item |
 | `POST` | `/wp-json/cmcc/v1/queue/bulk-action` | Perform bulk actions |
+| `GET` | `/wp-json/cmcc/v1/queue/:id/history` | Get item history/timeline |
+| `GET` | `/wp-json/cmcc/v1/queue/:id/notes` | Get notes for a queue item |
+| `POST` | `/wp-json/cmcc/v1/queue/:id/note` | Add a note to a queue item |
+| `POST` | `/wp-json/cmcc/v1/queue/:id/assign` | Assign item to a moderator |
 | `GET` | `/wp-json/cmcc/v1/analytics` | Get analytics data |
 | `GET` | `/wp-json/cmcc/v1/activity-log` | Get activity log entries |
+| `GET` | `/wp-json/cmcc/v1/activity-feed` | Get recent moderation activity |
+| `GET` | `/wp-json/cmcc/v1/users/reputation` | Get user reputation data |
 | `GET` | `/wp-json/cmcc/v1/settings` | Get current settings |
 | `POST` | `/wp-json/cmcc/v1/settings` | Update settings |
+| `POST` | `/wp-json/cmcc/v1/settings/export` | Export settings as JSON |
+| `POST` | `/wp-json/cmcc/v1/settings/import` | Import settings from JSON |
 
 ### Using the Queue
 
@@ -387,6 +721,17 @@ CMCC creates the following custom tables on activation:
 - `wp_cmcc_activity_log` — Records all moderation actions for the audit trail.
 
 Settings are stored as a WordPress option (`cmcc_settings`).
+
+### Multi-Site Support (Section 9 - Missing Features)
+
+CMCC fully supports WordPress Multisite networks:
+
+- **Network Activation** — When activated network-wide, CMCC creates its tables on every site in the network
+- **Per-Site Data** — Each site maintains its own queue, activity log, and settings (using `$wpdb->prefix`)
+- **Network Admin** — A **CMCC** submenu is available under **Settings** in the Network Admin for network-wide configuration
+- **Plugin Management** — Activate or deactivate CMCC on individual sites via the **Network Admin → Plugins** screen
+
+> **Note:** When using multisite, each site's moderator queue and analytics are independent. There is no cross-site aggregation of data in the current version.
 
 ### Troubleshooting
 
@@ -883,7 +1228,17 @@ After 5 minutes, the action is considered final and the Undo button is no longer
 
 ### Is there a dark mode?
 
-Yes. In **Settings → General**, toggle **Enable dark mode**. The interface will switch to a dark color scheme. The dark mode respects your platform's design system — it will use the appropriate dark palette for WordPress, Strapi, etc.
+Yes. CMCC provides full dark mode support with multiple access methods:
+
+- **🌙/☀️ Theme Toggle**: Click the moon/sun icon in the top bar (right side) of any CMCC page to switch between Light and Dark themes instantly.
+- **Settings**: Navigate to **Settings → Appearance & Display → Theme** and select Light, Dark, or System.
+- **System-aware**: When set to "System", CMCC follows your OS-level theme preference automatically.
+
+The theme preference is persisted in `localStorage`, so it survives page reloads and works across all browser tabs — changing the theme in one tab automatically updates all other open CMCC tabs.
+
+Dark mode covers all CMCC components including tables, charts, modals, settings forms, slide-out panels, activity feed, and the queue table. All Tailwind utility classes (`tw-bg-white`, `tw-text-gray-900`, `tw-border-gray-200`, etc.) are overridden for dark theme with smooth CSS transitions between themes.
+
+The dark palette uses a deep navy/charcoal scheme (#1a1a2e backgrounds, #2a2a4a borders, #e0e0e0 text) for reduced eye strain during extended moderation sessions.
 
 ### What happens to my data if I uninstall?
 
@@ -941,4 +1296,4 @@ The WordPress plugin is licensed under GPL-2.0-or-later to comply with WordPress
 ---
 
 *CMCC — Content Moderation Command Center v1.0.0*
-*Documentation last updated: June 2026*
+*Documentation last updated: June 2026 (Sections 8–10 implemented)*

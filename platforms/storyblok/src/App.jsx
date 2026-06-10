@@ -1,704 +1,331 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react'
-import {
-  QueueTable,
-  HeatmapChart,
-  SettingsForm,
-  ActionButton,
-  NotificationBadge,
-} from '@cmcc/ui'
-import {
-  processAnalytics,
-  filterActivityLog,
-  getDefaultAnalyticsOptions,
-  getEmptyAnalytics,
-} from '@cmcc/core'
+import React, { useState, useEffect, useCallback } from 'react'
+import { NotificationBadge, useKeyboardShortcuts } from '@cmcc/ui'
+import { useQueue } from './hooks/useQueue'
+import { useAnalytics } from './hooks/useAnalytics'
+import { useActivityLog } from './hooks/useActivityLog'
+import { useSettings } from './hooks/useSettings'
+import QueuePage from './pages/QueuePage'
+import AnalyticsPage from './pages/AnalyticsPage'
+import ActivityLogPage from './pages/ActivityLogPage'
+import SettingsPage from './pages/SettingsPage'
 
-const DEFAULT_SETTINGS = {
-  apiEndpoint: '',
-  apiKey: '',
-  spamThreshold: 0.7,
-  autoApprove: false,
-  notifyOnSpike: true,
-  notifyOnSpam: true,
-  queuePollInterval: 30,
-}
-
-const SETTINGS_SECTIONS = [
-  {
-    id: 'connection',
-    title: 'API Connection',
-    fields: [
-      {
-        name: 'apiEndpoint',
-        label: 'API Endpoint URL',
-        type: 'text',
-        placeholder: 'https://your-cmcc-api.example.com',
-        helpText: 'The base URL of your CMCC backend API',
-        required: true,
-      },
-      {
-        name: 'apiKey',
-        label: 'API Key',
-        type: 'text',
-        placeholder: 'Enter your API key',
-        helpText: 'Authentication key for the CMCC API',
-        required: true,
-      },
-    ],
-  },
-  {
-    id: 'moderation',
-    title: 'Moderation Rules',
-    fields: [
-      {
-        name: 'spamThreshold',
-        label: 'Spam Score Threshold',
-        type: 'number',
-        placeholder: '0.7',
-        helpText: 'Items with a spam score above this value are auto-flagged',
-        required: true,
-      },
-      {
-        name: 'autoApprove',
-        label: 'Auto-approve safe items',
-        type: 'toggle',
-        helpText: 'Automatically approve items with spam score below threshold',
-      },
-    ],
-  },
-  {
-    id: 'notifications',
-    title: 'Notifications',
-    fields: [
-      {
-        name: 'notifyOnSpike',
-        label: 'Alert on volume spikes',
-        type: 'toggle',
-        helpText: 'Receive alerts when queued item volume spikes',
-      },
-      {
-        name: 'notifyOnSpam',
-        label: 'Alert on high spam ratio',
-        type: 'toggle',
-        helpText: 'Receive alerts when spam ratio exceeds threshold',
-      },
-      {
-        name: 'queuePollInterval',
-        label: 'Queue Poll Interval (seconds)',
-        type: 'number',
-        placeholder: '30',
-        helpText: 'How often to check for new items in the queue',
-      },
-    ],
-  },
+const TABS = [
+  { id: 'Queue', label: 'Queue', icon: '📋' },
+  { id: 'Analytics', label: 'Analytics', icon: '📊' },
+  { id: 'Activity', label: 'Activity Log', icon: '📜' },
+  { id: 'Settings', label: 'Settings', icon: '⚙️' },
 ]
 
-const SETTINGS_VALIDATORS = {
-  apiEndpoint: (v) =>
-    !v || String(v).length === 0 ? 'API endpoint is required' : null,
-  apiKey: (v) => (!v || String(v).length === 0 ? 'API key is required' : null),
-  spamThreshold: (v) => {
-    const n = Number(v)
-    return Number.isNaN(n) || n < 0 || n > 1
-      ? 'Must be a number between 0 and 1'
-      : null
-  },
-  queuePollInterval: (v) => {
-    const n = Number(v)
-    return Number.isNaN(n) || n < 5 || n > 300
-      ? 'Must be between 5 and 300'
-      : null
-  },
-}
-
-const TABS = ['Queue', 'Analytics', 'Activity Log', 'Settings']
-
-export default function App({ sdk, space, user, _accessToken }) {
+export default function App() {
+  // ── Core state ─────────────────────────────────────────────────────-
   const [activeTab, setActiveTab] = useState('Queue')
-  const [queueItems, setQueueItems] = useState([])
-  const [analyticsData, setAnalyticsData] = useState(null)
-  const [activityLog, setActivityLog] = useState([])
-  // Load persisted settings from localStorage on mount
-  const [settings, setSettings] = useState(() => {
-    try {
-      const saved = localStorage.getItem('cmcc-storyblok-settings')
-      if (saved) {
-        return { ...DEFAULT_SETTINGS, ...JSON.parse(saved) }
-      }
-    } catch {
-      // Ignore corrupt settings
-    }
-    return DEFAULT_SETTINGS
-  })
-  const [loading, setLoading] = useState({
-    queue: false,
-    analytics: false,
-    activity: false,
-  })
-  const [error, setError] = useState(null)
+  const [theme, setTheme] = useState(
+    () => localStorage.getItem('cmcc-storyblok-theme') || 'light',
+  )
+  const [showShortcuts, setShowShortcuts] = useState(false)
+  const [toasts, setToasts] = useState([])
 
-  // Persist settings to localStorage
-  const persistSettings = useCallback((newSettings) => {
-    setSettings(newSettings)
-    try {
-      localStorage.setItem(
-        'cmcc-storyblok-settings',
-        JSON.stringify(newSettings),
-      )
-    } catch {
-      // Storage may be unavailable in iframe context
-    }
+  const addToast = useCallback((message, type = 'success') => {
+    const id = Date.now() + Math.random()
+    setToasts((prev) => [...prev, { id, message, type }])
+    setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 4000)
   }, [])
 
-  // Build the API headers
-  const apiHeaders = useCallback(() => {
-    const headers = { 'Content-Type': 'application/json' }
-    if (settings.apiKey) {
-      headers['X-API-Key'] = settings.apiKey
-    }
-    return headers
-  }, [settings.apiKey])
-
-  // Fetch queue items from the backend API
-  const fetchQueueItems = useCallback(async () => {
-    if (!settings.apiEndpoint) {
-      setQueueItems([])
-      return
-    }
-
-    setLoading((prev) => ({ ...prev, queue: true }))
-    setError(null)
-
-    try {
-      const res = await fetch(`${settings.apiEndpoint}/api/queue`, {
-        headers: apiHeaders(),
-      })
-
-      if (!res.ok) {
-        throw new Error(`API error: ${res.status} ${res.statusText}`)
-      }
-
-      const data = await res.json()
-      setQueueItems(Array.isArray(data) ? data : data.items || [])
-    } catch (err) {
-      console.error('[CMCC] Failed to fetch queue:', err)
-      setError('Failed to load queue items. Check your API connection.')
-      setQueueItems([])
-    } finally {
-      setLoading((prev) => ({ ...prev, queue: false }))
-    }
-  }, [settings.apiEndpoint, apiHeaders])
-
-  // Fetch analytics data
-  const fetchAnalytics = useCallback(async () => {
-    if (!settings.apiEndpoint) {
-      setAnalyticsData(getEmptyAnalytics())
-      return
-    }
-
-    setLoading((prev) => ({ ...prev, analytics: true }))
-
-    try {
-      const [eventsRes, queueRes] = await Promise.all([
-        fetch(`${settings.apiEndpoint}/api/events`, {
-          headers: apiHeaders(),
-        }),
-        fetch(`${settings.apiEndpoint}/api/queue`, {
-          headers: apiHeaders(),
-        }),
-      ])
-
-      if (!eventsRes.ok || !queueRes.ok) {
-        throw new Error('Failed to fetch analytics data from API')
-      }
-
-      const events = await eventsRes.json()
-      const queue = await queueRes.json()
-      const eventsList = Array.isArray(events) ? events : events.events || []
-      const queueList = Array.isArray(queue) ? queue : queue.items || []
-
-      setEventHistory(eventsList)
-
-      const opts = getDefaultAnalyticsOptions()
-      const processed = processAnalytics(eventsList, queueList, opts)
-      setAnalyticsData(processed)
-    } catch (err) {
-      console.error('[CMCC] Failed to fetch analytics:', err)
-      setAnalyticsData(getEmptyAnalytics())
-    } finally {
-      setLoading((prev) => ({ ...prev, analytics: false }))
-    }
-  }, [settings.apiEndpoint, apiHeaders])
-
-  // Fetch activity log
-  const fetchActivityLog = useCallback(async () => {
-    if (!settings.apiEndpoint) {
-      setActivityLog([])
-      return
-    }
-
-    setLoading((prev) => ({ ...prev, activity: true }))
-
-    try {
-      const res = await fetch(`${settings.apiEndpoint}/api/activity`, {
-        headers: apiHeaders(),
-      })
-
-      if (!res.ok) {
-        throw new Error(`API error: ${res.status}`)
-      }
-
-      const data = await res.json()
-      const entries = Array.isArray(data) ? data : data.entries || []
-      setActivityLog(entries)
-    } catch (err) {
-      console.error('[CMCC] Failed to fetch activity log:', err)
-      setActivityLog([])
-    } finally {
-      setLoading((prev) => ({ ...prev, activity: false }))
-    }
-  }, [settings.apiEndpoint, apiHeaders])
-
-  // Set up queue polling when apiEndpoint is configured
-  const pollingMount = useRef(true)
-  useEffect(() => {
-    if (pollingMount.current) {
-      pollingMount.current = false
-      return
-    }
-
-    if (!settings.apiEndpoint) return
-
-    const interval = setInterval(
-      fetchQueueItems,
-      (settings.queuePollInterval || 30) * 1000,
-    )
-
-    return () => clearInterval(interval)
-  }, [settings.apiEndpoint, settings.queuePollInterval, fetchQueueItems])
-
-  // Handle bulk actions from QueueTable
-  const handleBulkAction = async (actionType, selectedIds) => {
-    if (!settings.apiEndpoint) return
-
-    try {
-      const res = await fetch(`${settings.apiEndpoint}/api/queue/bulk`, {
-        method: 'POST',
-        headers: apiHeaders(),
-        body: JSON.stringify({
-          action: actionType,
-          ids: selectedIds,
-          moderatorId: user?.id || 'storyblok-user',
-        }),
-      })
-
-      if (!res.ok) {
-        throw new Error(`Bulk action failed: ${res.status}`)
-      }
-
-      // Refresh the queue after action
-      await fetchQueueItems()
-    } catch (err) {
-      console.error('[CMCC] Bulk action error:', err)
-      setError(`Failed to perform action: ${actionType}`)
-    }
-  }
-
-  // Handle individual item actions
-  const handleItemAction = async (actionType, itemId) => {
-    if (!settings.apiEndpoint) return
-
-    try {
-      const res = await fetch(`${settings.apiEndpoint}/api/queue/${itemId}`, {
-        method: 'PATCH',
-        headers: apiHeaders(),
-        body: JSON.stringify({
-          action: actionType,
-          moderatorId: user?.id || 'storyblok-user',
-        }),
-      })
-
-      if (!res.ok) {
-        throw new Error(`Action failed: ${res.status}`)
-      }
-
-      await fetchQueueItems()
-    } catch (err) {
-      console.error('[CMCC] Item action error:', err)
-      setError(`Failed to ${actionType} item ${itemId}`)
-    }
-  }
-
-  // Handle tab change — fetch data for the selected tab
-  const handleTabChange = (tab) => {
-    setActiveTab(tab)
-    if (tab === 'Queue') {
-      fetchQueueItems()
-    } else if (tab === 'Analytics') {
-      fetchAnalytics()
-    } else if (tab === 'Activity Log') {
-      fetchActivityLog()
-    }
-  }
-
-  // Handle chart cell click
-  const handleChartCellClick = (dayOfWeek, hour, count) => {
-    console.log(
-      `[CMCC] Heatmap cell: Day ${dayOfWeek}, Hour ${hour}, Count ${count}`,
-    )
-  }
-
-  // Handle settings save
-  const handleSettingsSave = (formData) => {
-    persistSettings({
-      ...settings,
-      ...formData,
+  // ── Theme toggle ────────────────────────────────────────────────────
+  const toggleTheme = useCallback(() => {
+    setTheme((prev) => {
+      const next = prev === 'light' ? 'dark' : 'light'
+      localStorage.setItem('cmcc-storyblok-theme', next)
+      return next
     })
+  }, [])
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', theme === 'dark')
+  }, [theme])
+
+  // ── Domain hooks ────────────────────────────────────────────────────
+  const settings = useSettings()
+  const { apiHeaders } = settings
+  const queue = useQueue({
+    apiEndpoint: settings.settings.apiEndpoint,
+    apiHeaders,
+    addToast,
+  })
+  const analytics = useAnalytics({
+    apiEndpoint: settings.settings.apiEndpoint,
+    apiHeaders,
+  })
+  const activityLog = useActivityLog({
+    apiEndpoint: settings.settings.apiEndpoint,
+    apiHeaders,
+  })
+
+  // ── Keyboard shortcuts ─────────────────────────────────────────────
+  useKeyboardShortcuts([
+    {
+      key: '?',
+      description: 'Toggle keyboard shortcut help',
+      handler: () => setShowShortcuts((p) => !p),
+    },
+    {
+      key: 'Escape',
+      description: 'Close panel / Cancel',
+      handler: () => setShowShortcuts(false),
+    },
+    {
+      key: 'f',
+      description: 'Focus search',
+      handler: () => document.querySelector('input[type="text"]')?.focus(),
+    },
+  ])
+
+  // ── Tab rendering map ──────────────────────────────────────────────
+  const renderTab = () => {
+    switch (activeTab) {
+      case 'Queue':
+        return <QueuePage queue={queue} theme={theme} addToast={addToast} />
+      case 'Analytics':
+        return <AnalyticsPage analytics={analytics} />
+      case 'Activity':
+        return <ActivityLogPage activityLog={activityLog} />
+      case 'Settings':
+        return (
+          <SettingsPage
+            settings={settings.settings}
+            updateSettings={settings.updateSettings}
+            addToast={addToast}
+          />
+        )
+      default:
+        return null
+    }
   }
 
-  // Filter activity log when viewing
-  const filteredLog = filterActivityLog
-    ? filterActivityLog(activityLog, { limit: 50 })
-    : activityLog
-
-  // Compute summary counts for badges
-  const pendingCount = queueItems.filter((i) => i.status === 'pending').length
-  const spamCount = queueItems.filter((i) => i.status === 'spam').length
-
-  // Determine tab icon indicators
-  const tabIndicators = {
-    Queue:
-      pendingCount > 0 ? (
-        <NotificationBadge count={pendingCount} type="pending" size="sm" />
-      ) : null,
-  }
+  const pendingCount = queue.items.filter((i) => i.status === 'pending').length
 
   return (
-    <div className="cmcc-storyblok-app">
-      {/* Header */}
-      <header className="cmcc-header">
-        <div className="cmcc-header-brand">
-          <h1 className="cmcc-title">CMCC Moderation</h1>
-          <span className="cmcc-space-name">{space?.name || 'Storyblok'}</span>
+    <div
+      style={{
+        fontFamily: 'system-ui, sans-serif',
+        minHeight: '100vh',
+        background: theme === 'dark' ? '#1f2937' : '#f9fafb',
+        color: theme === 'dark' ? '#f3f4f6' : '#111827',
+      }}
+    >
+      {/* ── Top bar ───────────────────────────────────────────────── */}
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          padding: '12px 20px',
+          background: theme === 'dark' ? '#111827' : '#fff',
+          borderBottom: '1px solid #e5e7eb',
+        }}
+      >
+        <h1 style={{ margin: 0, fontSize: '1.125rem', fontWeight: 600 }}>
+          🛡️ <span style={{ color: '#2563eb' }}>CMCC</span>{' '}
+          <span
+            style={{ fontWeight: 400, color: '#6b7280', fontSize: '0.875rem' }}
+          >
+            Storyblok Moderation
+          </span>
+        </h1>
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <button
+            onClick={toggleTheme}
+            style={{
+              background: 'none',
+              border: '1px solid #d1d5db',
+              borderRadius: '6px',
+              padding: '6px 10px',
+              cursor: 'pointer',
+              fontSize: '1rem',
+            }}
+          >
+            {theme === 'light' ? '🌙' : '☀️'}
+          </button>
+          <button
+            onClick={() => setShowShortcuts(true)}
+            style={{
+              background: 'none',
+              border: '1px solid #d1d5db',
+              borderRadius: '6px',
+              padding: '6px 10px',
+              cursor: 'pointer',
+              fontSize: '0.875rem',
+            }}
+          >
+            ⌨️
+          </button>
         </div>
-        <div className="cmcc-header-meta">
-          <span className="cmcc-user-name">{user?.name || 'User'}</span>
-          {spamCount > 0 && (
-            <NotificationBadge count={spamCount} type="spam" size="sm" />
-          )}
-        </div>
-      </header>
+      </div>
 
-      {/* Tab Navigation */}
-      <nav className="cmcc-tabs" role="tablist">
+      {/* ── Tab navigation ────────────────────────────────────────── */}
+      <div
+        style={{
+          display: 'flex',
+          gap: '4px',
+          padding: '8px 20px',
+          background: theme === 'dark' ? '#1f2937' : '#fff',
+          borderBottom: '1px solid #e5e7eb',
+        }}
+      >
         {TABS.map((tab) => (
           <button
-            key={tab}
-            role="tab"
-            type="button"
-            aria-selected={activeTab === tab}
-            className={
-              'cmcc-tab' + (activeTab === tab ? ' cmcc-tab-active' : '')
-            }
-            onClick={() => handleTabChange(tab)}
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            style={{
+              padding: '8px 16px',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontWeight: activeTab === tab.id ? 600 : 400,
+              background:
+                activeTab === tab.id
+                  ? theme === 'dark'
+                    ? '#374151'
+                    : '#eff6ff'
+                  : 'transparent',
+              color:
+                activeTab === tab.id
+                  ? '#2563eb'
+                  : theme === 'dark'
+                    ? '#d1d5db'
+                    : '#6b7280',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              fontSize: '0.875rem',
+            }}
           >
-            {tab}
-            {tabIndicators[tab] && (
-              <span className="cmcc-tab-badge">{tabIndicators[tab]}</span>
+            {tab.icon} {tab.label}
+            {tab.id === 'Queue' && pendingCount > 0 && (
+              <NotificationBadge
+                count={pendingCount}
+                type="pending"
+                size="sm"
+              />
             )}
           </button>
         ))}
-      </nav>
+      </div>
 
-      {/* Error Banner */}
-      {error && (
-        <div className="cmcc-error-banner" role="alert">
-          <span>{error}</span>
-          <button
-            className="cmcc-error-dismiss"
-            onClick={() => setError(null)}
-            aria-label="Dismiss error"
-          >
-            &times;
-          </button>
+      {/* ── Tab content ───────────────────────────────────────────── */}
+      <div style={{ maxWidth: '1200px', margin: '0 auto' }}>{renderTab()}</div>
+
+      {/* ── Toast notifications ───────────────────────────────────── */}
+      {toasts.length > 0 && (
+        <div
+          style={{
+            position: 'fixed',
+            bottom: '16px',
+            right: '16px',
+            zIndex: 50,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '8px',
+          }}
+        >
+          {toasts.map((t) => (
+            <div
+              key={t.id}
+              onClick={() => setToasts((p) => p.filter((x) => x.id !== t.id))}
+              style={{
+                padding: '10px 16px',
+                borderRadius: '8px',
+                boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+                fontSize: '0.875rem',
+                fontWeight: 500,
+                cursor: 'pointer',
+                background:
+                  t.type === 'success'
+                    ? '#16a34a'
+                    : t.type === 'error'
+                      ? '#dc2626'
+                      : '#374151',
+                color: '#fff',
+              }}
+            >
+              {t.type === 'success' ? '✓' : t.type === 'error' ? '✕' : 'ℹ'}{' '}
+              {t.message}
+            </div>
+          ))}
         </div>
       )}
 
-      {/* Main Content */}
-      <main className="cmcc-main" role="tabpanel">
-        {/* --- Queue Tab --- */}
-        {activeTab === 'Queue' && (
-          <section className="cmcc-section">
-            <div className="cmcc-section-header">
-              <h2>Moderation Queue</h2>
-              <ActionButton
-                variant="secondary"
-                size="sm"
-                onClick={fetchQueueItems}
-                loading={loading.queue}
-              >
-                Refresh
-              </ActionButton>
-            </div>
-
-            {!settings.apiEndpoint ? (
-              <div className="cmcc-empty">
-                <p>
-                  Connect your CMCC backend API in Settings to start moderating
-                  content.
-                </p>
-                <ActionButton
-                  variant="primary"
-                  size="md"
-                  onClick={() => setActiveTab('Settings')}
-                >
-                  Open Settings
-                </ActionButton>
-              </div>
-            ) : loading.queue && queueItems.length === 0 ? (
-              <div className="cmcc-loading">
-                <div className="cmcc-loading-spinner"></div>
-                <p>Loading queue items...</p>
-              </div>
-            ) : queueItems.length === 0 ? (
-              <div className="cmcc-empty">
-                <p>No items in the moderation queue.</p>
-              </div>
-            ) : (
-              <QueueTable
-                items={queueItems}
-                onBulkAction={handleBulkAction}
-                onItemAction={handleItemAction}
-                filters={{
-                  contentType: 'all',
-                  status: 'all',
-                  dateRange: 'all',
-                  search: '',
-                }}
-                onFilterChange={() => {
-                  // Filtering handled client-side by QueueTable
-                }}
-                isLoading={loading.queue}
-                totalCount={queueItems.length}
-              />
-            )}
-          </section>
-        )}
-
-        {/* --- Analytics Tab --- */}
-        {activeTab === 'Analytics' && (
-          <section className="cmcc-section">
-            <h2>Analytics</h2>
-
-            {!settings.apiEndpoint ? (
-              <div className="cmcc-empty">
-                <p>
-                  Connect your CMCC backend API in Settings to view analytics.
-                </p>
-              </div>
-            ) : loading.analytics ? (
-              <div className="cmcc-loading">
-                <div className="cmcc-loading-spinner"></div>
-                <p>Loading analytics data...</p>
-              </div>
-            ) : !analyticsData ||
-              analyticsData.heatmap.data.every((row) =>
-                row.every((c) => c === 0),
-              ) ? (
-              <div className="cmcc-empty">
-                <p>
-                  No analytics data available yet. Data will appear once
-                  moderation activity begins.
-                </p>
-              </div>
-            ) : (
-              <div className="cmcc-analytics-grid">
-                {/* Heatmap */}
-                <div className="cmcc-analytics-card">
-                  <h3>Activity Heatmap</h3>
-                  <HeatmapChart
-                    data={analyticsData.heatmap}
-                    onCellClick={handleChartCellClick}
-                    showTooltip
-                  />
-                </div>
-
-                {/* Spam Ratio */}
-                <div className="cmcc-analytics-card">
-                  <h3>Spam Ratio</h3>
-                  {analyticsData.spamRatio ? (
-                    <div className="cmcc-metric">
-                      <span className="cmcc-metric-value">
-                        {analyticsData.spamRatio.percentage.toFixed(1)}%
-                      </span>
-                      <span className="cmcc-metric-label">
-                        {analyticsData.spamRatio.spamCount} spam /{' '}
-                        {analyticsData.spamRatio.totalCount} total
-                      </span>
-                    </div>
-                  ) : (
-                    <p className="cmcc-empty">No data</p>
-                  )}
-                </div>
-
-                {/* Content Breakdown */}
-                <div className="cmcc-analytics-card">
-                  <h3>Content Breakdown</h3>
-                  {analyticsData.contentTypeBreakdown &&
-                  analyticsData.contentTypeBreakdown.length > 0 ? (
-                    <ul className="cmcc-breakdown-list">
-                      {analyticsData.contentTypeBreakdown.map((item) => (
-                        <li key={item.type}>
-                          <span className="cmcc-breakdown-type">
-                            {item.type}
-                          </span>
-                          <span className="cmcc-breakdown-pct">
-                            {item.percentage.toFixed(0)}%
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p className="cmcc-empty">No data</p>
-                  )}
-                </div>
-
-                {/* Anomaly Alerts */}
-                {analyticsData.anomalyAlerts &&
-                  analyticsData.anomalyAlerts.length > 0 && (
-                    <div className="cmcc-analytics-card cmcc-alerts-card">
-                      <h3>Anomaly Alerts</h3>
-                      <ul className="cmcc-alerts-list">
-                        {analyticsData.anomalyAlerts.map((alert) => (
-                          <li
-                            key={alert.id}
-                            className={
-                              'cmcc-alert cmcc-alert--' + alert.severity
-                            }
-                          >
-                            <strong>{alert.type}</strong>
-                            <p>{alert.description}</p>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-              </div>
-            )}
-          </section>
-        )}
-
-        {/* --- Activity Log Tab --- */}
-        {activeTab === 'Activity Log' && (
-          <section className="cmcc-section">
-            <div className="cmcc-section-header">
-              <h2>Activity Log</h2>
-              <ActionButton
-                variant="secondary"
-                size="sm"
-                onClick={fetchActivityLog}
-                loading={loading.activity}
-              >
-                Refresh
-              </ActionButton>
-            </div>
-
-            {!settings.apiEndpoint ? (
-              <div className="cmcc-empty">
-                <p>
-                  Connect your CMCC backend API in Settings to view the activity
-                  log.
-                </p>
-              </div>
-            ) : loading.activity && activityLog.length === 0 ? (
-              <div className="cmcc-loading">
-                <div className="cmcc-loading-spinner"></div>
-                <p>Loading activity log...</p>
-              </div>
-            ) : filteredLog.length === 0 ? (
-              <div className="cmcc-empty">
-                <p>No activity recorded yet.</p>
-              </div>
-            ) : (
-              <div className="cmcc-activity-table-wrapper">
-                <table className="cmcc-activity-table">
-                  <thead>
-                    <tr>
-                      <th>Timestamp</th>
-                      <th>User</th>
-                      <th>Action</th>
-                      <th>Item</th>
-                      <th>Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredLog.map((entry) => (
-                      <tr key={entry.id}>
-                        <td>{new Date(entry.timestamp).toLocaleString()}</td>
-                        <td>{entry.moderatorId}</td>
-                        <td>{entry.action}</td>
-                        <td>{entry.itemTitle || entry.itemId}</td>
-                        <td>
-                          <span
-                            className={
-                              'cmcc-activity-status cmcc-activity-status--' +
-                              (entry.status || 'info')
-                            }
-                          >
-                            {entry.status || 'info'}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </section>
-        )}
-
-        {/* --- Settings Tab --- */}
-        {activeTab === 'Settings' && (
-          <section className="cmcc-section">
-            <h2>Settings</h2>
-
-            {!sdk ? (
-              <div className="cmcc-empty">
-                <p>
-                  Storyblok SDK not available. Settings require an active
-                  Storyblok App context.
-                </p>
-              </div>
-            ) : (
-              <SettingsForm
-                sections={SETTINGS_SECTIONS}
-                onSubmit={handleSettingsSave}
-                initialValues={settings}
-                validators={SETTINGS_VALIDATORS}
-                submitLabel="Save Settings"
-                isSubmitting={false}
-              />
-            )}
-          </section>
-        )}
-      </main>
-
-      {/* Footer */}
-      <footer className="cmcc-footer">
-        <span className="cmcc-footer-brand">CMCC Moderation v1.0.0</span>
-        <span className="cmcc-footer-separator">&middot;</span>
-        <span className="cmcc-footer-powered">
-          Powered by{' '}
-          <a
-            href="https://www.storyblok.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="cmcc-footer-link"
+      {/* ── Keyboard shortcuts modal ──────────────────────────────── */}
+      {showShortcuts && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 50,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'rgba(0,0,0,0.4)',
+          }}
+          onClick={() => setShowShortcuts(false)}
+        >
+          <div
+            style={{
+              background: '#fff',
+              borderRadius: '12px',
+              padding: '24px',
+              maxWidth: '400px',
+              width: '90%',
+              boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+            }}
+            onClick={(e) => e.stopPropagation()}
           >
-            Storyblok
-          </a>
-        </span>
-      </footer>
+            <h2
+              style={{
+                margin: '0 0 16px',
+                fontSize: '1.125rem',
+                fontWeight: 600,
+              }}
+            >
+              ⌨️ Keyboard Shortcuts
+            </h2>
+            <div
+              style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}
+            >
+              {[
+                { key: '?', desc: 'Toggle help' },
+                { key: 'Esc', desc: 'Close panel / Cancel' },
+                { key: 'F', desc: 'Focus search' },
+              ].map((s) => (
+                <div
+                  key={s.key}
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                  }}
+                >
+                  <span style={{ color: '#6b7280', fontSize: '0.875rem' }}>
+                    {s.desc}
+                  </span>
+                  <kbd
+                    style={{
+                      padding: '4px 8px',
+                      fontSize: '0.75rem',
+                      fontFamily: 'monospace',
+                      background: '#f3f4f6',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '4px',
+                    }}
+                  >
+                    {s.key}
+                  </kbd>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

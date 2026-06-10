@@ -36,6 +36,15 @@ module.exports = (env, argv) => {
     },
     resolve: {
       extensions: ['.js', '.jsx'],
+      alias: process.env.LOCAL_DEV
+        ? {
+            // Use local mock for app-bridge-react when running standalone
+            '@shopify/app-bridge-react$': path.resolve(
+              __dirname,
+              'src/app-bridge-mock.js',
+            ),
+          }
+        : {},
     },
     plugins: [
       new MiniCssExtractPlugin({
@@ -46,11 +55,15 @@ module.exports = (env, argv) => {
       minimize: isProd,
       minimizer: ['...', new CssMinimizerPlugin()],
     },
-    externals: {
-      react: 'React',
-      'react-dom': 'ReactDOM',
-      '@shopify/app-bridge-react': 'AppBridgeReact',
-      '@shopify/polaris': 'Polaris',
-    },
+    // For local dev (LOCAL_DEV=true), bundle everything so the app works standalone.
+    // In production, these are externalized (provided by Shopify admin via CDN).
+    externals: process.env.LOCAL_DEV
+      ? {}
+      : {
+          react: 'React',
+          'react-dom': 'ReactDOM',
+          '@shopify/app-bridge-react': 'AppBridgeReact',
+          '@shopify/polaris': 'Polaris',
+        },
   }
 }

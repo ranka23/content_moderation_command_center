@@ -3,59 +3,84 @@
 const PLUGIN_ID = 'cmcc'
 
 module.exports = async ({ strapi }) => {
-  // Register plugin permissions
+  // Register plugin permissions (Strapi v5 format)
   const permissions = [
     {
-      action: 'plugin::cmcc.queue.read',
-      subject: null,
-      properties: {},
-      conditions: [],
+      uid: 'queue.read',
+      displayName: 'Queue',
+      section: 'plugins',
+      pluginName: PLUGIN_ID,
     },
     {
-      action: 'plugin::cmcc.queue.moderate',
-      subject: null,
-      properties: {},
-      conditions: [],
+      uid: 'queue.moderate',
+      displayName: 'Moderate',
+      section: 'plugins',
+      pluginName: PLUGIN_ID,
     },
     {
-      action: 'plugin::cmcc.queue.bulk',
-      subject: null,
-      properties: {},
-      conditions: [],
+      uid: 'queue.bulk',
+      displayName: 'Bulk Moderation',
+      section: 'plugins',
+      pluginName: PLUGIN_ID,
     },
     {
-      action: 'plugin::cmcc.analytics.read',
-      subject: null,
-      properties: {},
-      conditions: [],
+      uid: 'analytics.read',
+      displayName: 'Analytics',
+      section: 'plugins',
+      pluginName: PLUGIN_ID,
     },
     {
-      action: 'plugin::cmcc.settings.read',
-      subject: null,
-      properties: {},
-      conditions: [],
+      uid: 'settings.read',
+      displayName: 'Read Settings',
+      section: 'plugins',
+      pluginName: PLUGIN_ID,
     },
     {
-      action: 'plugin::cmcc.settings.update',
-      subject: null,
-      properties: {},
-      conditions: [],
+      uid: 'settings.update',
+      displayName: 'Update Settings',
+      section: 'plugins',
+      pluginName: PLUGIN_ID,
     },
     {
-      action: 'plugin::cmcc.activity-log.read',
-      subject: null,
-      properties: {},
-      conditions: [],
+      uid: 'activity-log.read',
+      displayName: 'Activity Log',
+      section: 'plugins',
+      pluginName: PLUGIN_ID,
+    },
+    {
+      uid: 'notifications.send',
+      displayName: 'Send Notifications',
+      section: 'plugins',
+      pluginName: PLUGIN_ID,
+    },
+    {
+      uid: 'webhooks.manage',
+      displayName: 'Manage Webhooks',
+      section: 'plugins',
+      pluginName: PLUGIN_ID,
+    },
+    {
+      uid: 'hooks.manage',
+      displayName: 'Manage Content Hooks',
+      section: 'plugins',
+      pluginName: PLUGIN_ID,
+    },
+    {
+      uid: 'retention.manage',
+      displayName: 'Manage Retention',
+      section: 'plugins',
+      pluginName: PLUGIN_ID,
+    },
+    {
+      uid: 'sync.receive',
+      displayName: 'Receive Platform Sync',
+      section: 'plugins',
+      pluginName: PLUGIN_ID,
     },
   ]
 
   await strapi.admin.services.permission.actionProvider.registerMany(
-    permissions.map((p) => ({
-      ...p,
-      section: 'plugins',
-      pluginName: PLUGIN_ID,
-      category: 'plugins',
-    })),
+    permissions,
   )
 
   // Register content types

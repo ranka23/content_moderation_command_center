@@ -567,3 +567,225 @@ export class InMemoryReputationAdapter implements ReputationStorageAdapter {
     }
   }
 }
+
+// --------------------------------------------------------------------------
+// v2 Enhancement: Reputation Service
+// --------------------------------------------------------------------------
+
+/**
+ * Service layer for managing user reputation.
+ *
+ * Provides high-level operations for recording moderation actions,
+ * tracking breaches, and generating reputation summaries.
+ * Wraps a {@link ReputationStorageAdapter} with business logic.
+ *
+ * @example
+ *   const service = new ReputationService();
+ *   await service.recordApprovedContent('user-123');
+ *   const summary = await service.getUserSummary('user-123');
+ */
+export class ReputationService {
+  private readonly options: ReputationOptions
+  private readonly storage: ReputationStorageAdapter
+  private readonly knownUserIds: Set<string>
+
+  constructor(
+    options?: Partial<ReputationOptions>,
+    storage?: ReputationStorageAdapter,
+  ) {
+    const defaults = getDefaultReputationOptions()
+    this.options = {
+      approvedItemScore:
+        options?.approvedItemScore ?? defaults.approvedItemScore,
+      rejectedItemScore:
+        options?.rejectedItemScore ?? defaults.rejectedItemScore,
+      deactivationScore:
+        options?.deactivationScore ?? defaults.deactivationScore,
+      decayEnabled: options?.decayEnabled ?? defaults.decayEnabled,
+      decayRatePerPeriod:
+        options?.decayRatePerPeriod ?? defaults.decayRatePerPeriod,
+      decayPeriodDays: options?.decayPeriodDays ?? defaults.decayPeriodDays,
+      inactivityThresholdDays:
+        options?.inactivityThresholdDays ?? defaults.inactivityThresholdDays,
+    }
+    this.storage = storage ?? new InMemoryReputationAdapter()
+    this.knownUserIds = new Set()
+  }
+
+  /**
+   * Get a comprehensive reputation summary for a user.
+   *
+   * Reads the stored score and breaches, applies inactivity-based score decay
+   * in memory (without persisting), classifies the risk level, and returns
+   * a full {@link UserReputationSummary}.
+   */
+  async getUserSummary(userId: string): Promise<UserReputationSummary> {
+    this.knownUserIds.add(userId)
+
+    const [score, breaches] = await Promise.all([
+      this.storage.getReputationScore(userId),
+      this.storage.getUserBreaches(userId),
+    ])
+
+    const riskThresholds = getDefaultRiskLevelThresholds()
+
+    // Compute decayed score in memory – do not persist a read-only summary
+    let effectiveScore: ReputationScore | null = score
+    if (score !== null) {
+      const decayedScoreValue = calculateDecayedScore(
+        score.score,
+        score.lastUpdated,
+        new Date().toISOString(),
+        this.options,
+      )
+      effectiveScore = {
+        ...score,
+        score: decayedScoreValue,
+      }
+    }
+
+    return generateUserReputationSummary(
+      effectiveScore,
+      breaches,
+      this.options,
+      riskThresholds,
+    )
+  }
+
+  /**
+   * Record approved content for a user, adding a reputation point.
+   */
+  async recordApprovedContent(userId: string): Promise<void> {
+    this.knownUserIds.add(userId)
+
+    const change = calculateReputationChange('approve', this.options)
+    const existing = await this.storage.getReputationScore(userId)
+
+    const newScore: ReputationScore = {
+      score: (existing?.score ?? 0) + change,
+      lastUpdated: new Date().toISOString(),
+      totalApproved: (existing?.totalApproved ?? 0) + 1,
+      totalRejected: existing?.totalRejected ?? 0,
+      timesDeactivated: existing?.timesDeactivated ?? 0,
+    }
+
+    await this.storage.saveReputationScore(userId, newScore)
+  }
+
+  /**
+   * Record rejected content for a user, subtracting a reputation point.
+   */
+  async recordRejectedContent(userId: string): Promise<void> {
+    this.knownUserIds.add(userId)
+
+    const change = calculateReputationChange('reject', this.options)
+    const existing = await this.storage.getReputationScore(userId)
+
+    const newScore: ReputationScore = {
+      score: (existing?.score ?? 0) + change,
+      lastUpdated: new Date().toISOString(),
+      totalApproved: existing?.totalApproved ?? 0,
+      totalRejected: (existing?.totalRejected ?? 0) + 1,
+      timesDeactivated: existing?.timesDeactivated ?? 0,
+    }
+
+    await this.storage.saveReputationScore(userId, newScore)
+  }
+
+  /**
+   * Record a user deactivation, applying the deactivation penalty.
+   */
+  async recordDeactivation(userId: string): Promise<void> {
+    this.knownUserIds.add(userId)
+
+    const change = calculateReputationChange('deactivate', this.options)
+    const existing = await this.storage.getReputationScore(userId)
+
+    const newScore: ReputationScore = {
+      score: (existing?.score ?? 0) + change,
+      lastUpdated: new Date().toISOString(),
+      totalApproved: existing?.totalApproved ?? 0,
+      totalRejected: existing?.totalRejected ?? 0,
+      timesDeactivated: (existing?.timesDeactivated ?? 0) + 1,
+    }
+
+    await this.storage.saveReputationScore(userId, newScore)
+  }
+
+  /**
+   * Record a breach event for a user.
+   *
+   * Accepts optional additional details (`moderatorId`, `contentType`,
+   * `contentId`) spread from the `details` map. Does not modify the
+   * user's numeric score directly; breach severity is reflected through
+   * risk level classification.
+   */
+  async recordBreach(
+    userId: string,
+    reason: string,
+    details?: Record<string, unknown>,
+  ): Promise<void> {
+    this.knownUserIds.add(userId)
+
+    // Use bracket notation for Record<string, unknown> access to satisfy
+    // noPropertyAccessFromIndexSignature
+    const breach: Omit<BreachRecord, 'id'> = {
+      userId,
+      timestamp: new Date().toISOString(),
+      reason,
+      moderatorId:
+        (details?.['moderatorId'] as string | number | undefined) ?? '',
+      contentType: (details?.['contentType'] as string | undefined) ?? '',
+      contentId: (details?.['contentId'] as string | number | undefined) ?? '',
+    }
+
+    await this.storage.addBreachRecord(breach)
+  }
+
+  /**
+   * Get all tracked users whose risk level exceeds the given threshold.
+   *
+   * Uses {@link isHighRiskUser} to evaluate both score and recent breach count.
+   * Only returns users that this service instance has interacted with.
+   *
+   * @param threshold - Optional score threshold override.
+   *   Defaults to `getDefaultHighRiskThresholds().highRiskThreshold`.
+   */
+  async getHighRiskUsers(
+    threshold?: number,
+  ): Promise<Array<{ userId: string; summary: UserReputationSummary }>> {
+    const riskThresholds = getDefaultHighRiskThresholds()
+    const effectiveThreshold = threshold ?? riskThresholds.highRiskThreshold
+    const highRiskOptions = {
+      highRiskThreshold: effectiveThreshold,
+      recentBreachThreshold: riskThresholds.recentBreachThreshold,
+    }
+
+    const results: Array<{
+      userId: string
+      summary: UserReputationSummary
+    }> = []
+
+    for (const userId of this.knownUserIds) {
+      const summary = await this.getUserSummary(userId)
+      if (
+        isHighRiskUser(
+          summary.currentScore,
+          summary.recentBreachCount,
+          highRiskOptions,
+        )
+      ) {
+        results.push({ userId, summary })
+      }
+    }
+
+    return results
+  }
+
+  /**
+   * Get the raw reputation score for a user, or `null` if none exists.
+   */
+  async getUserScore(userId: string): Promise<ReputationScore | null> {
+    return this.storage.getReputationScore(userId)
+  }
+}

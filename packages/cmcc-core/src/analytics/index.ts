@@ -34,7 +34,20 @@ export interface QueueItem {
   id: string
   contentType: string
   originalId: string | number
-  status: 'pending' | 'spam' | 'flagged'
+  /**
+   * Item moderation status.
+   * Core analytics only tracks pending/spam/flagged,
+   * but the union allows additional statuses used by
+   * platform-specific implementations.
+   */
+  status:
+    | 'pending'
+    | 'spam'
+    | 'flagged'
+    | 'approved'
+    | 'rejected'
+    | 'deferred'
+    | 'deactivated'
   spamScore: number
   authorId: string | number
   dateGmt: string // ISO date string
@@ -153,23 +166,19 @@ export function generateHeatmapData(
     // Skip events outside lookback window
     if (eventTime < cutoffTime) continue
 
-    // Only count pending and spam creations for heatmap
-    if (
-      event.action === 'created' &&
-      (event.contentType === 'comment' || event.contentType === 'post')
-    ) {
-      const eventDate = new Date(event.timestamp)
-      const dayOfWeek = eventDate.getDay() // 0-6 (Sun-Sat)
-      const hour = eventDate.getHours() // 0-23
+    // Count ALL moderation actions for heatmap (not just 'created')
+    // Moderation actions: approve, reject, spam, defer, flag, created, trashed, etc.
+    const eventDate = new Date(event.timestamp)
+    const dayOfWeek = eventDate.getDay() // 0-6 (Sun-Sat)
+    const hour = eventDate.getHours() // 0-23
 
-      // Safe access: dayOfWeek is 0-6, hour is 0-23, array is 7x24
-      const dayRow = data[dayOfWeek]
-      if (dayRow !== undefined) {
-        const currentValue = dayRow[hour]
-        if (currentValue !== undefined) {
-          dayRow[hour] = currentValue + 1
-          maxCount = Math.max(maxCount, currentValue + 1)
-        }
+    // Safe access: dayOfWeek is 0-6, hour is 0-23, array is 7x24
+    const dayRow = data[dayOfWeek]
+    if (dayRow !== undefined) {
+      const currentValue = dayRow[hour]
+      if (currentValue !== undefined) {
+        dayRow[hour] = currentValue + 1
+        maxCount = Math.max(maxCount, currentValue + 1)
       }
     }
   }

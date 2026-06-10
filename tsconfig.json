@@ -1,36 +1,36 @@
 {
   "compilerOptions": {
-    /* Base Strict Family Settings */
-    "strict": true, // Enables all strict type checking options
-    "noImplicitAny": true, // Raises error on expressions and declarations with an implied 'any' type
-    "strictNullChecks": true, // Enables strict null checks (null and undefined are not in the domain of any type)
-    "strictFunctionTypes": true, // Enables strict checking of function types
-    "strictBindCallApply": true, // Enables strict 'bind', 'call', and 'apply' methods on functions
-    "strictPropertyInitialization": true, // Enables strict checking of property initialization in classes
-    "noImplicitThis": true, // Raises error on 'this' expressions with an implied 'any' type
-    "alwaysStrict": true, // Parse in strict mode and emit "use strict" for each source file
-
-    /* Advanced Strictness & Safety */
-    "noUncheckedIndexedAccess": true, // Adds undefined to a type accessed via an index or array (e.g., array[0] becomes Type | undefined)
-    "exactOptionalPropertyTypes": true, // Prohibits explicitly assigning 'undefined' to an optional property (e.g., { a?: string } cannot take { a: undefined })
-    "noPropertyAccessFromIndexSignature": true, // Forces bracket notation (obj['prop']) for accessing index signature properties to prevent typos
-    "noImplicitOverride": true, // Ensures overridden members in derived classes are marked with an 'override' modifier
-
-    /* Code Hygiene & Quality Flags */
-    "noImplicitReturns": true, // Report error when not all code paths in function return a value
-    "noFallthroughCasesInSwitch": true, // Report errors for fallthrough cases in switch statements
-    "noUnusedLocals": true, // Report errors on unused local variables
-    "noUnusedParameters": true, // Report errors on unused parameters
-    "allowUnreachableCode": false, // Report error when unreachable code is detected
-    "allowUnusedLabels": false, // Report error when unused labels are detected
-
-    /* Module and Interop Settings */
-    "esModuleInterop": true, // Emit additional JavaScript to ease support for importing CommonJS modules
-    "forceConsistentCasingInFileNames": true, // Disallow inconsistently-cased references to the same file
-
-    /* Target and Compilation Settings */
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictBindCallApply": true,
+    "strictPropertyInitialization": true,
+    "noImplicitThis": true,
+    "alwaysStrict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "noImplicitOverride": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "allowUnreachableCode": false,
+    "allowUnusedLabels": false,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
     "target": "ES2022",
     "downlevelIteration": true,
-    "skipLibCheck": true
-  }
+    "skipLibCheck": true,
+    "moduleResolution": "node",
+    "module": "ESNext",
+  },
+  "references": [
+    { "path": "packages/cmcc-core" },
+    { "path": "packages/cmcc-server-core" },
+    { "path": "packages/cmcc-ui" },
+  ],
+  "files": [],
+  "include": [],
 }

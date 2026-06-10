@@ -1,413 +1,272 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react'
-import { getEmptyAnalytics } from '@cmcc/core'
-import {
-  QueueTable,
-  HeatmapChart,
-  SettingsForm,
-  ActionButton,
-  NotificationBadge,
-} from '@cmcc/ui'
-
-const TABS = [
-  { id: 'queue', label: 'Queue' },
-  { id: 'analytics', label: 'Analytics' },
-  { id: 'activity-log', label: 'Activity Log' },
-  { id: 'settings', label: 'Settings' },
-]
-
-function mapInitialTab(page) {
-  switch (page) {
-    case 'cmcc':
-      return 'queue'
-    case 'cmcc-analytics':
-      return 'analytics'
-    case 'cmcc-settings':
-      return 'settings'
-    default:
-      return 'queue'
-  }
-}
-
-function apiFetch(path, options = {}) {
-  const url = (window.cmccData?.restUrl || '/wp-json/cmcc/v1/') + path
-  const headers = {
-    'X-WP-Nonce': window.cmccData?.nonce || '',
-    'Content-Type': 'application/json',
-    ...options.headers,
-  }
-
-  return fetch(url, { ...options, headers }).then((res) => {
-    if (!res.ok) {
-      return res.json().then((err) => Promise.reject(err))
-    }
-    return res.json()
-  })
-}
+import React, { useState, useEffect, useCallback, startTransition } from 'react'
+import { useKeyboardShortcuts, NotificationBadge } from '@cmcc/ui'
+import { TABS, KEYBOARD_SHORTCUTS, mapInitialTab } from './lib/constants'
+import { useQueue } from './hooks/useQueue'
+import { useAnalytics } from './hooks/useAnalytics'
+import { useActivityLog } from './hooks/useActivityLog'
+import { useSettings } from './hooks/useSettings'
+import { useCollaboration } from './hooks/useCollaboration'
+import { useReports } from './hooks/useReports'
+import QueuePage from './pages/QueuePage'
+import AnalyticsPage from './pages/AnalyticsPage'
+import ActivityLogPage from './pages/ActivityLogPage'
+import ReportsPage from './pages/ReportsPage'
+import SettingsPage from './pages/SettingsPage'
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState(() => {
-    const initial = window.cmccData?.initialTab || ''
-    return mapInitialTab(initial)
-  })
-  const [queueItems, setQueueItems] = useState([])
-  const [queueTotal, setQueueTotal] = useState(0)
-  const [analyticsData, setAnalyticsData] = useState(getEmptyAnalytics())
-  const [queueStats, setQueueStats] = useState({
-    pending: 0,
-    spam: 0,
-    flagged: 0,
-    total: 0,
-  })
-  const [activityLog, setActivityLog] = useState([])
-  const [, setSettings] = useState({})
-  const [isLoading, setIsLoading] = useState(false)
-
-  // Queue filters
-  const [filters, setFilters] = useState({
-    contentType: 'all',
-    status: 'all',
-    dateRange: '7d',
-    search: '',
-  })
-
-  // Queue pagination
-  const [queuePage, setQueuePage] = useState(1)
-  const queuePerPage = 25
-
-  // Activity log pagination
-  const [logPage, setLogPage] = useState(1)
-  const logPerPage = 50
-  const [logTotal, setLogTotal] = useState(0)
-
-  // Settings form state
-  const [settingsSections, setSettingsSections] = useState([])
-  const [settingsInitialValues, setSettingsInitialValues] = useState({})
-
-  const fetchQueue = useCallback(
-    async (page = 1) => {
-      setIsLoading(true)
-      try {
-        const params = new URLSearchParams({
-          page: String(page),
-          per_page: String(queuePerPage),
-        })
-        if (filters.status && filters.status !== 'all') {
-          params.set('status', filters.status)
-        }
-        if (filters.contentType && filters.contentType !== 'all') {
-          params.set('content_type', filters.contentType)
-        }
-        if (filters.search) {
-          params.set('search', filters.search)
-        }
-        const data = await apiFetch('queue?' + params.toString())
-        setQueueItems(data.items || [])
-        setQueueTotal(data.total || 0)
-      } catch (err) {
-        console.error('Failed to fetch queue:', err)
-      } finally {
-        setIsLoading(false)
-      }
-    },
-    [filters],
+  // ── Active tab (initialized from WP admin page slug) ──────────────
+  const [activeTab, setActiveTab] = useState(() =>
+    mapInitialTab(window.cmccData?.initialTab || ''),
   )
 
-  const fetchAnalytics = useCallback(async () => {
-    try {
-      const data = await apiFetch('analytics')
-      setQueueStats(
-        data.queue_stats || {
-          pending: 0,
-          spam: 0,
-          flagged: 0,
-          total: 0,
-        },
-      )
-      setAnalyticsData({
-        heatmap: {
-          data: Array(7)
-            .fill(0)
-            .map(() => Array(24).fill(0)),
-          maxCount: 0,
-        },
-        spamRatio: data.spam_ratio || {
-          spamCount: 0,
-          totalCount: 0,
-          ratio: 0,
-          percentage: 0,
-        },
-        contentTypeBreakdown: data.content_type_breakdown || [],
-        moderatorPerformance: [],
-        anomalyAlerts: [],
-        dateRange: { start: '', end: '' },
-      })
-    } catch (err) {
-      console.error('Failed to fetch analytics:', err)
-    }
-  }, [])
-
-  const fetchActivityLog = useCallback(
-    async (page = 1) => {
-      setIsLoading(true)
-      try {
-        const params = new URLSearchParams({
-          page: String(page),
-          per_page: String(logPerPage),
-        })
-        const data = await apiFetch('activity-log?' + params.toString())
-        setActivityLog(data.items || [])
-        setLogTotal(data.total || 0)
-      } catch (err) {
-        console.error('Failed to fetch activity log:', err)
-      } finally {
-        setIsLoading(false)
-      }
-    },
-    [logPerPage],
+  // ── Theme (persisted in localStorage) ─────────────────────────────
+  const [theme, setTheme] = useState(
+    () => localStorage.getItem('cmcc-theme') || 'light',
   )
-
-  const fetchSettings = useCallback(async () => {
-    try {
-      const data = await apiFetch('settings')
-      setSettings(data)
-
-      // Build settings sections for SettingsForm
-      const sections = []
-      const initialValues = {}
-
-      if (data.general) {
-        const fields = [
-          {
-            name: 'auto_moderate',
-            label: 'Auto Moderate',
-            type: 'toggle',
-            helpText: 'Automatically moderate items based on firewall rules',
-          },
-          {
-            name: 'moderation_behavior',
-            label: 'Moderation Behavior',
-            type: 'select',
-            options: [
-              { value: 'flag', label: 'Flag for review' },
-              { value: 'spam', label: 'Mark as spam' },
-              { value: 'discard', label: 'Discard silently' },
-            ],
-          },
-          {
-            name: 'queue_page_size',
-            label: 'Queue Page Size',
-            type: 'number',
-          },
-          {
-            name: 'language',
-            label: 'Language',
-            type: 'select',
-            options: [
-              { value: 'en', label: 'English' },
-              { value: 'es', label: 'Spanish' },
-              { value: 'fr', label: 'French' },
-              { value: 'de', label: 'German' },
-            ],
-          },
-        ]
-        sections.push({ id: 'general', title: 'General', fields })
-        Object.assign(initialValues, data.general)
-      }
-
-      if (data.spam_firewall) {
-        const fields = [
-          {
-            name: 'max_links',
-            label: 'Max Links Allowed',
-            type: 'number',
-            helpText: 'Maximum number of links before content is flagged',
-          },
-          {
-            name: 'blacklisted_keywords',
-            label: 'Blacklisted Keywords',
-            type: 'textarea',
-            placeholder: 'One keyword per line',
-          },
-          {
-            name: 'blacklisted_email_domains',
-            label: 'Blacklisted Email Domains',
-            type: 'textarea',
-            placeholder: 'e.g. spam.com',
-          },
-          {
-            name: 'min_submit_time',
-            label: 'Minimum Submit Time (seconds)',
-            type: 'number',
-            helpText: 'Minimum time before a form can be submitted',
-          },
-          {
-            name: 'enable_duplicate_detection',
-            label: 'Enable Duplicate Detection',
-            type: 'toggle',
-          },
-          {
-            name: 'duplicate_lookback_days',
-            label: 'Duplicate Lookback Days',
-            type: 'number',
-          },
-          {
-            name: 'global_action',
-            label: 'Default Action',
-            type: 'select',
-            options: [
-              { value: 'flag', label: 'Flag for review' },
-              { value: 'spam', label: 'Mark as spam' },
-              { value: 'discard', label: 'Discard silently' },
-            ],
-          },
-        ]
-        sections.push({ id: 'spam_firewall', title: 'Spam Firewall', fields })
-        Object.assign(initialValues, data.spam_firewall)
-      }
-
-      if (data.notifications) {
-        const fields = [
-          {
-            name: 'email_alerts',
-            label: 'Email Alerts',
-            type: 'toggle',
-            helpText: 'Send email notifications when alerts are triggered',
-          },
-          {
-            name: 'alert_threshold',
-            label: 'Alert Threshold',
-            type: 'number',
-            helpText: 'Number of flagged items before an alert is sent',
-          },
-          {
-            name: 'notify_moderators',
-            label: 'Notify Moderators',
-            type: 'toggle',
-            helpText: 'Notify moderators of pending items',
-          },
-        ]
-        sections.push({ id: 'notifications', title: 'Notifications', fields })
-        Object.assign(initialValues, data.notifications)
-      }
-
-      setSettingsSections(sections)
-      setSettingsInitialValues(initialValues)
-    } catch (err) {
-      console.error('Failed to fetch settings:', err)
-    }
+  const toggleTheme = useCallback(() => {
+    setTheme((p) => {
+      const n = p === 'light' ? 'dark' : 'light'
+      localStorage.setItem('cmcc-theme', n)
+      return n
+    })
   }, [])
-
-  // Track initial mount to load data once
-  const initialMount = useRef(true)
-
-  // Load data when tab changes
   useEffect(() => {
-    if (initialMount.current) {
-      initialMount.current = false
-      fetchQueue(queuePage)
-      return
-    }
-    // Don't auto-fetch on mount - handled above
-  }, [fetchQueue, queuePage])
+    document.documentElement.classList.toggle('dark', theme === 'dark')
+    document.body.classList.toggle('cmcc-dark-mode', theme === 'dark')
+  }, [theme])
 
-  // Re-fetch when tab changes via the tab change handler below
+  // ── Onboarding (dismissed permanently once closed) ────────────────
+  const [showOnboarding, setShowOnboarding] = useState(
+    () => !localStorage.getItem('cmcc-onboarding-dismissed'),
+  )
+  const dismissOnboarding = useCallback(() => {
+    setShowOnboarding(false)
+    localStorage.setItem('cmcc-onboarding-dismissed', 'true')
+  }, [])
 
-  // Handle tab change
-  const handleTabChange = (tabId) => {
-    setActiveTab(tabId)
-    if (tabId === 'queue') {
-      setQueuePage(1)
-      fetchQueue(1)
-    } else if (tabId === 'analytics') {
-      fetchAnalytics()
-    } else if (tabId === 'activity-log') {
-      setLogPage(1)
-      fetchActivityLog(1)
-    } else if (tabId === 'settings') {
-      fetchSettings()
-    }
-  }
+  // ── Toast notifications (4 s auto-dismiss) ──────────────────────
+  const [toasts, setToasts] = useState([])
+  const addToast = useCallback((message, type = 'success') => {
+    const id = Date.now() + Math.random()
+    setToasts((p) => [...p, { id, message, type }])
+    setTimeout(() => setToasts((p) => p.filter((t) => t.id !== id)), 4000)
+  }, [])
 
-  // Handle queue item action
-  const handleItemAction = async (actionType, itemId) => {
-    try {
-      await apiFetch(`queue/${encodeURIComponent(itemId)}/action`, {
-        method: 'POST',
-        body: JSON.stringify({ action: actionType }),
-      })
-      fetchQueue(queuePage)
-    } catch (err) {
-      console.error('Action failed:', err)
-    }
-  }
+  // ── Keyboard shortcuts modal ─────────────────────────────────────
+  const [showShortcuts, setShowShortcuts] = useState(false)
 
-  // Handle bulk action
-  const handleBulkAction = async (actionType, selectedIds) => {
-    try {
-      await apiFetch('queue/bulk-action', {
-        method: 'POST',
-        body: JSON.stringify({ ids: selectedIds, action: actionType }),
-      })
-      fetchQueue(queuePage)
-    } catch (err) {
-      console.error('Bulk action failed:', err)
-    }
-  }
+  // ── Initialize all domain hooks ──────────────────────────────────
+  const queue = useQueue({ addToast })
+  const analytics = useAnalytics({ addToast })
+  const activityLog = useActivityLog({ addToast })
+  const settings = useSettings({ addToast })
+  const collaboration = useCollaboration({ addToast })
+  const reports = useReports({ addToast })
 
-  // Handle filter change
-  const handleFilterChange = (newFilters) => {
-    setFilters((prev) => ({ ...prev, ...newFilters }))
-    setQueuePage(1)
-  }
-
-  // Handle settings save
-  const handleSettingsSave = async (formData) => {
-    try {
-      // Rebuild the settings structure from sections
-      const payload = {}
-      for (const section of settingsSections) {
-        payload[section.id] = {}
-        for (const field of section.fields) {
-          if (formData[field.name] !== undefined) {
-            payload[section.id][field.name] = formData[field.name]
-          }
-        }
+  // ── Load data when the active tab changes ─────────────────────────
+  useEffect(() => {
+    startTransition(() => {
+      switch (activeTab) {
+        case 'queue':
+          queue.fetchQueue(queue.queuePage)
+          break
+        case 'analytics':
+          analytics.fetchAnalytics(analytics.analyticsDateRange)
+          break
+        case 'activity-log':
+          activityLog.fetchActivityLog(activityLog.logPage)
+          break
+        case 'reports':
+          analytics.fetchAnalytics(analytics.analyticsDateRange)
+          reports.fetchUserReputation()
+          reports.fetchActivityFeed()
+          break
+        case 'settings':
+          settings.fetchSettings()
+          break
       }
-      await apiFetch('settings', {
-        method: 'POST',
-        body: JSON.stringify(payload),
-      })
-    } catch (err) {
-      console.error('Failed to save settings:', err)
-    }
-  }
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    activeTab,
+    queue.fetchQueue,
+    queue.queuePage,
+    analytics.fetchAnalytics,
+    analytics.analyticsDateRange,
+    activityLog.fetchActivityLog,
+    activityLog.logPage,
+    reports.fetchUserReputation,
+    reports.fetchActivityFeed,
+    settings.fetchSettings,
+  ])
 
-  // Spam ratio data for display
-  const spamRatioData = analyticsData?.spamRatio || {
-    spamCount: 0,
-    totalCount: 0,
-    ratio: 0,
-    percentage: 0,
-  }
+  // ── Handle tab change: set state, update URL, highlight WP menu ──
+  const handleTabChange = useCallback(
+    (tabId) => {
+      setActiveTab(tabId)
 
+      const tabPageMap = {
+        queue: 'cmcc',
+        analytics: 'cmcc-analytics',
+        'activity-log': 'cmcc',
+        reports: 'cmcc-reports',
+        settings: 'cmcc-settings',
+      }
+      const page = tabPageMap[tabId] || 'cmcc'
+      if (window.history?.replaceState) {
+        window.history.replaceState(null, '', `?page=${page}`)
+      }
+      document
+        .querySelectorAll(
+          '#adminmenu .wp-submenu a[href^="admin.php?page=cmcc"]',
+        )
+        .forEach((el) => {
+          const href = el.getAttribute('href') || ''
+          el.closest('li')?.classList.toggle(
+            'current',
+            href.includes(`page=${page}`),
+          )
+        })
+
+      if (tabId === 'queue') queue.setQueuePage(1)
+      else if (tabId === 'activity-log') activityLog.setLogPage(1)
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [queue.setQueuePage, activityLog.setLogPage],
+  )
+
+  // ── Global keyboard shortcuts ─────────────────────────────────────
+  useKeyboardShortcuts([
+    {
+      key: '?',
+      description: 'Toggle keyboard shortcut help',
+      handler: () => setShowShortcuts((p) => !p),
+    },
+    {
+      key: 'f',
+      description: 'Focus search',
+      handler: () => document.querySelector('input[type="text"]')?.focus(),
+    },
+  ])
+
+  // ── Render ────────────────────────────────────────────────────────
   return (
-    <div className="cmcc-admin">
-      {/* Tab Navigation */}
+    <div className={`cmcc-admin cmcc-theme-${theme}`}>
+      {/* ── Onboarding overlay ─────────────────────────────────────── */}
+      {showOnboarding && (
+        <div className="cmcc-onboarding-overlay">
+          <div className="cmcc-onboarding-card">
+            <button
+              className="cmcc-onboarding-skip"
+              onClick={dismissOnboarding}
+            >
+              ✕
+            </button>
+            <h3>Welcome to CMCC 🛡️</h3>
+            <p>
+              Your Content Moderation Command Center is ready. Here&apos;s how
+              to get started:
+            </p>
+            <div className="cmcc-onboarding-steps">
+              {[
+                {
+                  num: 1,
+                  title: 'Review the Queue',
+                  desc: 'Go to the Queue tab to review pending content.',
+                },
+                {
+                  num: 2,
+                  title: 'Take Action',
+                  desc: 'Approve, reject, flag, or mark items as spam.',
+                },
+                {
+                  num: 3,
+                  title: 'Configure Settings',
+                  desc: 'Set up spam firewall rules and auto-moderation.',
+                },
+                {
+                  num: 4,
+                  title: 'View Analytics',
+                  desc: 'Monitor moderation activity and performance.',
+                },
+              ].map((s, i) => (
+                <div
+                  key={s.num}
+                  className={`cmcc-onboarding-step${i === 0 ? ' active' : ''}`}
+                >
+                  <span className="cmcc-onboarding-step-number">{s.num}</span>
+                  <div>
+                    <strong>{s.title}</strong>
+                    <p>{s.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="cmcc-onboarding-progress">
+              <div
+                className="cmcc-onboarding-progress-bar"
+                style={{ width: '25%' }}
+              />
+            </div>
+            <button
+              className="tw-rounded tw-bg-primary-600 tw-text-white tw-px-6 tw-py-2 tw-text-sm hover:tw-bg-primary-700 tw-transition-colors"
+              onClick={dismissOnboarding}
+            >
+              Get Started →
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── Top bar ────────────────────────────────────────────────── */}
+      <div className="cmcc-top-bar">
+        <div className="cmcc-top-bar-left">
+          <h1 className="cmcc-title">
+            <span className="cmcc-title-icon">🛡️</span>
+            CMCC <span className="cmcc-title-light">Content Moderation</span>
+          </h1>
+        </div>
+        <div className="cmcc-top-bar-right">
+          <button
+            className="cmcc-theme-toggle"
+            onClick={toggleTheme}
+            title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+          >
+            {theme === 'light' ? '🌙' : '☀️'}
+          </button>
+          <a
+            className="cmcc-donate-link"
+            href="https://rzp.io/rzp/IbvR3pMx"
+            target="_blank"
+            rel="noopener noreferrer"
+            title="Support the creator — Donate $1"
+          >
+            ❤️ Donate $1
+          </a>
+        </div>
+      </div>
+
+      {/* ── Tab navigation with badges ─────────────────────────────── */}
       <div className="cmcc-tab-nav">
         {TABS.map((tab) => {
           const isActive = activeTab === tab.id
           return (
             <button
               key={tab.id}
-              className={`cmcc-tab ${isActive ? 'cmcc-tab-active' : ''}`}
+              className={`cmcc-tab${isActive ? ' cmcc-tab-active' : ''}`}
               onClick={() => handleTabChange(tab.id)}
               role="tab"
               aria-selected={isActive}
             >
+              {tab.id === 'queue' && '📋 '}
+              {tab.id === 'analytics' && '📊 '}
+              {tab.id === 'activity-log' && '📜 '}
+              {tab.id === 'reports' && '📄 '}
+              {tab.id === 'settings' && '⚙️ '}
               {tab.label}
-              {tab.id === 'queue' && queueStats.total > 0 && (
+              {tab.id === 'queue' && analytics.queueStats.total > 0 && (
                 <NotificationBadge
-                  count={queueStats.pending}
+                  count={analytics.queueStats.pending}
                   type="pending"
                   size="sm"
                 />
@@ -417,227 +276,100 @@ export default function App() {
         })}
       </div>
 
-      {/* Tab Content */}
+      {/* ── Tab content ────────────────────────────────────────────── */}
       <div className="cmcc-tab-content">
-        {/* Queue Tab */}
         {activeTab === 'queue' && (
-          <div className="cmcc-tab-panel" role="tabpanel">
-            <QueueTable
-              items={queueItems}
-              onBulkAction={handleBulkAction}
-              onItemAction={handleItemAction}
-              filters={filters}
-              onFilterChange={handleFilterChange}
-              isLoading={isLoading}
-              totalCount={queueTotal}
-            />
-            {/* Simple pagination */}
-            {queueTotal > queuePerPage && (
-              <div className="cmcc-pagination">
-                <ActionButton
-                  variant="secondary"
-                  size="sm"
-                  disabled={queuePage <= 1}
-                  onClick={() => setQueuePage((p) => Math.max(1, p - 1))}
-                >
-                  Previous
-                </ActionButton>
-                <span className="cmcc-pagination-info">
-                  Page {queuePage} of {Math.ceil(queueTotal / queuePerPage)}
-                </span>
-                <ActionButton
-                  variant="secondary"
-                  size="sm"
-                  disabled={queuePage >= Math.ceil(queueTotal / queuePerPage)}
-                  onClick={() => setQueuePage((p) => p + 1)}
-                >
-                  Next
-                </ActionButton>
-              </div>
-            )}
-          </div>
+          <QueuePage
+            queue={queue}
+            collaboration={collaboration}
+            theme={theme}
+            queueStats={analytics.queueStats}
+            addToast={addToast}
+          />
         )}
-
-        {/* Analytics Tab */}
         {activeTab === 'analytics' && (
-          <div className="cmcc-tab-panel" role="tabpanel">
-            <div className="cmcc-analytics">
-              {/* Queue Stats Summary */}
-              <div className="cmcc-stats-grid">
-                <div className="cmcc-stat-card">
-                  <span className="cmcc-stat-label">Pending</span>
-                  <span className="cmcc-stat-value cmcc-stat-pending">
-                    {queueStats.pending}
-                  </span>
-                </div>
-                <div className="cmcc-stat-card">
-                  <span className="cmcc-stat-label">Spam</span>
-                  <span className="cmcc-stat-value cmcc-stat-spam">
-                    {queueStats.spam}
-                  </span>
-                </div>
-                <div className="cmcc-stat-card">
-                  <span className="cmcc-stat-label">Flagged</span>
-                  <span className="cmcc-stat-value cmcc-stat-flagged">
-                    {queueStats.flagged}
-                  </span>
-                </div>
-                <div className="cmcc-stat-card">
-                  <span className="cmcc-stat-label">Total</span>
-                  <span className="cmcc-stat-value">{queueStats.total}</span>
-                </div>
-              </div>
-
-              {/* Spam Ratio */}
-              <div className="cmcc-analytics-section">
-                <h3>Spam Ratio</h3>
-                <div className="cmcc-spam-ratio">
-                  <div className="cmcc-spam-ratio-bar">
-                    <div
-                      className="cmcc-spam-ratio-fill"
-                      style={{
-                        width: `${Math.min(spamRatioData.percentage, 100)}%`,
-                      }}
-                    />
-                  </div>
-                  <span className="cmcc-spam-ratio-text">
-                    {spamRatioData.percentage}% spam ({spamRatioData.spamCount}{' '}
-                    of {spamRatioData.totalCount} items)
-                  </span>
-                </div>
-              </div>
-
-              {/* Content Type Breakdown */}
-              {analyticsData?.contentTypeBreakdown?.length > 0 && (
-                <div className="cmcc-analytics-section">
-                  <h3>Content Breakdown</h3>
-                  <table className="cmcc-breakdown-table">
-                    <thead>
-                      <tr>
-                        <th>Content Type</th>
-                        <th>Count</th>
-                        <th>Percentage</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {analyticsData.contentTypeBreakdown.map((item) => (
-                        <tr key={item.content_type}>
-                          <td>{item.content_type}</td>
-                          <td>{item.count}</td>
-                          <td>{item.percentage}%</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-
-              {/* Heatmap Chart */}
-              <div className="cmcc-analytics-section">
-                <h3>Activity Heatmap</h3>
-                <HeatmapChart
-                  data={
-                    analyticsData.heatmap || {
-                      data: Array(7)
-                        .fill(0)
-                        .map(() => Array(24).fill(0)),
-                      maxCount: 0,
-                    }
-                  }
-                />
-              </div>
-            </div>
-          </div>
+          <AnalyticsPage analytics={analytics} theme={theme} />
         )}
-
-        {/* Activity Log Tab */}
         {activeTab === 'activity-log' && (
-          <div className="cmcc-tab-panel" role="tabpanel">
-            {isLoading && activityLog.length === 0 ? (
-              <div className="cmcc-loading">Loading activity log...</div>
-            ) : activityLog.length === 0 ? (
-              <div className="cmcc-empty">No activity recorded yet.</div>
-            ) : (
-              <>
-                <table className="cmcc-activity-table">
-                  <thead>
-                    <tr>
-                      <th>Date</th>
-                      <th>Moderator</th>
-                      <th>Action</th>
-                      <th>Type</th>
-                      <th>Item</th>
-                      <th>Previous Status</th>
-                      <th>New Status</th>
-                      <th>Notes</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {activityLog.map((entry) => (
-                      <tr key={entry.id}>
-                        <td>{new Date(entry.timestamp).toLocaleString()}</td>
-                        <td>{entry.moderator_id}</td>
-                        <td>
-                          <span
-                            className={`cmcc-action-badge cmcc-action-${entry.action}`}
-                          >
-                            {entry.action}
-                          </span>
-                        </td>
-                        <td>{entry.content_type}</td>
-                        <td>{entry.item_title || entry.item_id}</td>
-                        <td>{entry.previous_status}</td>
-                        <td>{entry.new_status}</td>
-                        <td>{entry.notes || '-'}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-                {logTotal > logPerPage && (
-                  <div className="cmcc-pagination">
-                    <ActionButton
-                      variant="secondary"
-                      size="sm"
-                      disabled={logPage <= 1}
-                      onClick={() => setLogPage((p) => Math.max(1, p - 1))}
-                    >
-                      Previous
-                    </ActionButton>
-                    <span className="cmcc-pagination-info">
-                      Page {logPage} of {Math.ceil(logTotal / logPerPage)}
-                    </span>
-                    <ActionButton
-                      variant="secondary"
-                      size="sm"
-                      disabled={logPage >= Math.ceil(logTotal / logPerPage)}
-                      onClick={() => setLogPage((p) => p + 1)}
-                    >
-                      Next
-                    </ActionButton>
-                  </div>
-                )}
-              </>
-            )}
-          </div>
+          <ActivityLogPage activityLog={activityLog} />
         )}
-
-        {/* Settings Tab */}
+        {activeTab === 'reports' && (
+          <ReportsPage
+            reports={reports}
+            analytics={analytics}
+            collaboration={collaboration}
+            analyticsDateRange={analytics.analyticsDateRange}
+            addToast={addToast}
+          />
+        )}
         {activeTab === 'settings' && (
-          <div className="cmcc-tab-panel" role="tabpanel">
-            {settingsSections.length > 0 ? (
-              <SettingsForm
-                sections={settingsSections}
-                onSubmit={handleSettingsSave}
-                initialValues={settingsInitialValues}
-                validators={{}}
-                submitLabel="Save Settings"
-              />
-            ) : (
-              <div className="cmcc-loading">Loading settings...</div>
-            )}
-          </div>
+          <SettingsPage settings={settings} addToast={addToast} />
         )}
       </div>
+
+      {/* ── Toast notifications ────────────────────────────────────── */}
+      {toasts.length > 0 && (
+        <div className="tw-fixed tw-bottom-4 tw-right-4 tw-z-50 tw-flex tw-flex-col tw-gap-2">
+          {toasts.map((t) => (
+            <div
+              key={t.id}
+              className={`tw-flex tw-items-center tw-gap-2 tw-px-4 tw-py-3 tw-rounded-lg tw-shadow-lg tw-text-sm tw-font-medium tw-transition-all tw-cursor-pointer ${
+                t.type === 'success'
+                  ? 'tw-bg-green-600 tw-text-white'
+                  : t.type === 'error'
+                    ? 'tw-bg-red-600 tw-text-white'
+                    : 'tw-bg-gray-800 tw-text-white'
+              }`}
+              onClick={() => setToasts((p) => p.filter((x) => x.id !== t.id))}
+            >
+              <span>
+                {t.type === 'success' ? '✓' : t.type === 'error' ? '✕' : 'ℹ'}
+              </span>
+              <span>{t.message}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* ── Keyboard shortcuts modal ───────────────────────────────── */}
+      {showShortcuts && (
+        <div
+          className="tw-fixed tw-inset-0 tw-z-50 tw-flex tw-items-center tw-justify-center tw-bg-black/40"
+          onClick={() => setShowShortcuts(false)}
+        >
+          <div
+            className="tw-bg-white tw-rounded-lg tw-shadow-xl tw-p-6 tw-max-w-md tw-w-full tw-mx-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="tw-flex tw-items-center tw-justify-between tw-mb-4">
+              <h2 className="tw-text-lg tw-font-semibold">
+                ⌨️ Keyboard Shortcuts
+              </h2>
+              <button
+                onClick={() => setShowShortcuts(false)}
+                className="tw-text-gray-400 hover:tw-text-gray-600"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="tw-space-y-2">
+              {KEYBOARD_SHORTCUTS.map((sk) => (
+                <div
+                  key={sk.key}
+                  className="tw-flex tw-justify-between tw-items-center tw-py-1"
+                >
+                  <span className="tw-text-sm tw-text-gray-600">
+                    {sk.description}
+                  </span>
+                  <kbd className="tw-px-2 tw-py-1 tw-text-xs tw-font-mono tw-bg-gray-100 tw-border tw-border-gray-300 tw-rounded">
+                    {sk.key.length === 1 ? sk.key.toUpperCase() : sk.key}
+                  </kbd>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

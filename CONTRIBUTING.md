@@ -101,21 +101,39 @@ cmcc/
 ## 4. Automated Tests
 
 ```bash
-# All tests
+# All tests via Turborepo
 npm test
 
 # Specific workspace
 npm --workspace=@cmcc/core test
+npm --workspace=@cmcc/server-core test
 npm --workspace=@cmcc/ui test
 
 # Via Makefile
 make test
 ```
 
-**Coverage areas:**
-- `@cmcc/core` — Jest unit tests for analytics, firewall, queues, reputation, concurrency
-- `@cmcc/ui` — Jest + @testing-library/react for component rendering and interaction
-- Platform tests — `jest --passWithNoTests` (extend as needed)
+**Coverage areas (14 test files total):**
+
+### `@cmcc/core` (10 test files)
+- `firewall/__tests__/rules.test.ts` — All rule checkers, simhash, CIDR, evaluateFirewallRules, stats
+- `concurrency/__tests__/concurrency.test.ts` — InMemoryLockManager acquisition, rejection, release, force-release, expiry
+- `queues/__tests__/queues.test.ts` — QueueManager FIFO, peek, update, remove, autoClassify
+- `reputation/__tests__/reputation.test.ts` — Pure utility functions (score changes, decay, risk classification)
+- `sla/__tests__/sla.test.ts` — SlaEngine SLA checks, EscalationManager rules
+- `collaboration/__tests__/collaboration.test.ts` — TeamManager, AssignmentManager, ConflictDetector
+- `config/__tests__/config.test.ts` — Platform and options registries
+- `src/__tests__/setup.test.ts`, `ai-adapters.test.ts`, `integration.test.ts`, `reputation-integration.test.ts`
+
+### `@cmcc/server-core` (9 test files)
+- All services tested: FirewallService, EmailService, WebhookService, RetentionService, UndoService,
+  ContentHookService, ScheduledReportService, SyncReceiver, WebSocketEventBus
+
+### `@cmcc/ui` (2 test files)
+- `src/__tests__/components.test.tsx` — Button, Badge, Card, Input, Select, Pagination, Skeleton, EmptyState
+- `src/__tests__/additional-components.test.tsx` — ActionButton, NotificationBadge, SlideOutPanel, ProgressBar, ConfirmationModal
+
+**Platform tests** — `jest --passWithNoTests` (extend as needed)
 
 ---
 
@@ -246,10 +264,10 @@ make serve-api
 
 # Terminal 2 — Build and serve the app
 make serve-wix
-# → http://localhost:5000
+# → http://localhost:5001
 
 # Terminal 3 — Create an HTTPS tunnel
-make tunnel PORT=5000
+make tunnel PORT=5001
 # → https://abc123.ngrok.io
 ```
 
@@ -275,10 +293,10 @@ Shopify apps are embedded in the Shopify admin and require a Shopify Partners ac
 ```bash
 # Terminal 1 — Build and start the Express server
 make serve-shopify
-# → http://localhost:3000
+# → http://localhost:3001
 
 # Terminal 2 — Create an HTTPS tunnel
-make tunnel PORT=3000
+make tunnel PORT=3001
 # → https://abc123.ngrok.io
 ```
 
@@ -347,6 +365,55 @@ npm run format:fix
 npm run lint:fix
 ```
 
+### Design System
+
+The app uses **shadcn-style components** from the `@cmcc/ui` package. All shared UI components live in `packages/cmcc-ui/src/components/ui/`.
+
+- **Tailwind CSS** is used for all styling with the `tw-` prefix for utility classes (e.g. `tw-flex`, `tw-text-lg`)
+- The `cn()` utility from `@cmcc/ui` is used to merge Tailwind classes conditionally
+- **Dark mode** is supported via Tailwind's `dark` class on `<html>`. Toggle with the 🌙/☀️ button in the top bar
+- All new reusable components **must** be added to `@cmcc/ui/src/components/ui/` so they can be shared across platforms
+
+### Keyboard Shortcuts
+
+The app registers a global keyboard shortcut system via the `useKeyboardShortcuts` hook. Registered shortcuts:
+
+| Key | Action |
+|-----|--------|
+| `A` | Approve selected item |
+| `R` | Reject selected item |
+| `S` | Mark as Spam |
+| `D` | Defer selected item |
+| `V` | View item details |
+| `F` | Focus search field |
+| `?` | Show keyboard shortcuts help |
+| `Esc` | Close panel / Cancel |
+
+To add a new shortcut, call `useKeyboardShortcuts` with an array of shortcut objects:
+
+```jsx
+useKeyboardShortcuts([
+  {
+    key: 'n',
+    description: 'New item',
+    handler: () => handleNewItem(),
+  },
+])
+```
+
+Shortcuts only fire when no input/textarea/select is focused.
+
+### Adding New Features
+
+Follow the established pattern:
+
+1. **Component** — Create the component in `@cmcc/ui/src/components/ui/`
+2. **Platform integration** — Import and use it in the platform's `App.jsx`
+3. **Saved filters** — Use the `useSavedFilters` hook to persist and restore filter combinations
+4. **Toast notifications** — Call `addToast({ type: 'success'|'error', message: '...' })` to show a notification
+5. **Slide-out panels** — Use the `SlideOutPanel` component for side panels and modals
+6. **Data fetching** — Use the `apiFetch` wrapper (auto-handles nonce refresh, error handling, etc.)
+
 ---
 
 ## 7. Build & Publish
@@ -356,6 +423,10 @@ npm run lint:fix
 ```bash
 # Build all packages
 npm run build
+
+# Build specific package
+npm run build --workspace=@cmcc/ui
+npm run build --workspace=@cmcc/wordpress
 
 # Publish individually
 npm publish --workspace=@cmcc/core
@@ -378,4 +449,5 @@ npm publish --workspace=@cmcc/ui
 
 - Read the full [Developer Guide](docs/developer-guide.md)
 - Read the [User Guide](docs/user-guide.md)
+- Read the [User Guide (New)](docs/USER_GUIDE.md)
 - Check the [Audit Report](docs/audit-report.md)

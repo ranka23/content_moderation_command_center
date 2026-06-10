@@ -2,7 +2,7 @@
  * CMCC Shopify App Server
  *
  * Serves the built Shopify app and handles OAuth, session management,
- * and proxying to the CMCC moderation API.
+ * API proxying, and the CMCC backend (database, routes, services).
  *
  * Required environment variables (see .env.example):
  *   SHOPIFY_API_KEY      – Shopify app API key
@@ -16,14 +16,21 @@ require('dotenv').config()
 const crypto = require('crypto')
 const express = require('express')
 const path = require('path')
+const http = require('http')
+const { WebSocketServer } = require('ws')
 
-const PORT = process.env.PORT || 3000
+const PORT = process.env.PORT || 3001
 const API_KEY = process.env.SHOPIFY_API_KEY
-const API_SECRET = process.env.SHOPIFY_API_SECRET
 const SCOPES =
   process.env.SCOPES ||
   'read_products,write_products,read_customers,read_content,write_content'
 const APP_URL = process.env.SHOPIFY_APP_URL || `http://localhost:${PORT}`
+
+// ── CMCC Backend ───────────────────────────────────────────────────────────
+const { createApp } = require('./server')
+
+// Create the CMCC backend application
+const cmccApp = createApp()
 
 // ── Session Store (placeholder) ────────────────────────────────────────────
 // Replace with a persistent store (Redis, DB) for production.
@@ -146,36 +153,35 @@ app.get('/auth/callback', async (req, res) => {
   res.redirect(embeddedAppUrl)
 })
 
-// ── CMCC API Proxy (Placeholder) ───────────────────────────────────────────
-// In production, proxy /api/* requests to the CMCC backend, injecting
-// the Shopify store context (shop, access token) for per-store isolation.
-
-app.all('/api/*', async (req, res) => {
-  // const shop = getShopFromSession(req)   // determine from session
-  // const token = getAccessToken(shop)
-  // const cmccUrl = `${CMCC_API_URL}${req.originalUrl}`
-  // const upstream = await fetch(cmccUrl, {
-  //   method: req.method,
-  //   headers: {
-  //     'Authorization': `Bearer ${token}`,
-  //     'Content-Type': 'application/json',
-  //     'X-Shopify-Shop': shop,
-  //   },
-  //   body: req.method !== 'GET' && req.method !== 'HEAD' ? JSON.stringify(req.body) : undefined,
-  // })
-  // res.status(upstream.status).json(await upstream.json())
-
-  res.status(501).json({
-    error: 'API proxy not yet implemented',
-    message: 'Connect this endpoint to the CMCC backend service.',
-  })
-})
+// ── CMCC Backend API Routes ───────────────────────────────────────────────
+// Mount the CMCC backend (routes already include /api/cmcc prefix)
+app.use(cmccApp)
 
 // ── Start ──────────────────────────────────────────────────────────────────
 
-app.listen(PORT, () => {
+const server = http.createServer(app)
+
+// ── WebSocket Server ──────────────────────────────────────────────────────
+// Provides real-time activity feed updates to connected clients.
+const wss = new WebSocketServer({ server, path: '/ws' })
+
+wss.on('connection', (ws) => {
+  console.log('[CMCC WS] Client connected')
+
+  ws.on('close', () => {
+    console.log('[CMCC WS] Client disconnected')
+  })
+
+  ws.on('error', (err) => {
+    console.error('[CMCC WS] Error:', err.message)
+  })
+})
+
+server.listen(PORT, () => {
   console.log(`CMCC Shopify App server listening on http://localhost:${PORT}`)
   console.log(
     `Visit http://localhost:${PORT}/auth?shop=your-store.myshopify.com to start OAuth`,
   )
+  console.log(`CMCC Backend API at http://localhost:${PORT}/api/cmcc`)
+  console.log(`WebSocket server at ws://localhost:${PORT}/ws`)
 })

@@ -1,11 +1,20 @@
 # CMCC Testing Environments
 #
-# Spin up WordPress or Strapi instances with the CMCC plugin pre-installed.
+# Spin up all platforms with the CMCC app pre-installed.
 #
 # Usage:
-#   docker compose up wordpress    # WordPress at http://localhost:8080
-#   docker compose up strapi       # Strapi at http://localhost:1337
-#   docker compose up cmcc-api     # Stub CMCC backend at http://localhost:3000
+#   docker compose up -d                    # Start all platforms
+#   docker compose up -d wordpress strapi   # Start only CMS platforms
+#   docker compose up -d cmcc-api cmcc-dev  # Start only frontend apps
+#
+# URLs:
+#   WordPress:  http://localhost:8080/wp-admin (admin / admin)
+#   Strapi:     http://localhost:1337/admin
+#   Storyblok:  http://localhost:5000
+#   Wix:        http://localhost:5001
+#   Shopify:    http://localhost:3001
+#   API Stub:   http://localhost:3000
+#   Test Hub:   http://localhost:4000
 
 name: cmcc
 
@@ -14,7 +23,7 @@ services:
   wordpress:
     image: wordpress:6.7-php8.2-apache
     ports:
-      - "8080:80"
+      - '8080:80'
     environment:
       WORDPRESS_DB_HOST: db
       WORDPRESS_DB_USER: wordpress
@@ -24,19 +33,20 @@ services:
         define('WP_DEBUG', true);
         define('WP_DEBUG_LOG', true);
     volumes:
-      # Mount the CMCC WordPress plugin directly into the container
       - ./platforms/wordpress:/var/www/html/wp-content/plugins/cmcc
-      # Persist WordPress uploads and other data
       - wp_data:/var/www/html/wp-content
     depends_on:
       db:
         condition: service_healthy
     restart: unless-stopped
+    labels:
+      - 'cmcc.platform=wordpress'
+      - 'cmcc.port=8080'
 
   db:
     image: mariadb:11
     ports:
-      - "3307:3306"
+      - '3307:3306'
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: wordpress
@@ -45,7 +55,7 @@ services:
     volumes:
       - db_data:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      test: ['CMD', 'healthcheck.sh', '--connect', '--innodb_initialized']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -56,39 +66,113 @@ services:
     image: node:20-alpine
     working_dir: /app
     ports:
-      - "1337:1337"
+      - '1337:1337'
     environment:
       NODE_ENV: development
       HOST: 0.0.0.0
       PORT: 1337
       DATABASE_FILENAME: /app/.tmp/data.db
+      CMCC_SEED_DATA: 'true'
     volumes:
-      # Mount the CMCC Strapi plugin
       - ./platforms/strapi:/app/src/plugins/cmcc
-      # Persist the Strapi project data (DB, uploaded files, etc.)
+      - ./packages/cmcc-core:/app/src/plugins/cmcc/packages/cmcc-core:ro
+      - ./packages/cmcc-ui:/app/src/plugins/cmcc/packages/cmcc-ui:ro
       - strapi_data:/app
     command: >
       sh -c "
         if [ ! -f /app/package.json ]; then
-          npx create-strapi-app@latest . --quickstart --no-run
+          echo 'y' | npx create-strapi-app@5 . --quickstart --no-run --skip-cloud 2>&1 || \
+          echo 'n' | npx create-strapi-app@4 . --quickstart --no-run 2>&1 &&
+          # Install @cmcc packages BEFORE the first build
+          if [ -d /app/src/plugins/cmcc/packages/cmcc-core/dist ]; then
+            mkdir -p /app/node_modules/@cmcc &&
+            cp -r /app/src/plugins/cmcc/packages/cmcc-core/dist /app/node_modules/@cmcc/core &&
+            printf '{\"name\":\"@cmcc/core\",\"version\":\"1.0.0\",\"main\":\"dist/index.js\"}' > /app/node_modules/@cmcc/core/package.json &&
+            cp -r /app/src/plugins/cmcc/packages/cmcc-ui/dist /app/node_modules/@cmcc/ui &&
+            printf '{\"name\":\"@cmcc/ui\",\"version\":\"1.0.0\",\"main\":\"dist/index.js\"}' > /app/node_modules/@cmcc/ui/package.json
+          fi
         fi &&
-        npm run build &&
-        npm run develop
+        if [ -f /app/package.json ]; then
+          # Enable CMCC plugin in config/plugins.ts
+          echo 'import type { Core } from "@strapi/strapi";' > /app/config/plugins.ts &&
+          echo 'const config = ({ env }: Core.Config.Shared.ConfigParams): Core.Config.Plugin => ({' >> /app/config/plugins.ts &&
+          echo '  "cmcc": {' >> /app/config/plugins.ts &&
+          echo '    enabled: true,' >> /app/config/plugins.ts &&
+          echo '    resolve: "./src/plugins/cmcc",' >> /app/config/plugins.ts &&
+          echo '  },' >> /app/config/plugins.ts &&
+          echo '});' >> /app/config/plugins.ts &&
+          echo 'export default config;' >> /app/config/plugins.ts &&
+          # Ensure @cmcc packages are installed (every run)
+          if [ -d /app/src/plugins/cmcc/packages/cmcc-core/dist ]; then
+            mkdir -p /app/node_modules/@cmcc &&
+            cp -r /app/src/plugins/cmcc/packages/cmcc-core/dist/* /app/node_modules/@cmcc/core/ 2>/dev/null || true &&
+            printf '{\"name\":\"@cmcc/core\",\"version\":\"1.0.0\",\"main\":\"index.js\"}' > /app/node_modules/@cmcc/core/package.json &&
+            cp -r /app/src/plugins/cmcc/packages/cmcc-ui/dist/* /app/node_modules/@cmcc/ui/ 2>/dev/null || true &&
+            printf '{\"name\":\"@cmcc/ui\",\"version\":\"1.0.0\",\"main\":\"index.js\"}' > /app/node_modules/@cmcc/ui/package.json &&
+            # Install @cmcc/ui's peer dependencies
+            npm install --no-save clsx chart.js@4 react-chartjs-2 tailwind-merge date-fns 2>&1 || true
+          fi &&
+          npm run build &&
+          npm run develop
+        else
+          echo 'ERROR: Strapi project creation failed';
+          exit 1;
+        fi
       "
     restart: unless-stopped
+    labels:
+      - 'cmcc.platform=strapi'
+      - 'cmcc.port=1337'
 
-  # ── CMCC Backend API stub ────────────────────────────────────────────────
-  # A minimal Express server that returns mock data for manual front-end testing.
-  # Used by Storyblok and Wix platforms which require a backend API.
+  # ── Backend API Stub ─────────────────────────────────────────────────────
   cmcc-api:
     image: node:20-alpine
     working_dir: /app
     ports:
-      - "3000:3000"
+      - '3000:3000'
     volumes:
       - ./tools/test-api-stub:/app
-    command: ["node", "server.js"]
+    command: ['node', 'server.js']
     restart: unless-stopped
+    labels:
+      - 'cmcc.platform=api'
+      - 'cmcc.port=3000'
+
+  # ── Dev Server (Storyblok + Wix + Shopify) ─────────────────────────────
+  # Serves all three frontend platforms on a single server with proper
+  # SDK mocks, CDN dependencies, and API proxy for Shopify.
+  cmcc-dev:
+    image: node:20-alpine
+    working_dir: /app
+    ports:
+      - '4000:4000'
+    environment:
+      API_HOST: cmcc-api
+    depends_on:
+      cmcc-api:
+        condition: service_started
+    volumes:
+      - ./tools/dev-server.js:/app/tools/dev-server.js
+      - ./platforms/storyblok/dist:/app/platforms/storyblok/dist
+      - ./platforms/wix/dist:/app/platforms/wix/dist
+      - ./platforms/shopify/dist:/app/platforms/shopify/dist
+    command: >
+      sh -c "
+        apk add --no-cache curl &&
+        echo 'Waiting for API stub...' &&
+        for i in \$$(seq 1 30); do
+          if curl -s http://cmcc-api:3000/api/health > /dev/null 2>&1; then
+            echo 'API stub is ready';
+            break;
+          fi;
+          echo 'Waiting...' && sleep 2;
+        done;
+        node tools/dev-server.js
+      "
+    restart: unless-stopped
+    labels:
+      - 'cmcc.platform=dev'
+      - 'cmcc.port=4000'
 
 volumes:
   wp_data:

@@ -40,10 +40,10 @@ export const HeatmapChart = (props) =>
 
 export const SettingsForm = ({
   sections,
-  onSubmit,
-  initialValues,
-  submitLabel,
-  isSubmitting,
+  _onSubmit,
+  _initialValues,
+  _submitLabel,
+  _isSubmitting,
   ...props
 }) => {
   const children = []

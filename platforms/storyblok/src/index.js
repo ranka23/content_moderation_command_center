@@ -14,6 +14,7 @@ async function init() {
   const container = document.getElementById('cmcc-app')
 
   if (!container) {
+    // eslint-disable-next-line no-console
     console.error('[CMCC] Mount container #cmcc-app not found in the DOM')
     return
   }
@@ -34,6 +35,7 @@ async function init() {
     // Authenticate and get space / user context
     const context = await sdk.getContext()
 
+    // eslint-disable-next-line no-console
     console.log(
       '[CMCC] Storyblok SDK initialized for space:',
       context.space?.id,
@@ -52,6 +54,7 @@ async function init() {
       </React.StrictMode>,
     )
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error('[CMCC] Failed to initialize Storyblok SDK:', error)
 
     container.innerHTML =

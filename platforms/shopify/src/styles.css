@@ -87,3 +87,768 @@
   --p-color-bg-primary-hover: #006e52;
   --p-color-bg-primary-active: #005c44;
 }
+
+/* ── Queue filter bar ──────────────────────────────────── */
+
+.cmcc-queue-filters {
+  margin-bottom: 16px;
+}
+
+.cmcc-queue-filters-row {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+.cmcc-filter-select {
+  min-width: 160px;
+  flex: 1 1 180px;
+}
+
+.cmcc-filter-actions {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+  padding-bottom: 2px;
+  flex: 0 0 auto;
+}
+
+/* ── Saved filters tags ──────────────────────────────── */
+
+.cmcc-saved-filters {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+.cmcc-saved-filters-label {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #6d7175;
+  white-space: nowrap;
+}
+
+/* ── Bulk action bar ──────────────────────────────────── */
+
+.cmcc-bulk-action-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: #f0f8f4;
+  border: 1px solid #b7e0c4;
+  border-radius: 6px;
+  margin-bottom: 16px;
+}
+
+.cmcc-bulk-action-count {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: #006e52;
+}
+
+.cmcc-bulk-action-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.cmcc-dark .cmcc-bulk-action-bar {
+  background: #1e2e24;
+  border-color: #2e5e3a;
+}
+
+.cmcc-dark .cmcc-bulk-action-count {
+  color: #7dda9a;
+}
+
+/* ── Save filter popover ──────────────────────────────── */
+
+.cmcc-save-filter-popover {
+  padding: 16px;
+  min-width: 240px;
+}
+
+.cmcc-save-filter-actions {
+  margin-top: 12px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* ── Platform hub grid (Reports tab) ──────────────────── */
+
+.cmcc-platform-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+  padding: 12px;
+}
+
+.cmcc-platform-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cmcc-platform-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.cmcc-platform-name {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #202223;
+}
+
+.cmcc-platform-stats {
+  display: flex;
+  gap: 24px;
+}
+
+.cmcc-platform-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cmcc-platform-stat .cmcc-stat-value {
+  font-size: 1.25rem;
+}
+
+/* ── Keyboard shortcuts ───────────────────────────────── */
+
+.cmcc-keyboard-shortcuts {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 1000;
+}
+
+.cmcc-shortcuts-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: none;
+  background: #008060;
+  color: #fff;
+  font-size: 1.25rem;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    background 0.15s,
+    transform 0.15s;
+}
+
+.cmcc-shortcuts-btn:hover {
+  background: #006e52;
+  transform: scale(1.05);
+}
+
+.cmcc-shortcuts-panel {
+  padding: 16px;
+  min-width: 280px;
+  max-width: 360px;
+}
+
+.cmcc-shortcuts-header h3 {
+  margin: 0 0 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #202223;
+}
+
+.cmcc-shortcuts-group {
+  margin-bottom: 12px;
+}
+
+.cmcc-shortcuts-group:last-of-type {
+  margin-bottom: 0;
+}
+
+.cmcc-shortcuts-group-heading {
+  margin: 0 0 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #6d7175;
+}
+
+.cmcc-shortcut-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 0;
+  gap: 16px;
+}
+
+.cmcc-shortcut-key {
+  font-family: 'SF Mono', 'Menlo', 'Monaco', 'Courier New', monospace;
+  font-size: 0.75rem;
+  background: #f1f1f1;
+  border: 1px solid #d2d5d8;
+  border-radius: 4px;
+  padding: 2px 8px;
+  color: #202223;
+  white-space: nowrap;
+}
+
+.cmcc-shortcut-label {
+  font-size: 0.8125rem;
+  color: #202223;
+  text-align: right;
+}
+
+.cmcc-shortcuts-footer {
+  margin-top: 12px;
+  padding-top: 8px;
+  border-top: 1px solid #e1e3e5;
+  font-size: 0.75rem;
+  color: #6d7175;
+}
+
+.cmcc-shortcuts-footer kbd {
+  font-family: 'SF Mono', 'Menlo', 'Monaco', 'Courier New', monospace;
+  font-size: 0.7rem;
+  background: #f1f1f1;
+  border: 1px solid #d2d5d8;
+  border-radius: 3px;
+  padding: 1px 5px;
+  color: #202223;
+}
+
+/* ── Saved filters list (Settings tab) ────────────────── */
+
+.cmcc-saved-filters-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cmcc-saved-filter-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: #f6f6f7;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  color: #202223;
+}
+
+/* ── Dark mode overrides ──────────────────────────────── */
+
+.cmcc-dark .cmcc-tab-header h2,
+.cmcc-dark .cmcc-stat-value,
+.cmcc-dark .cmcc-spam-pct,
+.cmcc-dark .cmcc-platform-name,
+.cmcc-dark .cmcc-shortcuts-header h3,
+.cmcc-dark .cmcc-shortcut-label,
+.cmcc-dark .cmcc-saved-filter-item {
+  color: #e3e5e7;
+}
+
+.cmcc-dark .cmcc-stat-label,
+.cmcc-dark .cmcc-saved-filters-label,
+.cmcc-dark .cmcc-spam-ratio p,
+.cmcc-dark .cmcc-shortcuts-group-heading,
+.cmcc-dark .cmcc-shortcuts-footer {
+  color: #9c9fa3;
+}
+
+.cmcc-dark .cmcc-saved-filter-item {
+  background: #2c2d2f;
+}
+
+.cmcc-dark .cmcc-shortcut-key,
+.cmcc-dark .cmcc-shortcuts-footer kbd {
+  background: #3a3b3d;
+  border-color: #4e4f51;
+  color: #e3e5e7;
+}
+
+.cmcc-dark .cmcc-shortcuts-panel {
+  background: #1c1d1e;
+}
+
+.cmcc-dark .cmcc-shortcuts-footer {
+  border-top-color: #3a3b3c;
+}
+
+/* ── Onboarding Wizard ────────────────────────────────── */
+
+.cmcc-onboarding-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+.cmcc-onboarding-modal {
+  max-width: 520px;
+  width: 90%;
+  animation: cmcc-fade-in 0.3s ease;
+}
+
+.cmcc-onboarding-content {
+  text-align: center;
+  padding: 24px;
+}
+
+.cmcc-onboarding-icon {
+  font-size: 3rem;
+  margin-bottom: 12px;
+}
+
+.cmcc-onboarding-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #202223;
+  margin: 0 0 8px;
+}
+
+.cmcc-onboarding-description {
+  font-size: 0.9375rem;
+  color: #6d7175;
+  margin: 0 0 24px;
+  line-height: 1.5;
+}
+
+.cmcc-onboarding-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  text-align: left;
+  margin-bottom: 24px;
+}
+
+.cmcc-onboarding-step {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.cmcc-onboarding-step strong {
+  display: block;
+  color: #202223;
+  font-size: 0.9375rem;
+  margin-bottom: 2px;
+}
+
+.cmcc-onboarding-step p {
+  margin: 0;
+  color: #6d7175;
+  font-size: 0.8125rem;
+}
+
+.cmcc-onboarding-step-num {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #008060;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.cmcc-onboarding-actions {
+  display: flex;
+  justify-content: center;
+}
+
+@keyframes cmcc-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ── Item Detail Panel ───────────────────────────────── */
+
+.cmcc-detail-panel-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 1500;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.cmcc-detail-panel {
+  width: 480px;
+  max-width: 90vw;
+  background: #fff;
+  height: 100%;
+  overflow-y: auto;
+  box-shadow: -4px 0 16px rgba(0, 0, 0, 0.15);
+  animation: cmcc-slide-in 0.25s ease;
+}
+
+@keyframes cmcc-slide-in {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.cmcc-detail-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e1e3e5;
+}
+
+.cmcc-detail-panel-header h2 {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #202223;
+}
+
+.cmcc-detail-panel-body {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.cmcc-detail-toast {
+  padding: 8px 16px 0;
+}
+
+.cmcc-detail-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cmcc-detail-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.875rem;
+}
+
+.cmcc-detail-label {
+  font-weight: 600;
+  color: #6d7175;
+  min-width: 100px;
+  font-size: 0.8125rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.cmcc-detail-excerpt {
+  color: #202223;
+  line-height: 1.4;
+}
+
+.cmcc-detail-assign-row {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+}
+
+.cmcc-detail-assign-btn {
+  flex-shrink: 0;
+  padding-bottom: 2px;
+}
+
+.cmcc-detail-notes-form {
+  margin-bottom: 16px;
+}
+
+.cmcc-detail-notes-actions {
+  margin-top: 8px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.cmcc-detail-notes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cmcc-detail-note-item {
+  padding: 8px 12px;
+  background: #f6f6f7;
+  border-radius: 6px;
+}
+
+.cmcc-detail-note-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+  font-size: 0.8125rem;
+}
+
+.cmcc-detail-note-date {
+  color: #6d7175;
+  font-size: 0.75rem;
+}
+
+.cmcc-detail-note-text {
+  margin: 0;
+  font-size: 0.875rem;
+  color: #202223;
+  line-height: 1.4;
+}
+
+.cmcc-detail-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cmcc-detail-history-item {
+  padding: 8px 12px;
+  background: #f6f6f7;
+  border-radius: 6px;
+}
+
+.cmcc-detail-history-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.cmcc-detail-history-moderator {
+  font-size: 0.8125rem;
+  color: #6d7175;
+}
+
+.cmcc-detail-history-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8125rem;
+  color: #202223;
+}
+
+.cmcc-detail-history-date {
+  color: #6d7175;
+  font-size: 0.75rem;
+}
+
+.cmcc-detail-history-notes {
+  margin: 4px 0 0;
+  font-size: 0.8125rem;
+  color: #6d7175;
+  font-style: italic;
+}
+
+/* ── Activity Feed ───────────────────────────────────── */
+
+.cmcc-activity-feed {
+  border: 1px solid #e1e3e5;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.cmcc-feed-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: #f6f6f7;
+  border-bottom: 1px solid #e1e3e5;
+}
+
+.cmcc-feed-title {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: #202223;
+}
+
+.cmcc-feed-list {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.cmcc-feed-compact .cmcc-feed-list {
+  max-height: 300px;
+}
+
+.cmcc-feed-item {
+  display: flex;
+  gap: 10px;
+  padding: 10px 16px;
+  border-bottom: 1px solid #f1f2f3;
+}
+
+.cmcc-feed-item:last-child {
+  border-bottom: none;
+}
+
+.cmcc-feed-item-icon {
+  font-size: 1.125rem;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.cmcc-feed-item-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.cmcc-feed-item-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 2px;
+}
+
+.cmcc-feed-item-actor {
+  font-size: 0.8125rem;
+  color: #202223;
+}
+
+.cmcc-feed-item-details {
+  font-size: 0.8125rem;
+  color: #6d7175;
+  line-height: 1.4;
+}
+
+.cmcc-feed-note-text {
+  font-style: italic;
+}
+
+.cmcc-feed-content-type {
+  font-weight: 500;
+}
+
+.cmcc-feed-item-title {
+  color: #202223;
+}
+
+.cmcc-feed-item-time {
+  font-size: 0.6875rem;
+  color: #9c9fa3;
+  margin-top: 2px;
+}
+
+.cmcc-feed-loading,
+.cmcc-feed-empty {
+  padding: 24px;
+  text-align: center;
+  color: #6d7175;
+}
+
+/* ── Reports Actions ─────────────────────────────────── */
+
+.cmcc-reports-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.cmcc-audit-meta {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #e1e3e5;
+  font-size: 0.8125rem;
+  color: #6d7175;
+}
+
+.cmcc-audit-meta p {
+  margin: 0;
+}
+
+/* ── Settings Import/Export ──────────────────────────── */
+
+.cmcc-settings-import-export {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* ── Keyboard Shortcuts Panel Fix ────────────────────── */
+
+.cmcc-shortcuts-panel-fixed {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.cmcc-shortcuts-visible .cmcc-shortcuts-panel {
+  margin-bottom: 8px;
+}
+
+/* ── Dark mode additions ─────────────────────────────── */
+
+.cmcc-dark .cmcc-detail-panel {
+  background: #1c1d1e;
+}
+
+.cmcc-dark .cmcc-detail-panel-header {
+  border-bottom-color: #3a3b3c;
+}
+
+.cmcc-dark .cmcc-detail-panel-header h2,
+.cmcc-dark .cmcc-detail-field span:last-child,
+.cmcc-dark .cmcc-detail-excerpt,
+.cmcc-dark .cmcc-detail-note-text,
+.cmcc-dark .cmcc-detail-history-meta {
+  color: #e3e5e7;
+}
+
+.cmcc-dark .cmcc-detail-note-item,
+.cmcc-dark .cmcc-detail-history-item {
+  background: #2c2d2f;
+}
+
+.cmcc-dark .cmcc-feed-header {
+  background: #2c2d2f;
+  border-bottom-color: #3a3b3c;
+}
+
+.cmcc-dark .cmcc-feed-title {
+  color: #e3e5e7;
+}
+
+.cmcc-dark .cmcc-feed-item {
+  border-bottom-color: #2c2d2f;
+}
+
+.cmcc-dark .cmcc-activity-feed {
+  border-color: #3a3b3c;
+}
+
+.cmcc-dark .cmcc-onboarding-title {
+  color: #e3e5e7;
+}
+
+.cmcc-dark .cmcc-onboarding-step strong {
+  color: #e3e5e7;
+}

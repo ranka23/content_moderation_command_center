@@ -41,5 +41,10 @@
   "cmcc.PendingItems": "Pending Items",
   "cmcc.ApprovedItems": "Approved Items",
   "cmcc.RejectedItems": "Rejected Items",
-  "cmcc.SpamItems": "Spam Items"
+  "cmcc.SpamItems": "Spam Items",
+  "cmcc.Reports": "Reports",
+  "cmcc.Moderate": "Moderate",
+  "cmcc.Bulk": "Bulk Moderation",
+  "cmcc.Settings.Read": "Read Settings",
+  "cmcc.Settings.Update": "Update Settings"
 }

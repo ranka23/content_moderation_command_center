@@ -1,25 +1,94 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react'
-import { QueueTable } from '@cmcc/ui'
-import { HeatmapChart } from '@cmcc/ui'
-import { SettingsForm } from '@cmcc/ui'
-import { ActionButton } from '@cmcc/ui'
-import { NotificationBadge } from '@cmcc/ui'
-import { processAnalytics } from '@cmcc/core'
-import { filterActivityLog } from '@cmcc/core'
-import { getEmptyAnalytics } from '@cmcc/core'
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+  startTransition,
+} from 'react'
+import {
+  QueueTable,
+  HeatmapChart,
+  ActionButton,
+  NotificationBadge,
+  useKeyboardShortcuts,
+  useSavedFilters,
+  QuickFilterBar,
+  AiEvaluationResult,
+} from '@cmcc/ui'
+import {
+  processAnalytics,
+  filterActivityLog,
+  getEmptyAnalytics,
+} from '@cmcc/core'
+import { OnboardingWizard } from './components/OnboardingWizard'
+import { ItemDetailPanel } from './components/ItemDetailPanel'
+import { ReportsTab } from './components/ReportsTab'
+import { SettingsTab } from './components/SettingsTab'
 
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
 
+const KEYBOARD_SHORTCUTS = [
+  { key: 'a', description: 'Approve selected item' },
+  { key: 'r', description: 'Reject selected item' },
+  { key: 's', description: 'Mark as Spam' },
+  { key: 'd', description: 'Defer selected item' },
+  { key: 'v', description: 'View item details' },
+  { key: 'f', description: 'Focus search' },
+  { key: 'Escape', description: 'Close panel / Cancel' },
+  { key: '?', description: 'Show keyboard shortcuts' },
+]
+
 const TABS = [
   { id: 'queue', label: 'Queue', icon: '\u{1F4CB}' },
   { id: 'analytics', label: 'Analytics', icon: '\u{1F4CA}' },
   { id: 'activity', label: 'Activity Log', icon: '\u{1F4DD}' },
+  { id: 'reports', label: 'Reports', icon: '\u{1F4C4}' },
   { id: 'settings', label: 'Settings', icon: '\u{2699}\u{FE0F}' },
 ]
 
 const POLL_INTERVAL_MS = 30000
+
+/** Quick filter presets for the queue tab. */
+const QUICK_PRESETS = [
+  {
+    id: 'last-hour',
+    label: 'Last Hour',
+    icon: '\u{1F550}',
+    filters: { dateRange: 'last-hour', status: 'all' },
+  },
+  {
+    id: 'today',
+    label: 'Today',
+    icon: '\u{1F4C5}',
+    filters: { dateRange: 'today', status: 'all' },
+  },
+  {
+    id: 'this-week',
+    label: 'This Week',
+    icon: '\u{1F4C6}',
+    filters: { dateRange: 'this-week', status: 'all' },
+  },
+  {
+    id: 'pending',
+    label: 'Pending',
+    icon: '\u{23F3}',
+    filters: { status: 'pending', dateRange: 'all' },
+  },
+  {
+    id: 'high-spam',
+    label: 'High Spam',
+    icon: '\u{1F4E5}',
+    filters: { status: 'spam', dateRange: 'all' },
+  },
+  {
+    id: 'flagged',
+    label: 'Flagged',
+    icon: '\u{26A0}\u{FE0F}',
+    filters: { status: 'flagged', dateRange: 'all' },
+  },
+]
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -40,6 +109,7 @@ export function App({ wixContext, backendUrl }) {
   const [queueItems, setQueueItems] = useState([])
   const [queueLoading, setQueueLoading] = useState(true)
   const [queueError, setQueueError] = useState(null)
+  const [activeQuickPreset, setActiveQuickPreset] = useState(null)
 
   // Analytics state
   const [analytics, setAnalytics] = useState(getEmptyAnalytics())
@@ -56,24 +126,121 @@ export function App({ wixContext, backendUrl }) {
     search: '',
   })
 
+  // Reports tab state
+  const [reputationUsers, setReputationUsers] = useState([])
+  const [reputationLoading, setReputationLoading] = useState(false)
+  const [activityFeed, setActivityFeed] = useState([])
+  const [feedLoading, setFeedLoading] = useState(false)
+  const [feedError, setFeedError] = useState(null)
+
+  // Theme state
+  const [theme, setTheme] = useState(() => {
+    return localStorage.getItem('cmcc-wix-theme') || 'light'
+  })
+
+  const toggleTheme = useCallback(() => {
+    setTheme((prev) => {
+      const next = prev === 'light' ? 'dark' : 'light'
+      localStorage.setItem('cmcc-wix-theme', next)
+      return next
+    })
+  }, [])
+
+  // Keyboard shortcuts modal
+  const [showShortcuts, setShowShortcuts] = useState(false)
+
   // Settings state
   const [settingsSaving, setSettingsSaving] = useState(false)
 
+  // AI Moderation state
+  const DEFAULT_AI_CONFIG = {
+    engine: 'none',
+    apiKey: '',
+    model: '',
+    autoModerate: false,
+    spamThreshold: 50,
+    enableLanguageDetection: false,
+    enableSentimentAnalysis: false,
+  }
+  const [aiConfig, setAiConfig] = useState(DEFAULT_AI_CONFIG)
+  const [aiEvaluatingId, setAiEvaluatingId] = useState(null)
+  const [aiEvaluationResult, setAiEvaluationResult] = useState(null)
+  const [aiEvaluationError, setAiEvaluationError] = useState(null)
+  const [evaluatedItemId, setEvaluatedItemId] = useState(null)
+  const [toasts, setToasts] = useState([])
+  const addToast = useCallback((message, type = 'success') => {
+    const id = Date.now() + Math.random()
+    setToasts((prev) => [...prev, { id, message, type }])
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== id))
+    }, 4000)
+  }, [])
+
+  // Item detail panel state
+  const [detailItem, setDetailItem] = useState(null)
+  const [detailOpen, setDetailOpen] = useState(false)
+  const [itemHistory, setItemHistory] = useState([])
+  const [historyLoading, setHistoryLoading] = useState(false)
+  const [itemNotes, setItemNotes] = useState([])
+  const [notesLoading, setNotesLoading] = useState(false)
+  const [itemAssignment, setItemAssignment] = useState(null)
+
   // Track initial mount to avoid fetching all data in effect
   const initialMount = useRef(true)
+
+  // Apply theme
+  useEffect(() => {
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark')
+    } else {
+      document.documentElement.classList.remove('dark')
+    }
+    localStorage.setItem('cmcc-wix-theme', theme)
+  }, [theme])
+
+  // Keyboard shortcuts
+  useKeyboardShortcuts(
+    [
+      {
+        key: '?',
+        description: 'Toggle keyboard shortcut help',
+        handler: () => setShowShortcuts((p) => !p),
+      },
+      {
+        key: 'f',
+        description: 'Focus search',
+        handler: () => {
+          const searchInput = document.querySelector('input[type="text"]')
+          searchInput?.focus()
+        },
+      },
+    ].filter(Boolean),
+  )
+
+  // Saved filters for queue
+  const { savedFilters, saveFilter } = useSavedFilters('wix-queue', {
+    contentType: 'all',
+    status: 'all',
+    dateRange: 'all',
+    search: '',
+  })
 
   // -----------------------------------------------------------------------
   // Data fetching
   // -----------------------------------------------------------------------
 
   const fetchFromAPI = useCallback(
-    async (endpoint) => {
+    async (endpoint, options = {}) => {
       const headers = { 'Content-Type': 'application/json' }
       if (wixContext.token) {
         headers['Authorization'] = `Bearer ${wixContext.token}`
       }
       const url = `${backendUrl.replace(/\/+$/, '')}/${endpoint.replace(/^\/+/, '')}`
-      const response = await fetch(url, { headers })
+      const response = await fetch(url, {
+        ...options,
+        headers: { ...headers, ...options.headers },
+        body: options.body ? options.body : undefined,
+      })
       if (!response.ok) {
         throw new Error(`API error: ${response.status} ${response.statusText}`)
       }
@@ -111,7 +278,6 @@ export function App({ wixContext, backendUrl }) {
         )
         setAnalytics(processed)
       } else {
-        // No data available – keep empty state
         setAnalytics(getEmptyAnalytics())
       }
     } catch (err) {
@@ -134,13 +300,102 @@ export function App({ wixContext, backendUrl }) {
     }
   }, [fetchFromAPI])
 
-  // Initial fetch – only load queue data on mount
+  const fetchUserReputation = useCallback(async () => {
+    setReputationLoading(true)
+    try {
+      const data = await fetchFromAPI('reputation')
+      setReputationUsers(data.users || [])
+    } catch {
+      setReputationUsers([])
+    } finally {
+      setReputationLoading(false)
+    }
+  }, [fetchFromAPI])
+
+  const fetchActivityFeed = useCallback(async () => {
+    setFeedLoading(true)
+    setFeedError(null)
+    try {
+      const data = await fetchFromAPI('activity-feed?limit=20')
+      setActivityFeed(data.events || [])
+    } catch {
+      setFeedError('Failed to load activity feed')
+    } finally {
+      setFeedLoading(false)
+    }
+  }, [fetchFromAPI])
+
+  /** Fetch history for a specific queue item. */
+  const fetchItemHistory = useCallback(
+    async (itemId) => {
+      setHistoryLoading(true)
+      try {
+        const data = await fetchFromAPI(`queue/${itemId}/history`)
+        setItemHistory(Array.isArray(data) ? data : data.entries || [])
+      } catch {
+        setItemHistory([])
+      } finally {
+        setHistoryLoading(false)
+      }
+    },
+    [fetchFromAPI],
+  )
+
+  /** Fetch notes for a specific queue item. */
+  const fetchItemNotes = useCallback(
+    async (itemId) => {
+      setNotesLoading(true)
+      try {
+        const data = await fetchFromAPI(`queue/${itemId}/notes`)
+        setItemNotes(data.notes || [])
+      } catch {
+        setItemNotes([])
+      } finally {
+        setNotesLoading(false)
+      }
+    },
+    [fetchFromAPI],
+  )
+
+  /** Fetch assignment for a specific queue item. */
+  const fetchItemAssignment = useCallback(
+    async (itemId) => {
+      try {
+        const data = await fetchFromAPI(`queue/${itemId}/assignments`)
+        setItemAssignment(data.assignment || null)
+      } catch {
+        setItemAssignment(null)
+      }
+    },
+    [fetchFromAPI],
+  )
+
+  // Fetch data when tab changes
   useEffect(() => {
     if (initialMount.current) {
       initialMount.current = false
-      fetchQueue()
     }
-  }, [fetchQueue])
+    startTransition(() => {
+      if (activeTab === 'queue') {
+        fetchQueue()
+      } else if (activeTab === 'analytics') {
+        fetchAnalytics()
+      } else if (activeTab === 'activity') {
+        fetchActivity()
+      } else if (activeTab === 'reports') {
+        fetchAnalytics()
+        fetchUserReputation()
+        fetchActivityFeed()
+      }
+    })
+  }, [
+    activeTab,
+    fetchQueue,
+    fetchAnalytics,
+    fetchActivity,
+    fetchUserReputation,
+    fetchActivityFeed,
+  ])
 
   // Polling for queue data
   useEffect(() => {
@@ -156,18 +411,7 @@ export function App({ wixContext, backendUrl }) {
 
   const handleTabChange = (tabId) => {
     setActiveTab(tabId)
-    if (tabId === 'queue') {
-      fetchQueue()
-    } else if (tabId === 'analytics') {
-      fetchAnalytics()
-    } else if (tabId === 'activity') {
-      fetchActivity()
-    }
   }
-
-  // -----------------------------------------------------------------------
-  // Action handlers
-  // -----------------------------------------------------------------------
 
   const handleQueueBulkAction = async (actionType, selectedIds) => {
     try {
@@ -177,8 +421,9 @@ export function App({ wixContext, backendUrl }) {
         body: JSON.stringify({ action: actionType, ids: selectedIds }),
       })
       await fetchQueue()
+      addToast('Bulk action completed')
     } catch (err) {
-      console.error('[CMCC] Bulk action failed:', err.message)
+      addToast(err.message, 'error')
     }
   }
 
@@ -190,25 +435,89 @@ export function App({ wixContext, backendUrl }) {
         body: JSON.stringify({ action: actionType }),
       })
       await fetchQueue()
+      addToast('Item moderated successfully')
     } catch (err) {
-      console.error('[CMCC] Item action failed:', err.message)
+      addToast(err.message, 'error')
     }
   }
 
   const handleSettingsSubmit = async (formData) => {
     setSettingsSaving(true)
     try {
+      const payload = { ...formData, aiConfig }
       await fetch(`${backendUrl}/settings`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       })
+      addToast('Settings saved successfully')
     } catch (err) {
-      console.error('[CMCC] Settings save failed:', err.message)
+      addToast(err.message, 'error')
     } finally {
       setSettingsSaving(false)
     }
   }
+
+  // AI evaluate handler
+  const handleAiEvaluate = useCallback(
+    async (itemId) => {
+      setAiEvaluatingId(itemId)
+      setEvaluatedItemId(itemId)
+      setAiEvaluationResult(null)
+      setAiEvaluationError(null)
+      try {
+        const data = await fetchFromAPI(`queue/${itemId}/ai-evaluate`, {
+          method: 'POST',
+          body: JSON.stringify(aiConfig.engine !== 'none' ? { aiConfig } : {}),
+        })
+        setAiEvaluationResult(data)
+        addToast('AI evaluation completed')
+      } catch (err) {
+        setAiEvaluationError(err.message)
+        addToast(err.message, 'error')
+      }
+    },
+    [aiConfig, fetchFromAPI, addToast],
+  )
+
+  /** Open the item detail panel for a queue item. */
+  const handleViewItem = useCallback(
+    (item) => {
+      const itemId = item._id || item.id
+      setDetailItem(item)
+      setDetailOpen(true)
+      fetchItemHistory(itemId)
+      fetchItemNotes(itemId)
+      fetchItemAssignment(itemId)
+    },
+    [fetchItemHistory, fetchItemNotes, fetchItemAssignment],
+  )
+
+  /** Add a note to the currently viewed detail item. */
+  const handleAddNote = useCallback(
+    async (content, isInternal, type) => {
+      if (!detailItem) return
+      const itemId = detailItem._id || detailItem.id
+      try {
+        const data = await fetchFromAPI(`queue/${itemId}/notes`, {
+          method: 'POST',
+          body: JSON.stringify({
+            content,
+            isInternal,
+            type: type || 'general',
+            authorName: 'Moderator',
+          }),
+        })
+        if (data.note) {
+          setItemNotes((prev) => [data.note, ...prev])
+          addToast('Note added', 'success')
+        }
+      } catch (err) {
+        addToast(err.message || 'Failed to add note', 'error')
+      }
+    },
+    [detailItem, fetchFromAPI, addToast],
+  )
 
   // -----------------------------------------------------------------------
   // Derived state
@@ -266,20 +575,142 @@ export function App({ wixContext, backendUrl }) {
     }
 
     return (
-      <QueueTable
-        items={queueItems}
-        onBulkAction={handleQueueBulkAction}
-        onItemAction={handleQueueItemAction}
-        filters={{
-          contentType: 'all',
-          status: 'all',
-          dateRange: 'all',
-          search: '',
-        }}
-        onFilterChange={() => {}}
-        isLoading={queueLoading}
-        totalCount={queueItems.length}
-      />
+      <div>
+        {/* Quick Filters */}
+        <div style={{ marginBottom: 12 }}>
+          <QuickFilterBar
+            presets={QUICK_PRESETS}
+            activePreset={activeQuickPreset}
+            onSelectPreset={setActiveQuickPreset}
+          />
+        </div>
+
+        {/* Saved Filters Bar */}
+        <div className="cmcc-queue-toolbar">
+          <div className="cmcc-queue-toolbar-left">
+            {savedFilters.length > 0 && (
+              <select
+                className="cmcc-saved-filters-select"
+                onChange={(e) => {
+                  if (e.target.value) {
+                    const found = savedFilters.find(
+                      (f) => f.name === e.target.value,
+                    )
+                    if (found) {
+                      addToast('Filter applied: ' + found.name, 'success')
+                    }
+                  }
+                }}
+                defaultValue=""
+              >
+                <option value="">Saved Filters...</option>
+                {savedFilters.map((sf) => (
+                  <option key={sf.name} value={sf.name}>
+                    {sf.name}
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
+          <div className="cmcc-queue-toolbar-right">
+            <input
+              type="text"
+              className="cmcc-save-filter-input"
+              placeholder="Name this filter..."
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && e.target.value.trim()) {
+                  saveFilter(e.target.value.trim(), {
+                    contentType: 'all',
+                    status: 'all',
+                    dateRange: 'all',
+                    search: '',
+                  })
+                  addToast('Filter saved: ' + e.target.value.trim(), 'success')
+                  e.target.value = ''
+                }
+              }}
+            />
+            <button
+              className="cmcc-save-filter-btn"
+              onClick={() => {
+                const input = document.querySelector('.cmcc-save-filter-input')
+                if (input && input.value.trim()) {
+                  saveFilter(input.value.trim(), {
+                    contentType: 'all',
+                    status: 'all',
+                    dateRange: 'all',
+                    search: '',
+                  })
+                  addToast('Filter saved: ' + input.value.trim(), 'success')
+                  input.value = ''
+                }
+              }}
+            >
+              + Save Filter
+            </button>
+            <button
+              className="cmcc-save-filter-btn"
+              onClick={() =>
+                handleAiEvaluate(queueItems[0]?._id || queueItems[0]?.id)
+              }
+              disabled={
+                aiConfig.engine === 'none' ||
+                queueItems.length === 0 ||
+                !!aiEvaluatingId
+              }
+              title={
+                aiConfig.engine === 'none'
+                  ? 'Enable an AI engine in Settings first'
+                  : 'Evaluate with AI'
+              }
+            >
+              {'\u{1F916}'} AI Eval
+            </button>
+            <button
+              className="cmcc-shortcuts-btn"
+              onClick={() => setShowShortcuts((p) => !p)}
+              title="Keyboard shortcuts"
+            >
+              {'\u{2328}\u{FE0F}'}
+            </button>
+          </div>
+        </div>
+
+        <QueueTable
+          items={queueItems}
+          onBulkAction={handleQueueBulkAction}
+          onItemAction={handleQueueItemAction}
+          onViewItem={handleViewItem}
+          filters={{
+            contentType: 'all',
+            status: 'all',
+            dateRange: 'all',
+            search: '',
+          }}
+          onFilterChange={() => {}}
+          isLoading={queueLoading}
+          totalCount={queueItems.length}
+        />
+
+        {/* AI Evaluation Result */}
+        {(aiEvaluationResult || aiEvaluationError || aiEvaluatingId) && (
+          <div className="cmcc-card" style={{ marginTop: 16, padding: 16 }}>
+            <h3 className="cmcc-card-title">{'\u{1F916}'} AI Moderation</h3>
+            <AiEvaluationResult
+              result={aiEvaluationResult}
+              isLoading={
+                !!aiEvaluatingId && !aiEvaluationResult && !aiEvaluationError
+              }
+              error={aiEvaluationError}
+              onReEvaluate={
+                !evaluatedItemId || aiEvaluatingId
+                  ? undefined
+                  : () => handleAiEvaluate(evaluatedItemId)
+              }
+            />
+          </div>
+        )}
+      </div>
     )
   }
 
@@ -306,6 +737,11 @@ export function App({ wixContext, backendUrl }) {
 
     return (
       <div>
+        <div className="cmcc-card">
+          <h3 className="cmcc-card-title">Moderation Activity Heatmap</h3>
+          <HeatmapChart data={analytics.heatmap} showTooltip />
+        </div>
+
         <div className="cmcc-analytics-summary">
           <div className="cmcc-stat-card">
             <p className="cmcc-stat-label">Spam Ratio</p>
@@ -326,11 +762,6 @@ export function App({ wixContext, backendUrl }) {
             <p className="cmcc-stat-label">Spam Items</p>
             <p className="cmcc-stat-value">{analytics.spamRatio.spamCount}</p>
           </div>
-        </div>
-
-        <div className="cmcc-card">
-          <h3 className="cmcc-card-title">Moderation Activity Heatmap</h3>
-          <HeatmapChart data={analytics.heatmap} showTooltip />
         </div>
 
         {analytics.contentTypeBreakdown.length > 0 && (
@@ -470,139 +901,43 @@ export function App({ wixContext, backendUrl }) {
     )
   }
 
-  function renderSettingsTab() {
-    const sections = [
-      {
-        id: 'general',
-        title: 'General',
-        fields: [
-          {
-            name: 'backendUrl',
-            label: 'Backend API URL',
-            type: 'text',
-            placeholder: 'https://your-api.com/api',
-            helpText: 'The URL of your CMCC backend service.',
-            required: true,
-          },
-          {
-            name: 'pollInterval',
-            label: 'Poll Interval (seconds)',
-            type: 'number',
-            placeholder: '30',
-            helpText: 'How often to check for new queue items.',
-          },
-          {
-            name: 'autoRefresh',
-            label: 'Auto-refresh queue',
-            type: 'toggle',
-            helpText: 'Enable automatic polling of the queue.',
-          },
-        ],
-      },
-      {
-        id: 'filters',
-        title: 'Spam Filters',
-        fields: [
-          {
-            name: 'maxLinks',
-            label: 'Max Links per Item',
-            type: 'number',
-            placeholder: '3',
-            helpText: 'Items with more links will be flagged.',
-          },
-          {
-            name: 'minSubmitTime',
-            label: 'Min Submit Time (seconds)',
-            type: 'number',
-            placeholder: '5',
-            helpText: 'Items submitted faster than this will be flagged.',
-          },
-          {
-            name: 'blockedKeywords',
-            label: 'Blocked Keywords (comma separated)',
-            type: 'textarea',
-            placeholder: 'keyword1, keyword2, ...',
-            helpText: 'Items containing these keywords will be discarded.',
-          },
-        ],
-      },
-      {
-        id: 'notifications',
-        title: 'Notifications',
-        fields: [
-          {
-            name: 'notifyOnSpam',
-            label: 'Spam detection alerts',
-            type: 'toggle',
-            helpText: 'Receive notifications when spam is detected.',
-          },
-          {
-            name: 'notifyOnAnomaly',
-            label: 'Anomaly alerts',
-            type: 'toggle',
-            helpText: 'Receive notifications for unusual activity spikes.',
-          },
-          {
-            name: 'notifyOnThreshold',
-            label: 'Queue threshold',
-            type: 'number',
-            placeholder: '100',
-            helpText: 'Alert when queue exceeds this many pending items.',
-          },
-        ],
-      },
-    ]
-
-    const initialValues = {
-      backendUrl: backendUrl,
-      pollInterval: 30,
-      autoRefresh: true,
-      maxLinks: 3,
-      minSubmitTime: 5,
-      blockedKeywords: '',
-      notifyOnSpam: true,
-      notifyOnAnomaly: true,
-      notifyOnThreshold: 100,
-    }
-
-    const validators = {
-      backendUrl: (v) =>
-        !v || typeof v !== 'string'
-          ? 'Backend URL is required'
-          : /^https?:\/\/.+/.test(v)
-            ? null
-            : 'Must be a valid HTTP or HTTPS URL',
-      maxLinks: (v) =>
-        typeof v === 'number' && v > 0 ? null : 'Must be a positive number',
-      minSubmitTime: (v) =>
-        typeof v === 'number' && v >= 0
-          ? null
-          : 'Must be a non-negative number',
-    }
-
-    return (
-      <SettingsForm
-        sections={sections}
-        onSubmit={handleSettingsSubmit}
-        initialValues={initialValues}
-        validators={validators}
-        submitLabel="Save Settings"
-        isSubmitting={settingsSaving}
-      />
-    )
-  }
-
   // -----------------------------------------------------------------------
   // Main render
   // -----------------------------------------------------------------------
 
   return (
-    <div className="cmcc-wix-app">
+    <div className={`cmcc-wix-app cmcc-theme-${theme}`}>
+      {/* Onboarding Wizard */}
+      <OnboardingWizard />
+
       <header className="cmcc-app-header">
         <h1 className="cmcc-app-title">CMCC Content Moderation</h1>
         <div className="cmcc-app-badges">
+          <button
+            className="cmcc-shortcuts-btn"
+            onClick={() => setShowShortcuts((p) => !p)}
+            title="Keyboard shortcuts"
+          >
+            {'\u{2328}\u{FE0F}'}
+          </button>
+          <button
+            className="cmcc-theme-toggle"
+            onClick={toggleTheme}
+            title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+          >
+            {theme === 'light' ? '\u{1F319}' : '\u{2600}\u{FE0F}'}
+          </button>
           <NotificationBadge count={pendingCount} type="pending" size="sm" />
           <NotificationBadge count={spamCount} type="spam" size="sm" />
+          <a
+            className="cmcc-donate-link"
+            href="https://rzp.io/rzp/IbvR3pMx"
+            target="_blank"
+            rel="noopener noreferrer"
+            title="Support the creator — Donate $1"
+          >
+            {'\u{2764}\u{FE0F}'} Donate $1
+          </a>
         </div>
       </header>
 
@@ -624,10 +959,102 @@ export function App({ wixContext, backendUrl }) {
         {activeTab === 'queue' && renderQueueTab()}
         {activeTab === 'analytics' && renderAnalyticsTab()}
         {activeTab === 'activity' && renderActivityTab()}
-        {activeTab === 'settings' && renderSettingsTab()}
+        {activeTab === 'reports' && (
+          <ReportsTab
+            reputationUsers={reputationUsers}
+            reputationLoading={reputationLoading}
+            activityFeed={activityFeed}
+            feedLoading={feedLoading}
+            feedError={feedError}
+            onFetchActivityFeed={fetchActivityFeed}
+            moderatorPerformance={analytics.moderatorPerformance || []}
+            backendUrl={backendUrl}
+            fetchFromAPI={fetchFromAPI}
+            addToast={addToast}
+          />
+        )}
+        {activeTab === 'settings' && (
+          <SettingsTab
+            onSubmit={handleSettingsSubmit}
+            isSaving={settingsSaving}
+            backendUrl={backendUrl}
+            fetchFromAPI={fetchFromAPI}
+            addToast={addToast}
+            aiConfig={aiConfig}
+            onAiConfigChange={setAiConfig}
+          />
+        )}
       </main>
+
+      {/* Toasts */}
+      {toasts.length > 0 && (
+        <div className="cmcc-toast-container">
+          {toasts.map((toast) => (
+            <div
+              key={toast.id}
+              className={`cmcc-toast cmcc-toast-${toast.type}`}
+              onClick={() =>
+                setToasts((prev) => prev.filter((t) => t.id !== toast.id))
+              }
+            >
+              <span className="cmcc-toast-icon">
+                {toast.type === 'success'
+                  ? '\u{2713}'
+                  : toast.type === 'error'
+                    ? '\u{2715}'
+                    : '\u{2139}'}
+              </span>
+              <span className="cmcc-toast-message">{toast.message}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Item Detail Panel */}
+      <ItemDetailPanel
+        open={detailOpen}
+        item={detailItem}
+        history={itemHistory}
+        historyLoading={historyLoading}
+        notes={itemNotes}
+        notesLoading={notesLoading}
+        assignment={itemAssignment}
+        onAddNote={handleAddNote}
+        onClose={() => setDetailOpen(false)}
+      />
+
+      {/* Keyboard Shortcuts Help Modal */}
+      {showShortcuts && (
+        <div
+          className="cmcc-modal-overlay"
+          onClick={() => setShowShortcuts(false)}
+        >
+          <div
+            className="cmcc-shortcuts-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="cmcc-shortcuts-header">
+              <h2>{'\u{2328}\u{FE0F}'} Keyboard Shortcuts</h2>
+              <button
+                className="cmcc-modal-close"
+                onClick={() => setShowShortcuts(false)}
+              >
+                {'\u{2715}'}
+              </button>
+            </div>
+            <div className="cmcc-shortcuts-body">
+              {KEYBOARD_SHORTCUTS.map((sk) => (
+                <div key={sk.key} className="cmcc-shortcut-row">
+                  <span className="cmcc-shortcut-desc">{sk.description}</span>
+                  <kbd className="cmcc-shortcut-key">
+                    {sk.key.length === 1 ? sk.key.toUpperCase() : sk.key}
+                  </kbd>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
-
-export default App

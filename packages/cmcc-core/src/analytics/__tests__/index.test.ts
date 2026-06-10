@@ -55,7 +55,7 @@ describe('Analytics Processing Engine', () => {
       expect(result.maxCount).toBe(1)
     })
 
-    it('should ignore non-comment/post creations', () => {
+    it('should count all moderation actions in heatmap including non-comment/post', () => {
       const events: ModerationEvent[] = [
         {
           id: '1',
@@ -69,7 +69,8 @@ describe('Analytics Processing Engine', () => {
       ]
 
       const result = generateHeatmapData(events)
-      expect(result.maxCount).toBe(0)
+      // Heatmap now counts ALL moderation actions, not just comment/post creations
+      expect(result.maxCount).toBe(1)
     })
 
     it('should respect lookback period', () => {
@@ -109,7 +110,7 @@ describe('Analytics Processing Engine', () => {
       expect(result.data[dayOfWeek]?.[hour]).toBe(1)
     })
 
-    it('should ignore non-created actions', () => {
+    it('should count all actions including non-created actions', () => {
       const events: ModerationEvent[] = [
         {
           id: '1',
@@ -122,7 +123,8 @@ describe('Analytics Processing Engine', () => {
       ]
 
       const result = generateHeatmapData(events)
-      expect(result.maxCount).toBe(0)
+      // Heatmap now counts ALL moderation actions, not just creations
+      expect(result.maxCount).toBe(1)
     })
 
     it('should accumulate multiple events in same slot', () => {

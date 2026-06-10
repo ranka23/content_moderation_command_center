@@ -1,49 +1,100 @@
-import React from 'react'
+import React, { useState, useMemo, useCallback, useRef } from 'react'
+import { Badge } from '../ui/Badge'
+import { Button } from '../ui/Button'
+import { Input } from '../ui/Input'
+import { Select } from '../ui/Select'
+import { Pagination } from '../ui/Pagination'
+import { useColumnResize } from '../ui/Table'
 
-// Define the types for our queue item
+// ─── Types ──────────────────────────────────────────────────────────────────
+
+export type QueueItemStatus =
+  | 'pending'
+  | 'spam'
+  | 'flagged'
+  | 'approved'
+  | 'rejected'
+  | 'deferred'
+  | 'deactivated'
+
 export interface QueueItem {
   id: string
   contentType: string
   originalId: string | number
-  status: 'pending' | 'spam' | 'flagged'
+  status: QueueItemStatus
   spamScore: number
   authorId: string | number
-  dateGmt: string // ISO date string
+  authorName: string
+  dateGmt: string
   title: string
   excerpt: string
-  // Additional fields for UI
-  typeIcon: string // emoji or icon name
+  typeIcon: string
   statusLabel: string
   statusColor: string
 }
 
-// Define the props for our QueueTable component
+export interface QueueFilters {
+  contentType: string
+  status: string
+  dateRange: string
+  search: string
+}
+
+export interface SortConfig {
+  field: string
+  direction: 'asc' | 'desc'
+}
+
 export interface QueueTableProps {
   items: QueueItem[]
   onBulkAction: (actionType: string, selectedIds: string[]) => void
   onItemAction: (actionType: string, itemId: string) => void
-  filters: {
-    contentType: string
-    status: string
-    dateRange: string
-    search: string
-  }
-  onFilterChange: (
-    newFilters: Partial<{
-      contentType: string
-      status: string
-      dateRange: string
-      search: string
-    }>,
-  ) => void
+  filters: QueueFilters
+  onFilterChange: (newFilters: Partial<QueueFilters>) => void
   isLoading?: boolean
   totalCount?: number
-  // Theme context would be used here, but for simplicity we'll pass theme as prop
-  // In a real implementation, we'd use React Context for theme
-  theme?: Record<string, unknown>
+  /** Called when user wants to read full item content */
+  onReadItem?: (item: QueueItem) => void
+  /** Called when user clicks a column header to sort */
+  onSort?: (field: string, direction: 'asc' | 'desc') => void
+  sortField?: string
+  sortDirection?: 'asc' | 'desc'
+  /** Pagination props */
+  page?: number
+  onPageChange?: (page: number) => void
+  perPage?: number
+  onPerPageChange?: (perPage: number) => void
+  /** Search */
+  onSearch?: (query: string) => void
+  /** Theme: 'light' | 'dark' */
+  theme?: 'light' | 'dark'
 }
 
-// Content type icons mapping
+// ─── Constants ──────────────────────────────────────────────────────────────
+
+const STATUS_ALIASES: Record<string, QueueItemStatus> = {
+  pending: 'pending',
+  spam: 'spam',
+  flagged: 'flagged',
+  approved: 'approved',
+  rejected: 'rejected',
+  deferred: 'deferred',
+  deactivated: 'deactivated',
+  // WordPress / platform-specific aliases
+  hold: 'pending',
+  'in-moderation': 'flagged',
+  approve: 'approved',
+  publish: 'approved',
+  trash: 'rejected',
+  'in-trash': 'rejected',
+  unapprove: 'pending',
+  'pending-review': 'pending',
+  // Numeric statuses
+  '0': 'pending',
+  '1': 'approved',
+  '-1': 'rejected',
+}
+
 const CONTENT_TYPE_ICONS: Record<string, string> = {
   comment: '💬',
   post: '📝',
@@ -59,239 +110,752 @@ const CONTENT_TYPE_ICONS: Record<string, string> = {
   default: '📄',
 }
 
-// Status labels and colors
-const STATUS_CONFIG: Record<
-  'pending' | 'spam' | 'flagged',
-  { label: string; color: string }
-> = {
-  pending: { label: 'Pending', color: '#ffc107' }, // yellow
-  spam: { label: 'Spam', color: '#dc3545' }, // red
-  flagged: { label: 'Flagged', color: '#fd7e14' }, // orange
-}
+const STATUS_CONFIG: Record<QueueItemStatus, { label: string; color: string }> =
+  {
+    pending: { label: 'Pending', color: '#f59e0b' },
+    spam: { label: 'Spam', color: '#ef4444' },
+    flagged: { label: 'Flagged', color: '#f97316' },
+    approved: { label: 'Approved', color: '#22c55e' },
+    rejected: { label: 'Rejected', color: '#6b7280' },
+    deferred: { label: 'Deferred', color: '#06b6d4' },
+    deactivated: { label: 'Deactivated', color: '#374151' },
+  }
 
-// Helper to get content type icon
+const PER_PAGE_OPTIONS = [10, 25, 50, 100]
+
 const getContentTypeIcon = (contentType: string): string => {
-  const lowerContentType = contentType.toLowerCase()
-  if (lowerContentType in CONTENT_TYPE_ICONS) {
-    return (
-      CONTENT_TYPE_ICONS[lowerContentType] ??
-      CONTENT_TYPE_ICONS['default'] ??
-      '📄'
-    )
-  }
-  return CONTENT_TYPE_ICONS['default'] ?? '📄'
+  const lower = contentType.toLowerCase()
+  return CONTENT_TYPE_ICONS[lower] ?? CONTENT_TYPE_ICONS['default'] ?? '📄'
 }
 
-// Helper to get status config
 const getStatusConfig = (status: string): { label: string; color: string } => {
-  const lowerStatus = status.toLowerCase() as 'pending' | 'spam' | 'flagged'
-  if (lowerStatus in STATUS_CONFIG) {
-    return (
-      STATUS_CONFIG[lowerStatus] ??
-      STATUS_CONFIG['pending'] ?? { label: 'Pending', color: '#ffc107' }
-    )
-  }
-  return STATUS_CONFIG['pending'] ?? { label: 'Pending', color: '#ffc107' }
+  const canonical = STATUS_ALIASES[status.toLowerCase()] ?? 'pending'
+  return STATUS_CONFIG[canonical] ?? { label: 'Pending', color: '#f59e0b' }
 }
+
+// ─── Column definitions ─────────────────────────────────────────────────────
+
+interface ColumnDef {
+  key: string
+  label: string
+  sortable: boolean
+  width?: string
+  minWidth?: string
+  align?: 'left' | 'center' | 'right'
+}
+
+const COLUMNS: ColumnDef[] = [
+  { key: 'checkbox', label: '', sortable: false, width: '44px' },
+  { key: 'contentType', label: 'Type', sortable: true, width: '80px' },
+  { key: 'title', label: 'Title / Excerpt', sortable: true },
+  { key: 'authorId', label: 'Author', sortable: true, width: '140px' },
+  { key: 'dateGmt', label: 'Date', sortable: true, width: '160px' },
+  { key: 'status', label: 'Status', sortable: true, width: '110px' },
+  { key: 'spamScore', label: 'Spam Score', sortable: true, width: '110px' },
+  {
+    key: 'actions',
+    label: 'Actions',
+    sortable: false,
+    minWidth: '240px',
+    width: '260px',
+  },
+]
+
+// ─── Content Modal ──────────────────────────────────────────────────────────
+
+interface ContentModalProps {
+  item: QueueItem | null
+  onClose: () => void
+  onAction: (action: string, id: string) => void
+}
+
+function ContentModal({
+  item,
+  onClose,
+  onAction,
+}: ContentModalProps): React.ReactElement | null {
+  if (!item) return null
+
+  const statusCfg = getStatusConfig(item.status)
+
+  return (
+    <div className="cmcc-modal-overlay" onClick={onClose}>
+      <div className="cmcc-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="cmcc-modal-header">
+          <h2 className="cmcc-modal-title">{item.title}</h2>
+          <button className="cmcc-modal-close" onClick={onClose}>
+            ✕
+          </button>
+        </div>
+        <div className="cmcc-modal-body">
+          <div className="cmcc-modal-meta">
+            <span
+              className="cmcc-modal-badge"
+              style={{ backgroundColor: statusCfg.color }}
+            >
+              {statusCfg.label}
+            </span>
+            <span className="cmcc-modal-type">
+              {getContentTypeIcon(item.contentType)} {item.contentType}
+            </span>
+            <span className="cmcc-modal-author">By: {item.authorId}</span>
+            <span className="cmcc-modal-date">
+              {new Date(item.dateGmt).toLocaleString()}
+            </span>
+            <span className="cmcc-modal-score">
+              Spam Score: <strong>{item.spamScore.toFixed(2)}</strong>
+            </span>
+          </div>
+          <div className="cmcc-modal-content">
+            <p>{item.excerpt || 'No content available.'}</p>
+          </div>
+        </div>
+        <div className="cmcc-modal-actions">
+          <button
+            className="cmcc-btn cmcc-btn-approve"
+            onClick={() => {
+              onAction('approve', item.id)
+              onClose()
+            }}
+          >
+            ✓ Approve
+          </button>
+          <button
+            className="cmcc-btn cmcc-btn-reject"
+            onClick={() => {
+              onAction('reject', item.id)
+              onClose()
+            }}
+          >
+            ✕ Reject
+          </button>
+          <button
+            className="cmcc-btn cmcc-btn-spam"
+            onClick={() => {
+              onAction('spam', item.id)
+              onClose()
+            }}
+          >
+            🚫 Spam
+          </button>
+          <button className="cmcc-btn cmcc-btn-secondary" onClick={onClose}>
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── QueueTable Component ───────────────────────────────────────────────────
 
 export const QueueTable: React.FC<QueueTableProps> = ({
   items,
   onBulkAction,
   onItemAction,
   filters,
-  onFilterChange: _onFilterChange,
+  onFilterChange,
+  onReadItem,
+  onSort,
+  sortField,
+  sortDirection = 'asc',
   isLoading = false,
   totalCount = 0,
-  theme: _theme = {},
+  page = 1,
+  onPageChange,
+  perPage = 25,
+  onPerPageChange,
+  onSearch,
+  theme = 'light',
 }) => {
-  // Handle bulk action change
-  const handleBulkActionChange = (
-    e: React.ChangeEvent<HTMLSelectElement>,
-  ): void => {
-    const actionType = e.target.value
-    if (actionType) {
-      // In a real implementation, we'd get selected IDs from state
-      // For now, we'll just call the action with empty array - this would be handled by parent
-      onBulkAction(actionType, [])
-      // Reset dropdown after action
-      e.target.value = ''
+  // ── Selection state ─────────────────────────────────────────────────────
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [readItem, setReadItem] = useState<QueueItem | null>(null)
+  const [changedItems, setChangedItems] = useState<Set<string>>(new Set())
+  const [searchInput, setSearchInput] = useState(filters.search || '')
+
+  // Column resize state
+  const initialWidths: Record<string, string> = {}
+  for (const col of COLUMNS) {
+    if (col.width) {
+      initialWidths[col.key] = col.width
     }
   }
+  const [colWidths, getResizeHandlers] = useColumnResize(initialWidths)
+  const headerRefs = useRef<Record<string, HTMLTableCellElement | null>>({})
 
-  // Handle item action
-  const handleItemAction = (actionType: string, itemId: string): void => {
-    onItemAction(actionType, itemId)
-  }
+  // ── Bulk select logic ───────────────────────────────────────────────────
+  const allSelected = items.length > 0 && selectedIds.size === items.length
+  const someSelected = selectedIds.size > 0 && selectedIds.size < items.length
 
-  // Get filtered and sorted items (in a real app, this would be done by parent or with useMemo)
-  const filteredItems = items.filter((item: QueueItem): boolean => {
-    const matchesContentType =
-      filters.contentType === 'all' ||
-      item.contentType.toLowerCase() === filters.contentType.toLowerCase()
+  const handleSelectAll = useCallback(() => {
+    if (allSelected) {
+      setSelectedIds(new Set())
+    } else {
+      setSelectedIds(new Set(items.map((i) => i.id)))
+    }
+  }, [allSelected, items])
 
-    const matchesStatus =
-      filters.status === 'all' ||
-      item.status.toLowerCase() === filters.status.toLowerCase()
+  const handleSelectItem = useCallback((id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) {
+        next.delete(id)
+      } else {
+        next.add(id)
+      }
+      return next
+    })
+  }, [])
 
-    // Simplified date range and search - would be more complex in reality
-    const matchesDateRange = true // Placeholder
-    const matchesSearch =
-      !filters.search ||
-      item.title.toLowerCase().includes(filters.search.toLowerCase()) ||
-      item.excerpt.toLowerCase().includes(filters.search.toLowerCase())
+  // ── Handle item action with visual feedback ────────────────────────────
+  const handleItemAction = useCallback(
+    (actionType: string, itemId: string) => {
+      onItemAction(actionType, itemId)
+      // Add to changed set for visual feedback
+      setChangedItems((prev) => new Set(prev).add(itemId))
+      // Remove from selection
+      setSelectedIds((prev) => {
+        const next = new Set(prev)
+        next.delete(itemId)
+        return next
+      })
+      // Clear visual feedback after animation
+      setTimeout(() => {
+        setChangedItems((prev) => {
+          const next = new Set(prev)
+          next.delete(itemId)
+          return next
+        })
+      }, 2000)
+    },
+    [onItemAction],
+  )
 
-    return (
-      matchesContentType && matchesStatus && matchesDateRange && matchesSearch
-    )
-  })
+  // ── Handle bulk action ─────────────────────────────────────────────────
+  const [bulkAction, setBulkAction] = useState('')
 
+  const handleBulkActionChange = useCallback(
+    (e: React.ChangeEvent<HTMLSelectElement>) => {
+      setBulkAction(e.target.value)
+    },
+    [],
+  )
+
+  const handleApplyBulkAction = useCallback(() => {
+    if (bulkAction && selectedIds.size > 0) {
+      onBulkAction(bulkAction, Array.from(selectedIds))
+      setBulkAction('')
+      setSelectedIds(new Set())
+    }
+  }, [bulkAction, selectedIds, onBulkAction])
+
+  // ── Refresh ─────────────────────────────────────────────────────────────
+  const handleRefresh = useCallback(() => {
+    onPageChange?.(1)
+  }, [onPageChange])
+
+  // ── Handle column sort ─────────────────────────────────────────────────
+  const handleSort = useCallback(
+    (field: string) => {
+      if (!onSort) return
+      if (sortField === field) {
+        onSort(field, sortDirection === 'asc' ? 'desc' : 'asc')
+      } else {
+        onSort(field, 'asc')
+      }
+    },
+    [onSort, sortField, sortDirection],
+  )
+
+  // ── Handle search ──────────────────────────────────────────────────────
+  const handleSearchChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const value = e.target.value
+      setSearchInput(value)
+    },
+    [],
+  )
+
+  const handleSearchKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === 'Enter' && onSearch) {
+        onSearch(searchInput)
+      }
+    },
+    [onSearch, searchInput],
+  )
+
+  const handleSearchSubmit = useCallback(() => {
+    if (onSearch) {
+      onSearch(searchInput)
+    }
+  }, [onSearch, searchInput])
+
+  // ── Filters ────────────────────────────────────────────────────────────
+  const handleFilterChange = useCallback(
+    (key: keyof QueueFilters, value: string) => {
+      onFilterChange({ [key]: value })
+    },
+    [onFilterChange],
+  )
+
+  // ── Client-side sorting for current page ───────────────────────────────
+  const sortedItems = useMemo(() => {
+    if (!sortField) return items
+    return [...items].sort((a, b) => {
+      const aVal = String(a[sortField as keyof QueueItem] ?? '')
+      const bVal = String(b[sortField as keyof QueueItem] ?? '')
+      const cmp = aVal.localeCompare(bVal, undefined, { numeric: true })
+      return sortDirection === 'asc' ? cmp : -cmp
+    })
+  }, [items, sortField, sortDirection])
+
+  // ── Filter status options for dropdown ─────────────────────────────────
+  const statusOptions = [
+    { value: 'all', label: 'All Statuses' },
+    ...Object.entries(STATUS_CONFIG).map(([key, cfg]) => ({
+      value: key,
+      label: cfg.label,
+    })),
+  ]
+
+  const contentTypeOptions = useMemo(() => {
+    const types = new Set(items.map((i) => i.contentType))
+    return [
+      { value: 'all', label: 'All Types' },
+      ...Array.from(types).map((t) => ({ value: t, label: t })),
+    ]
+  }, [items])
+
+  // ── Pagination ─────────────────────────────────────────────────────────
+  const totalPages = Math.max(1, Math.ceil(totalCount / perPage))
+
+  // ── Render ─────────────────────────────────────────────────────────────
   return (
-    <div className="cmcc-queue-table">
-      {/* Table Header */}
-      <div className="cmcc-queue-header">
-        <div className="cmcc-queue-filters">
-          {/* In a real implementation, these would be actual filter controls */}
-          <span>Content Type: {filters.contentType}</span>
-          <span>Status: {filters.status}</span>
-          <span>Search: {filters.search}</span>
+    <div className={`cmcc-queue-table cmcc-theme-${theme}`}>
+      {/* ── Toolbar: Search + Filters + Bulk ───────────────────────────── */}
+      <div className="cmcc-queue-toolbar">
+        <div className="cmcc-queue-toolbar-left">
+          {/* Search */}
+          <div className="tw-flex tw-items-center tw-gap-2">
+            <Input
+              type="text"
+              placeholder="Search titles & excerpts..."
+              value={searchInput}
+              onChange={handleSearchChange}
+              onKeyDown={handleSearchKeyDown}
+              className="tw-w-64"
+            />
+            <Button variant="secondary" size="sm" onClick={handleSearchSubmit}>
+              🔍 Search
+            </Button>
+            {filters.search && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setSearchInput('')
+                  onSearch?.('')
+                }}
+              >
+                ✕
+              </Button>
+            )}
+          </div>
+
+          {/* Status filter */}
+          <Select
+            className="tw-w-36"
+            value={filters.status}
+            onChange={(e) => handleFilterChange('status', e.target.value)}
+            options={statusOptions}
+          />
+
+          {/* Content type filter */}
+          <Select
+            className="tw-w-40"
+            value={filters.contentType}
+            onChange={(e) => handleFilterChange('contentType', e.target.value)}
+            options={contentTypeOptions}
+          />
+
+          {/* Date range filter */}
+          <Select
+            className="tw-w-36"
+            value={filters.dateRange}
+            onChange={(e) => handleFilterChange('dateRange', e.target.value)}
+          >
+            <option value="all">All Time</option>
+            <option value="24h">Last 24 Hours</option>
+            <option value="7d">Last 7 Days</option>
+            <option value="30d">Last 30 Days</option>
+            <option value="90d">Last 90 Days</option>
+          </Select>
         </div>
-        <div className="cmcc-queue-bulk-actions">
-          <select onChange={handleBulkActionChange}>
-            <option value="">Bulk Actions</option>
-            <option value="approve-all">Approve All</option>
-            <option value="move-to-trash">Move to Trash</option>
-            <option value="mark-as-spam">Mark as Spam</option>
-            <option value="deactivate-users">Deactivate User Accounts</option>
-            <option value="export-csv">Export to CSV</option>
-          </select>
-          <button
-            onClick={() => {
-              /* Apply would be handled by onChange in this simple version */
-            }}
+
+        <div className="tw-flex tw-items-center tw-gap-2">
+          {/* Refresh button */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleRefresh}
+            title="Refresh queue"
+            className="tw-text-gray-500"
+          >
+            🔄
+          </Button>
+          {/* Bulk actions */}
+          <Select
+            value={bulkAction}
+            onChange={handleBulkActionChange}
+            disabled={selectedIds.size === 0}
+            className="tw-w-52"
+          >
+            <option value="">
+              {selectedIds.size > 0
+                ? `Bulk (${selectedIds.size} selected)`
+                : 'Bulk Actions'}
+            </option>
+            <option value="approve-all">✓ Approve Selected</option>
+            <option value="move-to-trash">🗑 Reject Selected</option>
+            <option value="mark-as-spam">🚫 Mark Selected as Spam</option>
+            <option value="deactivate-users">
+              ⛔ Deactivate User Accounts
+            </option>
+            <option value="export-csv">📥 Export Selected as CSV</option>
+          </Select>
+          <Button
+            variant="default"
+            size="sm"
+            onClick={handleApplyBulkAction}
+            disabled={!bulkAction || selectedIds.size === 0}
           >
             Apply
-          </button>
-          <button
-            onClick={() => {
-              /* Refresh handler */
-            }}
-          >
-            Refresh
-          </button>
+          </Button>
         </div>
       </div>
 
-      {/* Loading State */}
+      {/* ── Loading Overlay ─────────────────────────────────────────────── */}
       {isLoading && (
-        <div className="cmcc-queue-loading">Loading queue items...</div>
-      )}
-
-      {/* Empty State */}
-      {!isLoading && filteredItems.length === 0 && totalCount === 0 && (
-        <div className="cmcc-queue-empty">
-          No items match your filters. Try adjusting your criteria.
+        <div className="cmcc-queue-loading-overlay">
+          <div className="cmcc-spinner" />
+          <span>Loading...</span>
         </div>
       )}
 
-      {/* Table */}
-      {!isLoading && filteredItems.length > 0 && (
-        <table className="cmcc-queue-table-inner">
+      {/* ── Table ───────────────────────────────────────────────────────── */}
+      <div className="cmcc-queue-table-wrapper">
+        <table
+          className="cmcc-queue-table-inner"
+          style={{ tableLayout: 'auto', width: '100%' }}
+        >
           <thead>
             <tr>
-              <th className="cmcc-queue-col-checkbox">
-                <input type="checkbox" />
+              {/* Checkbox column */}
+              <th
+                className="cmcc-th-checkbox"
+                style={{ width: COLUMNS[0]?.width ?? '40px' }}
+              >
+                <label className="cmcc-checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={allSelected}
+                    ref={(el) => {
+                      if (el) el.indeterminate = someSelected
+                    }}
+                    onChange={handleSelectAll}
+                  />
+                  <span className="cmcc-checkbox-custom" />
+                </label>
               </th>
-              <th className="cmcc-queue-col-type">Type</th>
-              <th className="cmcc-queue-col-title">Title / Excerpt</th>
-              <th className="cmcc-queue-col-author">Author</th>
-              <th className="cmcc-queue-col-date">Date</th>
-              <th className="cmcc-queue-col-status">Status</th>
-              <th className="cmcc-queue-col-spam-score">Spam Score</th>
-              <th className="cmcc-queue-col-actions">Actions</th>
+              {/* Data columns */}
+              {COLUMNS.slice(1).map((col) => {
+                const colStyle: React.CSSProperties = {
+                  width: colWidths[col.key] ?? col.width ?? undefined,
+                  minWidth: col.minWidth ?? undefined,
+                }
+                const width = colWidths[col.key] ?? col.width
+                if (width) {
+                  colStyle.width = width
+                }
+                if (col.minWidth) {
+                  colStyle.minWidth = col.minWidth
+                }
+                const handlers = getResizeHandlers(col.key)
+                const isSorted = sortField === col.key
+                const sortDir = isSorted ? sortDirection : undefined
+
+                return (
+                  <th
+                    key={col.key}
+                    ref={(el) => {
+                      headerRefs.current[col.key] = el
+                    }}
+                    className={`cmcc-th-${col.key} ${col.sortable ? 'cmcc-th-sortable' : ''}`}
+                    style={
+                      Object.keys(colStyle).length > 0 ? colStyle : undefined
+                    }
+                    onClick={() => col.sortable && handleSort(col.key)}
+                  >
+                    <div className="cmcc-th-content">
+                      <span>{col.label}</span>
+                      {col.sortable && (
+                        <span className="cmcc-sort-icons">
+                          <span
+                            className={
+                              isSorted && sortDir === 'asc'
+                                ? 'cmcc-sort-active'
+                                : ''
+                            }
+                          >
+                            ▲
+                          </span>
+                          <span
+                            className={
+                              isSorted && sortDir === 'desc'
+                                ? 'cmcc-sort-active'
+                                : ''
+                            }
+                          >
+                            ▼
+                          </span>
+                        </span>
+                      )}
+                    </div>
+                    {/* Resize handle */}
+                    <div
+                      className="cmcc-col-resize-handle"
+                      onMouseDown={handlers.onMouseDown}
+                    />
+                  </th>
+                )
+              })}
             </tr>
           </thead>
           <tbody>
-            {filteredItems.map((item: QueueItem) => (
-              <tr key={item.id} className="cmcc-queue-row">
-                <td className="cmcc-queue-col-checkbox">
-                  <input type="checkbox" />
-                </td>
-                <td className="cmcc-queue-col-type">
-                  <span>{getContentTypeIcon(item.contentType)}</span>
-                </td>
-                <td className="cmcc-queue-col-title">
-                  <div className="cmcc-queue-title">{item.title}</div>
-                  <div className="cmcc-queue-excerpt">{item.excerpt}</div>
-                </td>
-                <td className="cmcc-queue-col-author">
-                  {/* In a real implementation, we'd show avatar and name */}
-                  <span>Author {item.authorId}</span>
-                </td>
-                <td className="cmcc-queue-col-date">
-                  <span>{new Date(item.dateGmt).toLocaleString()}</span>
-                </td>
-                <td className="cmcc-queue-col-status">
-                  <span
-                    style={{
-                      backgroundColor: getStatusConfig(item.status).color,
-                      color: 'white',
-                      padding: '2px 6px',
-                      borderRadius: '3px',
-                      fontSize: '0.8em',
-                    }}
-                  >
-                    {getStatusConfig(item.status).label}
-                  </span>
-                </td>
-                <td className="cmcc-queue-col-spam-score">
-                  <span>{item.spamScore.toFixed(1)}</span>
-                </td>
-                <td className="cmcc-queue-col-actions">
-                  <div className="cmcc-queue-action-group">
-                    <button
-                      onClick={() => handleItemAction('approve', item.id)}
-                      className="cmcc-queue-action-btn approve"
-                    >
-                      Approve
-                    </button>
-                    <button
-                      onClick={() => handleItemAction('reject', item.id)}
-                      className="cmcc-queue-action-btn reject"
-                    >
-                      Reject
-                    </button>
-                    <button
-                      onClick={() => handleItemAction('spam', item.id)}
-                      className="cmcc-queue-action-btn spam"
-                    >
-                      Spam
-                    </button>
-                    <button
-                      onClick={() => handleItemAction('defer', item.id)}
-                      className="cmcc-queue-action-btn defer"
-                    >
-                      Defer
-                    </button>
+            {sortedItems.length === 0 && !isLoading && (
+              <tr>
+                <td colSpan={COLUMNS.length + 1} className="cmcc-empty-row">
+                  <div className="cmcc-empty-state">
+                    <span className="cmcc-empty-icon">📋</span>
+                    <p>No items match your filters.</p>
+                    <p className="cmcc-empty-hint">
+                      Try adjusting your search or filter criteria.
+                    </p>
                   </div>
                 </td>
               </tr>
-            ))}
+            )}
+            {sortedItems.map((item) => {
+              const statusCfg = getStatusConfig(item.status)
+              const isChanged = changedItems.has(item.id)
+              const isSelected = selectedIds.has(item.id)
+              const authorName = item.authorName || String(item.authorId)
+
+              // Determine which action buttons to show
+              // Only hide the button that matches the current status;
+              // show all other buttons so moderators can re-classify items.
+              // If status is 'deactivated', hide all buttons.
+              const isDeactivated = item.status === 'deactivated'
+              const showApprove = item.status !== 'approved' && !isDeactivated
+              const showReject = item.status !== 'rejected' && !isDeactivated
+              const showSpam = item.status !== 'spam' && !isDeactivated
+              const showDefer = item.status !== 'deferred' && !isDeactivated
+
+              return (
+                <tr
+                  key={item.id}
+                  className={`cmcc-queue-row ${isSelected ? 'cmcc-row-selected' : ''} ${isChanged ? 'cmcc-row-changed' : ''}`}
+                >
+                  <td className="cmcc-td-checkbox">
+                    <label className="cmcc-checkbox-label">
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => handleSelectItem(item.id)}
+                      />
+                      <span className="cmcc-checkbox-custom" />
+                    </label>
+                  </td>
+                  <td className="cmcc-td-type" title={item.contentType}>
+                    <span className="cmcc-type-icon">
+                      {getContentTypeIcon(item.contentType)}
+                    </span>
+                  </td>
+                  <td
+                    className="cmcc-td-title"
+                    onClick={() => {
+                      setReadItem(item)
+                      onReadItem?.(item)
+                    }}
+                  >
+                    <div className="cmcc-item-title">
+                      {item.title || 'Untitled'}
+                    </div>
+                    <div className="cmcc-item-excerpt">
+                      {item.excerpt || ''}
+                    </div>
+                  </td>
+                  <td className="cmcc-td-author">
+                    <div className="cmcc-author-name">{authorName}</div>
+                    <div className="cmcc-author-id">ID: {item.authorId}</div>
+                  </td>
+                  <td className="cmcc-td-date">
+                    {new Date(item.dateGmt).toLocaleDateString(undefined, {
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                  </td>
+                  <td className="cmcc-td-status">
+                    <Badge
+                      variant={
+                        item.status === 'spam'
+                          ? 'destructive'
+                          : item.status === 'pending'
+                            ? 'warning'
+                            : item.status === 'flagged'
+                              ? 'warning'
+                              : item.status === 'approved'
+                                ? 'success'
+                                : 'secondary'
+                      }
+                    >
+                      {statusCfg.label}
+                    </Badge>
+                  </td>
+                  <td className="cmcc-td-score">
+                    <div className="cmcc-score-bar-container">
+                      <div
+                        className="cmcc-score-bar"
+                        style={{
+                          width: `${Math.min(item.spamScore * 100, 100)}%`,
+                          backgroundColor:
+                            item.spamScore > 0.7
+                              ? '#ef4444'
+                              : item.spamScore > 0.4
+                                ? '#f97316'
+                                : '#22c55e',
+                        }}
+                      />
+                    </div>
+                    <span className="cmcc-score-text">
+                      {item.spamScore.toFixed(2)}
+                    </span>
+                  </td>
+                  <td className="cmcc-td-actions">
+                    <div className="tw-flex tw-items-center tw-gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setReadItem(item)
+                          onReadItem?.(item)
+                        }}
+                        title="View details"
+                        className="tw-text-xs"
+                      >
+                        📖
+                      </Button>
+                      {showApprove && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleItemAction('approve', item.id)}
+                          title="Approve"
+                          className="tw-text-green-600 hover:tw-bg-green-50"
+                        >
+                          ✓
+                        </Button>
+                      )}
+                      {showReject && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleItemAction('reject', item.id)}
+                          title="Reject"
+                          className="tw-text-red-600 hover:tw-bg-red-50"
+                        >
+                          ✕
+                        </Button>
+                      )}
+                      {showSpam && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleItemAction('spam', item.id)}
+                          title="Mark as Spam"
+                          className="tw-text-amber-600 hover:tw-bg-amber-50"
+                        >
+                          🚫
+                        </Button>
+                      )}
+                      {showDefer && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleItemAction('defer', item.id)}
+                          title="Defer"
+                          className="tw-text-cyan-600 hover:tw-bg-cyan-50"
+                        >
+                          ⏳
+                        </Button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              )
+            })}
           </tbody>
         </table>
-      )}
+      </div>
 
-      {/* Pagination would go here in a full implementation */}
-      {!isLoading && filteredItems.length > 0 && (
-        <div className="cmcc-queue-pagination">
-          <span>
-            Showing {filteredItems.length} of {totalCount} items
+      {/* ── Pagination ──────────────────────────────────────────────────── */}
+      <div className="tw-flex tw-items-center tw-justify-between tw-py-4 tw-px-2 tw-flex-wrap tw-gap-y-2">
+        <div className="tw-flex tw-items-center tw-gap-2">
+          <span className="tw-text-sm tw-text-gray-500">
+            {totalCount > 0
+              ? `${(page - 1) * perPage + 1}–${Math.min(page * perPage, totalCount)} of ${totalCount} items`
+              : 'No items'}
           </span>
-          {/* Previous/Next buttons would go here */}
+          <span className="tw-text-gray-300">|</span>
+          <label className="tw-flex tw-items-center tw-gap-1 tw-text-sm tw-text-gray-500">
+            Show
+            <Select
+              value={String(perPage)}
+              onChange={(e) => onPerPageChange?.(Number(e.target.value))}
+              className="tw-w-16 tw-h-8 tw-text-xs"
+            >
+              {PER_PAGE_OPTIONS.map((n) => (
+                <option key={n} value={n}>
+                  {n}
+                </option>
+              ))}
+            </Select>
+            per page
+          </label>
         </div>
+
+        <Pagination
+          currentPage={page}
+          totalPages={totalPages}
+          onPageChange={(p) => onPageChange?.(p)}
+        />
+      </div>
+
+      {/* ── Content Modal ───────────────────────────────────────────────── */}
+      {readItem && (
+        <ContentModal
+          item={readItem}
+          onClose={() => setReadItem(null)}
+          onAction={handleItemAction}
+        />
       )}
     </div>
   )
 }
 
-// Default export
 export default QueueTable

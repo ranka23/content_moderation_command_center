@@ -1,6 +1,6 @@
 'use strict'
 
-const { describe, it, expect, beforeEach } = require('@jest/globals')
+const { describe, it, expect } = require('@jest/globals')
 
 // Mock strapi
 const mockEntityService = {
@@ -16,6 +16,9 @@ const mockStrapi = {
   entityService: mockEntityService,
   log: {
     debug: jest.fn(),
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn(),
   },
 }
 
@@ -63,6 +66,22 @@ describe('CMCC Strapi Service', () => {
         'plugin::cmcc.queue-item',
         expect.objectContaining({
           filters: { status: { $eq: 'pending' } },
+        }),
+      )
+    })
+
+    it('applies contentType filter when provided', async () => {
+      mockEntityService.findPage.mockResolvedValue({
+        results: [],
+        pagination: { page: 1, pageSize: 20, total: 0 },
+      })
+
+      await cmccService.getQueue({ contentType: 'comment' })
+
+      expect(mockEntityService.findPage).toHaveBeenCalledWith(
+        'plugin::cmcc.queue-item',
+        expect.objectContaining({
+          filters: { contentType: { $eq: 'comment' } },
         }),
       )
     })
@@ -171,6 +190,83 @@ describe('CMCC Strapi Service', () => {
     })
   })
 
+  describe('getItemHistory', () => {
+    it('returns activity log entries for an item', async () => {
+      mockEntityService.findMany.mockResolvedValue([
+        { id: 1, action: 'approved', itemId: 'ext-1' },
+      ])
+
+      const result = await cmccService.getItemHistory('ext-1')
+
+      expect(mockEntityService.findMany).toHaveBeenCalledWith(
+        'plugin::cmcc.activity-log',
+        expect.objectContaining({
+          filters: { itemId: { $eq: 'ext-1' } },
+        }),
+      )
+      expect(result).toHaveLength(1)
+    })
+  })
+
+  describe('getNotes / addNote', () => {
+    it('returns empty array when no notes exist', async () => {
+      const notes = await cmccService.getNotes('unknown-item')
+      expect(notes).toEqual([])
+    })
+
+    it('adds and retrieves notes', async () => {
+      const note = await cmccService.addNote('item-1', {
+        content: 'Test note',
+        authorId: 'mod-1',
+        authorName: 'Admin',
+        isInternal: false,
+        type: 'general',
+      })
+
+      expect(note.content).toBe('Test note')
+      expect(note.id).toBeDefined()
+
+      const notes = await cmccService.getNotes('item-1')
+      expect(notes).toHaveLength(1)
+      expect(notes[0].content).toBe('Test note')
+    })
+  })
+
+  describe('assignItem', () => {
+    it('creates an assignment', async () => {
+      const result = await cmccService.assignItem('item-1', {
+        assigneeId: 'mod-2',
+        teamId: null,
+        assignedById: 'mod-1',
+        dueDate: '2024-12-31',
+        priority: 'high',
+      })
+
+      expect(result.itemId).toBe('item-1')
+      expect(result.assigneeId).toBe('mod-2')
+      expect(result.priority).toBe('high')
+      expect(result.status).toBe('pending')
+    })
+  })
+
+  describe('getActivityFeed', () => {
+    it('returns recent feed events', async () => {
+      // Add some events first
+      cmccService.addFeedEvent({
+        type: 'action',
+        actorId: 'mod-1',
+        actorName: 'Admin',
+        description: 'Approved item',
+        itemId: 'ext-1',
+        itemTitle: 'Test',
+      })
+
+      const events = await cmccService.getActivityFeed(10)
+      expect(events.length).toBeGreaterThanOrEqual(1)
+      expect(events[0].type).toBe('action')
+    })
+  })
+
   describe('getActivityLog', () => {
     it('returns paginated activity log with filters', async () => {
       const mockLog = {
@@ -190,6 +286,28 @@ describe('CMCC Strapi Service', () => {
         }),
       )
       expect(result).toEqual(mockLog)
+    })
+
+    it('applies moderatorId and contentType filters', async () => {
+      mockEntityService.findPage.mockResolvedValue({
+        results: [],
+        pagination: { page: 1, pageSize: 20, total: 0 },
+      })
+
+      await cmccService.getActivityLog({
+        moderatorId: 'mod-1',
+        contentType: 'comment',
+      })
+
+      expect(mockEntityService.findPage).toHaveBeenCalledWith(
+        'plugin::cmcc.activity-log',
+        expect.objectContaining({
+          filters: {
+            moderatorId: { $eq: 'mod-1' },
+            contentType: { $eq: 'comment' },
+          },
+        }),
+      )
     })
   })
 
@@ -253,7 +371,7 @@ describe('CMCC Strapi Service', () => {
 
       await cmccService.updateSettings({
         autoModerate: true,
-        moderationBehavior: 'strict',
+        moderationBehavior: 'flag',
         maxLinks: 3,
         blacklistedKeywords: ['spam'],
         duplicateDetection: true,
@@ -272,7 +390,7 @@ describe('CMCC Strapi Service', () => {
 
       await cmccService.updateSettings({
         autoModerate: false,
-        moderationBehavior: 'moderate',
+        moderationBehavior: 'flag',
         maxLinks: 5,
         blacklistedKeywords: [],
         duplicateDetection: false,
@@ -284,6 +402,207 @@ describe('CMCC Strapi Service', () => {
         1,
         expect.any(Object),
       )
+    })
+  })
+
+  describe('getUserReputation', () => {
+    it('returns user reputation scores from logs', async () => {
+      mockEntityService.findMany.mockResolvedValue([
+        { itemId: 'user-1', action: 'approved', createdAt: '2024-01-01' },
+        { itemId: 'user-1', action: 'approved', createdAt: '2024-01-02' },
+        { itemId: 'user-1', action: 'spam', createdAt: '2024-01-03' },
+        { itemId: 'user-2', action: 'rejected', createdAt: '2024-01-01' },
+      ])
+
+      const result = await cmccService.getUserReputation()
+
+      expect(result).toHaveLength(2)
+      const user1 = result.find((u) => u.userId === 'user-1')
+      expect(user1).toBeDefined()
+      expect(user1.totalItems).toBe(3)
+      expect(user1.approvedCount).toBe(2)
+      expect(user1.spamCount).toBe(1)
+    })
+  })
+
+  describe('getUserReputationDetail', () => {
+    it('returns detail for a user with history', async () => {
+      mockEntityService.findMany.mockResolvedValue([
+        {
+          id: 1,
+          action: 'approved',
+          contentType: 'comment',
+          createdAt: '2024-01-01',
+          moderatorId: 'mod-1',
+        },
+      ])
+
+      const result = await cmccService.getUserReputationDetail('user-1')
+
+      expect(result).not.toBeNull()
+      expect(result.userId).toBe('user-1')
+      expect(result.totalActions).toBe(1)
+      expect(result.history).toHaveLength(1)
+    })
+
+    it('returns null for unknown user', async () => {
+      mockEntityService.findMany.mockResolvedValue([])
+      const result = await cmccService.getUserReputationDetail('unknown')
+      expect(result).toBeNull()
+    })
+  })
+
+  describe('getModerationReport', () => {
+    it('generates a CSV report', async () => {
+      mockEntityService.findMany.mockResolvedValue([
+        {
+          createdAt: '2024-01-01',
+          moderatorId: 'mod-1',
+          action: 'approved',
+          contentType: 'comment',
+          itemId: 'ext-1',
+          previousStatus: 'pending',
+          newStatus: 'approved',
+        },
+      ])
+
+      const result = await cmccService.getModerationReport({
+        startDate: '2024-01-01',
+        endDate: '2024-12-31',
+        format: 'csv',
+      })
+
+      expect(result.success).toBe(true)
+      expect(result.filename).toContain('cmcc-moderation')
+      expect(result.data.length).toBeGreaterThan(0)
+    })
+  })
+
+  describe('getComplianceAudit', () => {
+    it('generates a compliance audit', async () => {
+      mockEntityService.findMany.mockResolvedValue([
+        {
+          createdAt: '2024-01-01',
+          moderatorId: 'mod-1',
+          action: 'approved',
+          contentType: 'comment',
+          itemId: 'ext-1',
+          previousStatus: 'pending',
+          newStatus: 'approved',
+        },
+      ])
+
+      const result = await cmccService.getComplianceAudit({
+        startDate: '2024-01-01',
+        endDate: '2024-12-31',
+      })
+
+      expect(result.success).toBe(true)
+      expect(result.filename).toContain('cmcc-compliance')
+      expect(result.data).toHaveLength(1)
+    })
+  })
+
+  describe('scheduleReport', () => {
+    it('creates a scheduled report', async () => {
+      const result = await cmccService.scheduleReport({
+        type: 'moderation_activity',
+        frequency: 'daily',
+        format: 'csv',
+        emails: ['admin@test.com'],
+        createdBy: 'admin',
+      })
+
+      expect(result.success).toBe(true)
+      expect(result.schedule.type).toBe('moderation_activity')
+      expect(result.schedule.frequency).toBe('daily')
+    })
+  })
+
+  describe('getPlatformStatus', () => {
+    it('returns platform statuses with counts', async () => {
+      mockEntityService.count
+        .mockResolvedValueOnce(5) // pending
+        .mockResolvedValueOnce(10) // total (moderatedCount)
+        .mockResolvedValueOnce(2) // spam
+
+      const result = await cmccService.getPlatformStatus()
+
+      expect(result.platforms).toHaveLength(5)
+      const strapi = result.platforms.find((p) => p.id === 'strapi')
+      expect(strapi).toBeDefined()
+      expect(strapi.connected).toBe(true)
+    })
+  })
+
+  describe('syncSettings', () => {
+    it('returns success with synced platforms', async () => {
+      const result = await cmccService.syncSettings({
+        targetPlatforms: ['wordpress', 'shopify'],
+        settings: { autoModerate: true },
+      })
+
+      expect(result.success).toBe(true)
+      expect(result.syncedPlatforms).toEqual(['wordpress', 'shopify'])
+    })
+  })
+
+  describe('getUnifiedQueue', () => {
+    it('delegates to getQueue', async () => {
+      mockEntityService.findPage.mockResolvedValue({
+        results: [{ id: 1 }],
+        pagination: { page: 1, pageSize: 20, total: 1 },
+      })
+
+      const result = await cmccService.getUnifiedQueue({ status: 'pending' })
+
+      expect(result.results).toHaveLength(1)
+    })
+  })
+
+  describe('exportSettings / importSettings', () => {
+    it('exports settings with timestamp', async () => {
+      mockEntityService.findMany.mockResolvedValue([{ autoModerate: true }])
+
+      const result = await cmccService.exportSettings()
+
+      expect(result.data).toBeDefined()
+      expect(result.exportedAt).toBeDefined()
+    })
+
+    it('imports settings', async () => {
+      // importSettings calls update for each key
+      mockEntityService.update.mockResolvedValue({})
+
+      const result = await cmccService.importSettings({
+        autoModerate: true,
+        maxLinks: 3,
+      })
+
+      expect(result.success).toBe(true)
+    })
+  })
+
+  describe('cleanup', () => {
+    it('cleans up in-memory stores', async () => {
+      // Add some data first
+      await cmccService.addNote('item-1', {
+        content: 'test',
+        authorId: 'mod-1',
+        authorName: 'Admin',
+        isInternal: false,
+        type: 'general',
+      })
+      await cmccService.assignItem('item-1', {
+        assigneeId: 'mod-2',
+        assignedById: 'mod-1',
+        priority: 'normal',
+      })
+
+      await cmccService.cleanup()
+
+      const notes = await cmccService.getNotes('item-1')
+      expect(notes).toEqual([])
     })
   })
 })
