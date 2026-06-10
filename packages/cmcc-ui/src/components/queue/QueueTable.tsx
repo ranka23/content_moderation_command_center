@@ -5,6 +5,7 @@ import { Input } from '../ui/Input'
 import { Select } from '../ui/Select'
 import { Pagination } from '../ui/Pagination'
 import { useColumnResize } from '../ui/Table'
+import { SkeletonTable } from '../common/SkeletonTable'
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -536,11 +537,10 @@ export const QueueTable: React.FC<QueueTableProps> = ({
         </div>
       </div>
 
-      {/* ── Loading Overlay ─────────────────────────────────────────────── */}
+      {/* ── Loading Skeleton ──────────────────────────────────────────────── */}
       {isLoading && (
         <div className="cmcc-queue-loading-overlay">
-          <div className="cmcc-spinner" />
-          <span>Loading...</span>
+          <SkeletonTable rows={5} columns={COLUMNS.length} />
         </div>
       )}
 

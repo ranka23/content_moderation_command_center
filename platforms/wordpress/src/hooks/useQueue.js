@@ -158,9 +158,52 @@ export function useQueue({ addToast }) {
   // ── Bulk actions ───────────────────────────────────────────────────
   const BULK_ACTIONS_THAT_NEED_USER_DEACTIVATION = ['deactivate-users']
 
+  /**
+   * Convert an array of arrays to a CSV string and trigger a download.
+   */
+  function downloadCSV(data, filename) {
+    const csvContent = data
+      .map((row) =>
+        row
+          .map((cell) => {
+            // Escape double quotes and wrap in quotes if contains comma, quote, or newline
+            const str = String(cell ?? '')
+            if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+              return '"' + str.replace(/"/g, '""') + '"'
+            }
+            return str
+          })
+          .join(','),
+      )
+      .join('\n')
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download =
+      filename || `cmcc-export-${new Date().toISOString().slice(0, 10)}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   const handleBulkAction = useCallback(
     async (actionType, selectedIds) => {
       try {
+        // CSV Export: download the data as a CSV file instead of applying a bulk action
+        if (actionType === 'export-csv') {
+          const data = await apiFetch('queue/bulk-action', {
+            method: 'POST',
+            body: JSON.stringify({ ids: selectedIds, action: 'export-csv' }),
+          })
+          if (data && data.data && Array.isArray(data.data)) {
+            downloadCSV(data.data, data.filename)
+            addToast(`Exported ${data.data.length - 1} items as CSV`, 'success')
+          } else {
+            addToast('No data to export', 'error')
+          }
+          return
+        }
+
         // B4 Fix: For 'deactivate-users', first deactivate WordPress user accounts
         if (BULK_ACTIONS_THAT_NEED_USER_DEACTIVATION.includes(actionType)) {
           await apiFetch('users/deactivate', {
