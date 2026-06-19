@@ -140,7 +140,6 @@ export interface AdminPermission extends Struct.CollectionTypeSchema {
       Schema.Attribute.SetMinMaxLength<{
         minLength: 1
       }>
-    // eslint-disable-next-line @typescript-eslint/no-empty-object-type
     actionParameters: Schema.Attribute.JSON & Schema.Attribute.DefaultTo<{}>
     apiToken: Schema.Attribute.Relation<'manyToOne', 'admin::api-token'>
     conditions: Schema.Attribute.JSON & Schema.Attribute.DefaultTo<[]>
@@ -150,7 +149,6 @@ export interface AdminPermission extends Struct.CollectionTypeSchema {
     locale: Schema.Attribute.String & Schema.Attribute.Private
     localizations: Schema.Attribute.Relation<'oneToMany', 'admin::permission'> &
       Schema.Attribute.Private
-    // eslint-disable-next-line @typescript-eslint/no-empty-object-type
     properties: Schema.Attribute.JSON & Schema.Attribute.DefaultTo<{}>
     publishedAt: Schema.Attribute.DateTime
     role: Schema.Attribute.Relation<'manyToOne', 'admin::role'>
@@ -463,7 +461,14 @@ export interface PluginCmccActivityLog extends Struct.CollectionTypeSchema {
   }
   attributes: {
     action: Schema.Attribute.Enumeration<
-      ['approved', 'rejected', 'marked_spam', 'deferred']
+      [
+        'approved',
+        'rejected',
+        'marked_spam',
+        'deferred',
+        'flag',
+        'deactivate-users',
+      ]
     > &
       Schema.Attribute.Required
     contentType: Schema.Attribute.String & Schema.Attribute.Required
@@ -479,12 +484,97 @@ export interface PluginCmccActivityLog extends Struct.CollectionTypeSchema {
       Schema.Attribute.Private
     moderatorId: Schema.Attribute.String & Schema.Attribute.Required
     newStatus: Schema.Attribute.Enumeration<
-      ['pending', 'approved', 'rejected', 'spam', 'deferred']
+      ['pending', 'approved', 'rejected', 'spam', 'deferred', 'flagged']
     >
     previousStatus: Schema.Attribute.Enumeration<
-      ['pending', 'approved', 'rejected', 'spam', 'deferred']
+      ['pending', 'approved', 'rejected', 'spam', 'deferred', 'flagged']
     >
     publishedAt: Schema.Attribute.DateTime
+    updatedAt: Schema.Attribute.DateTime
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private
+  }
+}
+
+export interface PluginCmccBreachRecord extends Struct.CollectionTypeSchema {
+  collectionName: 'cmcc_breach_records'
+  info: {
+    description: 'CMCC user breach records for reputation tracking'
+    displayName: 'Breach Record'
+    pluralName: 'breach-records'
+    singularName: 'breach-record'
+  }
+  options: {
+    draftAndPublish: false
+  }
+  pluginOptions: {
+    'content-manager': {
+      visible: true
+    }
+    'content-type-builder': {
+      visible: false
+    }
+  }
+  attributes: {
+    contentId: Schema.Attribute.String
+    contentType: Schema.Attribute.String
+    createdAt: Schema.Attribute.DateTime
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private
+    locale: Schema.Attribute.String & Schema.Attribute.Private
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'plugin::cmcc.breach-record'
+    > &
+      Schema.Attribute.Private
+    moderatorId: Schema.Attribute.String
+    publishedAt: Schema.Attribute.DateTime
+    reason: Schema.Attribute.String
+    severity: Schema.Attribute.String
+    timestamp: Schema.Attribute.DateTime & Schema.Attribute.Required
+    updatedAt: Schema.Attribute.DateTime
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private
+    userId: Schema.Attribute.String & Schema.Attribute.Required
+  }
+}
+
+export interface PluginCmccNotificationLog extends Struct.CollectionTypeSchema {
+  collectionName: 'cmcc_notification_logs'
+  info: {
+    description: 'CMCC sent notification tracking'
+    displayName: 'Notification Log'
+    pluralName: 'notification-logs'
+    singularName: 'notification-log'
+  }
+  options: {
+    draftAndPublish: false
+  }
+  pluginOptions: {
+    'content-manager': {
+      visible: true
+    }
+    'content-type-builder': {
+      visible: false
+    }
+  }
+  attributes: {
+    createdAt: Schema.Attribute.DateTime
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private
+    error: Schema.Attribute.Text
+    locale: Schema.Attribute.String & Schema.Attribute.Private
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'plugin::cmcc.notification-log'
+    > &
+      Schema.Attribute.Private
+    messageId: Schema.Attribute.String
+    publishedAt: Schema.Attribute.DateTime
+    recipients: Schema.Attribute.JSON
+    status: Schema.Attribute.Enumeration<['sent', 'failed']> &
+      Schema.Attribute.DefaultTo<'sent'>
+    type: Schema.Attribute.String & Schema.Attribute.Required
     updatedAt: Schema.Attribute.DateTime
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private
@@ -511,6 +601,7 @@ export interface PluginCmccQueueItem extends Struct.CollectionTypeSchema {
     }
   }
   attributes: {
+    aiEvaluation: Schema.Attribute.JSON
     authorId: Schema.Attribute.String
     contentType: Schema.Attribute.String & Schema.Attribute.Required
     createdAt: Schema.Attribute.DateTime
@@ -528,7 +619,7 @@ export interface PluginCmccQueueItem extends Struct.CollectionTypeSchema {
     publishedAt: Schema.Attribute.DateTime
     spamScore: Schema.Attribute.Decimal & Schema.Attribute.DefaultTo<0>
     status: Schema.Attribute.Enumeration<
-      ['pending', 'approved', 'rejected', 'spam', 'deferred']
+      ['pending', 'approved', 'rejected', 'spam', 'deferred', 'flagged']
     > &
       Schema.Attribute.Required &
       Schema.Attribute.DefaultTo<'pending'>
@@ -536,6 +627,92 @@ export interface PluginCmccQueueItem extends Struct.CollectionTypeSchema {
       Schema.Attribute.SetMinMaxLength<{
         maxLength: 500
       }>
+    updatedAt: Schema.Attribute.DateTime
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private
+  }
+}
+
+export interface PluginCmccReputationScore extends Struct.CollectionTypeSchema {
+  collectionName: 'cmcc_reputation_scores'
+  info: {
+    description: 'CMCC user reputation scores'
+    displayName: 'Reputation Score'
+    pluralName: 'reputation-scores'
+    singularName: 'reputation-score'
+  }
+  options: {
+    draftAndPublish: false
+  }
+  pluginOptions: {
+    'content-manager': {
+      visible: true
+    }
+    'content-type-builder': {
+      visible: false
+    }
+  }
+  attributes: {
+    createdAt: Schema.Attribute.DateTime
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private
+    lastUpdated: Schema.Attribute.DateTime
+    locale: Schema.Attribute.String & Schema.Attribute.Private
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'plugin::cmcc.reputation-score'
+    > &
+      Schema.Attribute.Private
+    publishedAt: Schema.Attribute.DateTime
+    score: Schema.Attribute.Decimal & Schema.Attribute.DefaultTo<0>
+    timesDeactivated: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<0>
+    totalApproved: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<0>
+    totalRejected: Schema.Attribute.Integer & Schema.Attribute.DefaultTo<0>
+    updatedAt: Schema.Attribute.DateTime
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private
+    userId: Schema.Attribute.String & Schema.Attribute.Required
+  }
+}
+
+export interface PluginCmccScheduledReport extends Struct.CollectionTypeSchema {
+  collectionName: 'cmcc_scheduled_reports'
+  info: {
+    description: 'CMCC recurring report schedules'
+    displayName: 'Scheduled Report'
+    pluralName: 'scheduled-reports'
+    singularName: 'scheduled-report'
+  }
+  options: {
+    draftAndPublish: false
+  }
+  pluginOptions: {
+    'content-manager': {
+      visible: true
+    }
+    'content-type-builder': {
+      visible: false
+    }
+  }
+  attributes: {
+    active: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<true>
+    createdAt: Schema.Attribute.DateTime
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private
+    emails: Schema.Attribute.JSON
+    format: Schema.Attribute.Enumeration<['csv', 'json']> &
+      Schema.Attribute.DefaultTo<'csv'>
+    frequency: Schema.Attribute.Enumeration<['daily', 'weekly', 'monthly']> &
+      Schema.Attribute.Required
+    lastSentAt: Schema.Attribute.DateTime
+    locale: Schema.Attribute.String & Schema.Attribute.Private
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'plugin::cmcc.scheduled-report'
+    > &
+      Schema.Attribute.Private
+    publishedAt: Schema.Attribute.DateTime
+    type: Schema.Attribute.String & Schema.Attribute.Required
     updatedAt: Schema.Attribute.DateTime
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private
@@ -562,6 +739,15 @@ export interface PluginCmccSettings extends Struct.CollectionTypeSchema {
     }
   }
   attributes: {
+    aiConfig: Schema.Attribute.JSON &
+      Schema.Attribute.DefaultTo<{
+        apiEndpoint: ''
+        apiKey: ''
+        engine: 'none'
+        maxContentLength: 5000
+        model: ''
+        timeoutMs: 30000
+      }>
     autoModerate: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<false>
     blacklistedKeywords: Schema.Attribute.JSON
     createdAt: Schema.Attribute.DateTime
@@ -585,6 +771,47 @@ export interface PluginCmccSettings extends Struct.CollectionTypeSchema {
     updatedAt: Schema.Attribute.DateTime
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private
+  }
+}
+
+export interface PluginCmccWebhookConfig extends Struct.CollectionTypeSchema {
+  collectionName: 'cmcc_webhook_configs'
+  info: {
+    description: 'CMCC webhook endpoint configurations'
+    displayName: 'Webhook Config'
+    pluralName: 'webhook-configs'
+    singularName: 'webhook-config'
+  }
+  options: {
+    draftAndPublish: false
+  }
+  pluginOptions: {
+    'content-manager': {
+      visible: true
+    }
+    'content-type-builder': {
+      visible: false
+    }
+  }
+  attributes: {
+    active: Schema.Attribute.Boolean & Schema.Attribute.DefaultTo<true>
+    createdAt: Schema.Attribute.DateTime
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private
+    events: Schema.Attribute.JSON & Schema.Attribute.Required
+    headers: Schema.Attribute.JSON
+    locale: Schema.Attribute.String & Schema.Attribute.Private
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'plugin::cmcc.webhook-config'
+    > &
+      Schema.Attribute.Private
+    publishedAt: Schema.Attribute.DateTime
+    secret: Schema.Attribute.String
+    updatedAt: Schema.Attribute.DateTime
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private
+    url: Schema.Attribute.String & Schema.Attribute.Required
   }
 }
 
@@ -1089,7 +1316,7 @@ export interface PluginUsersPermissionsUser
 }
 
 declare module '@strapi/strapi' {
-  export namespace Public {
+  export module Public {
     export interface ContentTypeSchemas {
       'admin::api-token': AdminApiToken
       'admin::api-token-permission': AdminApiTokenPermission
@@ -1100,8 +1327,13 @@ declare module '@strapi/strapi' {
       'admin::transfer-token-permission': AdminTransferTokenPermission
       'admin::user': AdminUser
       'plugin::cmcc.activity-log': PluginCmccActivityLog
+      'plugin::cmcc.breach-record': PluginCmccBreachRecord
+      'plugin::cmcc.notification-log': PluginCmccNotificationLog
       'plugin::cmcc.queue-item': PluginCmccQueueItem
+      'plugin::cmcc.reputation-score': PluginCmccReputationScore
+      'plugin::cmcc.scheduled-report': PluginCmccScheduledReport
       'plugin::cmcc.settings': PluginCmccSettings
+      'plugin::cmcc.webhook-config': PluginCmccWebhookConfig
       'plugin::content-releases.release': PluginContentReleasesRelease
       'plugin::content-releases.release-action': PluginContentReleasesReleaseAction
       'plugin::i18n.locale': PluginI18NLocale

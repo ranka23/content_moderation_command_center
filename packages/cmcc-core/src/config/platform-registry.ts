@@ -18,7 +18,12 @@
 /**
  * Unique platform identifier.
  */
-export type PlatformId = 'shopify' | 'storyblok' | 'strapi' | 'wix' | 'wordpress'
+export type PlatformId =
+  | 'shopify'
+  | 'storyblok'
+  | 'strapi'
+  | 'wix'
+  | 'wordpress'
 
 /**
  * Connection status for a platform integration.
@@ -37,7 +42,7 @@ export interface PlatformDefinition {
   id: PlatformId
   /** Human-readable display name */
   name: string
-  /** Emoji icon for UI display */
+  /** Semantic icon identifier for UI display (maps to @cmcc/ui Icon component) */
   icon: string
   /** Whether this platform ships as a first-party package */
   isFirstParty: boolean
@@ -55,7 +60,7 @@ const PLATFORMS: PlatformDefinition[] = [
   {
     id: 'shopify',
     name: 'Shopify',
-    icon: '🛍️',
+    icon: 'shopify',
     isFirstParty: true,
     defaultStatus: 'available',
     contentTypes: ['product_review', 'blog_comment', 'forum_post'],
@@ -63,7 +68,7 @@ const PLATFORMS: PlatformDefinition[] = [
   {
     id: 'storyblok',
     name: 'Storyblok',
-    icon: '🖼️',
+    icon: 'storyblok',
     isFirstParty: true,
     defaultStatus: 'available',
     contentTypes: ['story', 'comment'],
@@ -71,7 +76,7 @@ const PLATFORMS: PlatformDefinition[] = [
   {
     id: 'strapi',
     name: 'Strapi',
-    icon: '🟣',
+    icon: 'strapi',
     isFirstParty: true,
     defaultStatus: 'connected',
     contentTypes: ['comment', 'post', 'review'],
@@ -79,7 +84,7 @@ const PLATFORMS: PlatformDefinition[] = [
   {
     id: 'wix',
     name: 'Wix',
-    icon: '🎪',
+    icon: 'wix',
     isFirstParty: true,
     defaultStatus: 'available',
     contentTypes: ['blog_comment', 'forum_post', 'site_comment'],
@@ -87,7 +92,7 @@ const PLATFORMS: PlatformDefinition[] = [
   {
     id: 'wordpress',
     name: 'WordPress',
-    icon: '🌐',
+    icon: 'wordpress',
     isFirstParty: true,
     defaultStatus: 'available',
     contentTypes: ['comment', 'post'],

@@ -11,6 +11,6 @@
     "lib": ["DOM", "DOM.Iterable", "ES2022"],
     "allowJs": false,
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.d.ts"],
   "exclude": ["node_modules", "dist"],
 }

@@ -1,8 +1,23 @@
-import React, { useEffect, useCallback } from 'react'
-import { QueueTable } from '@cmcc/ui'
+import React, { useEffect, useCallback, useState } from 'react'
+import {
+  QueueTable,
+  Pagination,
+  useSavedFilters,
+  SkeletonTable,
+  ConfirmationModal,
+} from '@cmcc/ui'
+import { ListChecks, Save, XCircle, Search } from 'lucide-react'
 
-export default function QueuePage({ queue, theme }) {
-  const { saveFilter } = React.useMemo(() => ({ saveFilter: () => {} }), [])
+export default function QueuePage({ queue, theme, addToast }) {
+  const { savedFilters: _savedFilters, saveFilter } = useSavedFilters(
+    'storyblok-queue',
+    {
+      contentType: 'all',
+      status: 'all',
+      dateRange: 'all',
+      search: '',
+    },
+  )
 
   useEffect(() => {
     queue.fetchItems()
@@ -13,78 +28,132 @@ export default function QueuePage({ queue, theme }) {
     if (name) saveFilter(name, {})
   }, [saveFilter])
 
+  const [searchQuery, setSearchQuery] = useState('')
+  const [page, setPage] = useState(1)
+  const [perPage, setPerPage] = useState(25)
+  const [confirmAction, setConfirmAction] = useState(null)
+
+  const handleModerateWithConfirm = (action, itemId) => {
+    if (['reject', 'spam', 'defer'].includes(action)) {
+      setConfirmAction({ action, itemId })
+      return
+    }
+    queue.handleAction(action, itemId)
+  }
+
+  const lowerQuery = searchQuery.toLowerCase()
+  const filteredItems = queue.items.filter((item) => {
+    const title = (item.title || item.name || '').toLowerCase()
+    const author = (item.authorName || item.author || '').toLowerCase()
+    return title.includes(lowerQuery) || author.includes(lowerQuery)
+  })
+
+  const totalPages = Math.max(1, Math.ceil(filteredItems.length / perPage))
+  const safePage = Math.min(page, totalPages)
+  const start = (safePage - 1) * perPage
+  const paginatedItems = filteredItems.slice(start, start + perPage)
+
   return (
-    <div style={{ padding: '20px' }}>
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '16px',
-        }}
-      >
-        <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 600 }}>
-          📋 Moderation Queue
+    <div className="cmcc-queue-page">
+      <div className="cmcc-queue-header-area">
+        <h2>
+          <ListChecks size={20} className="cmcc-queue-header-icon" />
+          Moderation Queue
         </h2>
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <button
-            onClick={handleSaveFilter}
-            style={{
-              padding: '6px 12px',
-              borderRadius: '6px',
-              border: '1px solid #d1d5db',
-              cursor: 'pointer',
-              background: '#fff',
-            }}
-          >
-            💾 Save Filter
+        <div className="cmcc-queue-header-actions">
+          <button onClick={handleSaveFilter} className="cmcc-queue-header-btn">
+            <Save size={14} />
+            Save Filter
           </button>
-          <span
-            style={{
-              padding: '6px 12px',
-              background: '#f3f4f6',
-              borderRadius: '6px',
-              fontSize: '0.875rem',
-              color: '#6b7280',
-            }}
-          >
-            {queue.items.length} items
+          <span className="cmcc-queue-item-count">
+            {filteredItems.length}
+            {filteredItems.length !== queue.items.length
+              ? ` / ${queue.items.length}`
+              : ''}{' '}
+            items
           </span>
         </div>
       </div>
 
-      {queue.loading && (
-        <div style={{ textAlign: 'center', padding: '40px', color: '#6b7280' }}>
-          <div style={{ fontSize: '2rem', marginBottom: '8px' }}>⏳</div>
-          <p>Loading queue...</p>
+      <div className="cmcc-queue-search-wrap">
+        <Search size={16} className="cmcc-queue-search-icon" />
+        <input
+          type="text"
+          placeholder="Search by title or author…"
+          value={searchQuery}
+          onChange={(e) => {
+            setSearchQuery(e.target.value)
+            setPage(1)
+          }}
+          className="cmcc-queue-search-input"
+        />
+      </div>
+
+      {queue.loading && <SkeletonTable rows={5} columns={6} />}
+
+      {queue.error && (
+        <div className="cmcc-queue-error-banner">
+          <XCircle size={16} />
+          {queue.error}
         </div>
       )}
 
-      {queue.error && (
-        <div
-          style={{
-            padding: '16px',
-            background: '#fef2f2',
-            border: '1px solid #fecaca',
-            borderRadius: '8px',
-            color: '#dc2626',
-            marginBottom: '16px',
+      {confirmAction && (
+        <ConfirmationModal
+          open={!!confirmAction}
+          title={`Confirm ${confirmAction.action}`}
+          message={`Are you sure you want to ${confirmAction.action} this item?`}
+          confirmLabel="Confirm"
+          cancelLabel="Cancel"
+          onConfirm={() => {
+            queue.handleAction(confirmAction.action, confirmAction.itemId)
+            setConfirmAction(null)
           }}
-        >
-          ❌ {queue.error}
-        </div>
+          onCancel={() => setConfirmAction(null)}
+        />
       )}
 
       {!queue.loading && !queue.error && (
-        <QueueTable
-          items={queue.items}
-          onItemAction={queue.handleAction}
-          onBulkAction={queue.handleBulkAction}
-          onEvaluate={queue.handleEvaluate}
-          aiEvalResults={queue.aiEvalResults}
-          aiEvalLoading={queue.aiEvalLoading}
-          theme={theme}
-        />
+        <>
+          <QueueTable
+            items={paginatedItems}
+            onItemAction={(action, itemId) =>
+              handleModerateWithConfirm(action, itemId)
+            }
+            onBulkAction={queue.handleBulkAction}
+            onEvaluate={queue.handleEvaluate}
+            aiEvalResults={queue.aiEvalResults}
+            aiEvalLoading={queue.aiEvalLoading}
+            theme={theme}
+            onReadItem={(item) => addToast(`Item: ${item.title || item.id}`)}
+            onSearch={setSearchQuery}
+            onFilterChange={(newFilters) => {
+              if (newFilters.search !== undefined)
+                setSearchQuery(newFilters.search)
+            }}
+            onSort={(_field, _direction) => {}}
+            sortField="date"
+            sortDirection="desc"
+            totalCount={queue.items.length}
+            page={safePage}
+            onPageChange={setPage}
+            perPage={perPage}
+            onPerPageChange={setPerPage}
+            filters={{
+              contentType: 'all',
+              status: 'all',
+              dateRange: 'all',
+              search: searchQuery,
+            }}
+          />
+          <div className="cmcc-queue-pagination-wrap">
+            <Pagination
+              currentPage={safePage}
+              totalPages={totalPages}
+              onPageChange={(p) => setPage(p)}
+            />
+          </div>
+        </>
       )}
     </div>
   )

@@ -8,11 +8,21 @@
 import { getSettings } from '../cmcc/data'
 
 const PLATFORMS = [
-  { name: 'Wix', icon: '🎪', status: 'active', connected: true },
-  { name: 'Storyblok', icon: '🖼️', status: 'available', connected: false },
-  { name: 'WordPress', icon: '🌐', status: 'available', connected: false },
-  { name: 'Shopify', icon: '🛍️', status: 'available', connected: false },
-  { name: 'Strapi', icon: '🟣', status: 'available', connected: false },
+  { name: 'Wix', icon: 'wix', status: 'active', connected: true },
+  {
+    name: 'Storyblok',
+    icon: 'storyblok',
+    status: 'available',
+    connected: false,
+  },
+  {
+    name: 'WordPress',
+    icon: 'wordpress',
+    status: 'available',
+    connected: false,
+  },
+  { name: 'Shopify', icon: 'shopify', status: 'available', connected: false },
+  { name: 'Strapi', icon: 'strapi', status: 'available', connected: false },
 ]
 
 /**

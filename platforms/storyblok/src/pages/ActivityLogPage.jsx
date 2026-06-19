@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react'
+import { History, Inbox } from 'lucide-react'
 
 export default function ActivityLogPage({ activityLog }) {
   useEffect(() => {
@@ -10,7 +11,8 @@ export default function ActivityLogPage({ activityLog }) {
   return (
     <div style={{ padding: '20px' }}>
       <h2 style={{ margin: '0 0 20px', fontSize: '1.25rem', fontWeight: 600 }}>
-        📜 Activity Log
+        <History size={20} style={{ display: 'inline', marginRight: 8 }} />
+        Activity Log
       </h2>
 
       {activityLog.loading && (
@@ -21,14 +23,14 @@ export default function ActivityLogPage({ activityLog }) {
 
       {!activityLog.loading && items.length === 0 && (
         <div style={{ textAlign: 'center', padding: '40px', color: '#6b7280' }}>
-          <p style={{ fontSize: '2rem', marginBottom: '8px' }}>📭</p>
+          <Inbox size={32} />
           <p>No activity recorded yet.</p>
         </div>
       )}
 
       {items.length > 0 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          {items.slice(0, 50).map((entry, idx) => (
+          {items.map((entry, idx) => (
             <div
               key={entry.id || idx}
               style={{

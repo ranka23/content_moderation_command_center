@@ -1,5 +1,6 @@
 import React from 'react'
 import { cn } from '../../lib/cn'
+import { Icon } from '../../lib/icons'
 
 export interface AiSpamScoreDisplay {
   score: number
@@ -55,7 +56,10 @@ function getActionBadge(action: string): { label: string; color: string } {
     case 'approve':
       return { label: 'Approve', color: 'tw-bg-green-100 tw-text-green-800' }
     case 'flag':
-      return { label: 'Flag for Review', color: 'tw-bg-amber-100 tw-text-amber-800' }
+      return {
+        label: 'Flag for Review',
+        color: 'tw-bg-amber-100 tw-text-amber-800',
+      }
     case 'spam':
       return { label: 'Mark as Spam', color: 'tw-bg-red-100 tw-text-red-800' }
     case 'discard':
@@ -67,7 +71,12 @@ function getActionBadge(action: string): { label: string; color: string } {
 
 function SpamGauge({ score }: { score: number }): React.ReactElement {
   const clampedScore = Math.max(0, Math.min(100, score))
-  const color = clampedScore < 30 ? 'tw-bg-green-500' : clampedScore < 60 ? 'tw-bg-amber-500' : 'tw-bg-red-500'
+  const color =
+    clampedScore < 30
+      ? 'tw-bg-green-500'
+      : clampedScore < 60
+        ? 'tw-bg-amber-500'
+        : 'tw-bg-red-500'
 
   return (
     <div className="tw-flex tw-items-center tw-gap-3">
@@ -77,7 +86,9 @@ function SpamGauge({ score }: { score: number }): React.ReactElement {
           style={{ width: `${clampedScore}%` }}
         />
       </div>
-      <span className={`tw-text-lg tw-font-bold ${getScoreColor(clampedScore)}`}>
+      <span
+        className={`tw-text-lg tw-font-bold ${getScoreColor(clampedScore)}`}
+      >
         {Math.round(clampedScore)}
       </span>
     </div>
@@ -93,10 +104,17 @@ export function AiEvaluationResult({
 }: AiEvaluationResultProps): React.ReactElement {
   if (isLoading) {
     return (
-      <div className={cn('tw-bg-white tw-rounded-lg tw-border tw-border-gray-200 tw-p-4', className)}>
+      <div
+        className={cn(
+          'tw-bg-white tw-rounded-lg tw-border tw-border-gray-200 tw-p-4',
+          className,
+        )}
+      >
         <div className="tw-flex tw-items-center tw-gap-3">
           <div className="tw-h-5 tw-w-5 tw-animate-spin tw-rounded-full tw-border-2 tw-border-gray-300 tw-border-t-blue-600" />
-          <span className="tw-text-sm tw-text-gray-500">Analyzing content with AI...</span>
+          <span className="tw-text-sm tw-text-gray-500">
+            Analyzing content with AI...
+          </span>
         </div>
       </div>
     )
@@ -104,10 +122,17 @@ export function AiEvaluationResult({
 
   if (error) {
     return (
-      <div className={cn('tw-bg-red-50 tw-rounded-lg tw-border tw-border-red-200 tw-p-4', className)}>
+      <div
+        className={cn(
+          'tw-bg-red-50 tw-rounded-lg tw-border tw-border-red-200 tw-p-4',
+          className,
+        )}
+      >
         <div className="tw-flex tw-items-center tw-justify-between">
           <div>
-            <p className="tw-text-sm tw-font-medium tw-text-red-800">AI Evaluation Failed</p>
+            <p className="tw-text-sm tw-font-medium tw-text-red-800">
+              AI Evaluation Failed
+            </p>
             <p className="tw-text-xs tw-text-red-600 tw-mt-0.5">{error}</p>
           </div>
           {onReEvaluate && (
@@ -126,11 +151,17 @@ export function AiEvaluationResult({
   const actionBadge = getActionBadge(result.recommendedAction)
 
   return (
-    <div className={cn('tw-bg-white tw-rounded-lg tw-border tw-border-gray-200 tw-divide-y tw-divide-gray-100', className)}>
+    <div
+      className={cn(
+        'tw-bg-white tw-rounded-lg tw-border tw-border-gray-200 tw-divide-y tw-divide-gray-100',
+        className,
+      )}
+    >
       {/* Header */}
       <div className="tw-px-4 tw-py-3 tw-flex tw-items-center tw-justify-between">
         <span className="tw-text-sm tw-font-semibold tw-text-gray-700">
-          🤖 AI Moderation Result
+          <Icon name="ai" size={16} className="tw-inline tw-mr-1" /> AI
+          Moderation Result
         </span>
         <div className="tw-flex tw-items-center tw-gap-2">
           <span className="tw-text-xs tw-text-gray-400">
@@ -148,10 +179,16 @@ export function AiEvaluationResult({
       </div>
 
       {/* Recommended Action */}
-      <div className={cn('tw-px-4 tw-py-3', getScoreBg(result.spamScore.score))}>
+      <div
+        className={cn('tw-px-4 tw-py-3', getScoreBg(result.spamScore.score))}
+      >
         <div className="tw-flex tw-items-center tw-justify-between">
-          <span className="tw-text-sm tw-text-gray-600">Recommended Action</span>
-          <span className={`tw-text-xs tw-font-semibold tw-px-2 tw-py-0.5 tw-rounded-full ${actionBadge.color}`}>
+          <span className="tw-text-sm tw-text-gray-600">
+            Recommended Action
+          </span>
+          <span
+            className={`tw-text-xs tw-font-semibold tw-px-2 tw-py-0.5 tw-rounded-full ${actionBadge.color}`}
+          >
             {actionBadge.label}
           </span>
         </div>
@@ -167,7 +204,9 @@ export function AiEvaluationResult({
         </div>
         <SpamGauge score={result.spamScore.score} />
         {result.spamScore.reason && (
-          <p className="tw-text-xs tw-text-gray-500 tw-mt-1.5">{result.spamScore.reason}</p>
+          <p className="tw-text-xs tw-text-gray-500 tw-mt-1.5">
+            {result.spamScore.reason}
+          </p>
         )}
       </div>
 
@@ -179,9 +218,14 @@ export function AiEvaluationResult({
           </span>
           <div className="tw-space-y-1">
             {result.spamScore.factors.map((f, i) => (
-              <div key={i} className="tw-flex tw-items-center tw-justify-between tw-text-xs">
+              <div
+                key={i}
+                className="tw-flex tw-items-center tw-justify-between tw-text-xs"
+              >
                 <span className="tw-text-gray-600">{f.name}</span>
-                <span className={getScoreColor(f.score)}>{Math.round(f.score)}</span>
+                <span className={getScoreColor(f.score)}>
+                  {Math.round(f.score)}
+                </span>
               </div>
             ))}
           </div>

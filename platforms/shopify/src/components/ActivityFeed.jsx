@@ -4,8 +4,41 @@
 
 import React, { useState, useEffect, useCallback, startTransition } from 'react'
 import { Spinner, Badge, Banner, Button } from '@shopify/polaris'
+import {
+  FileText,
+  CheckCircle,
+  XCircle,
+  Shield,
+  Clock,
+  Flag,
+  Bell,
+  RefreshCw,
+} from 'lucide-react'
 
 const API_BASE = '/api/cmcc'
+
+// ── Event icon lookup table ─────────────────────────────
+const EVENT_ICONS = {
+  note: <FileText size={16} />,
+  approve: <CheckCircle size={16} />,
+  reject: <XCircle size={16} />,
+  spam: <Shield size={16} />,
+  defer: <Clock size={16} />,
+  flag: <Flag size={16} />,
+}
+
+const DEFAULT_EVENT_ICON = <Bell size={16} />
+
+// ── Event badge status lookup table ─────────────────────
+const EVENT_BADGE_STATUS = {
+  approve: 'success',
+  reject: 'critical',
+  spam: 'critical',
+  defer: 'warning',
+  flag: 'attention',
+}
+
+const DEFAULT_BADGE_STATUS = 'info'
 
 /**
  * @param {Object} props
@@ -42,39 +75,17 @@ export default function ActivityFeed({ limit = 20, compact = false }) {
   }, [fetchFeed])
 
   function getEventIcon(event) {
-    if (event.event_type === 'note') return '📝'
-    switch (event.event_action) {
-      case 'approve':
-        return '✅'
-      case 'reject':
-        return '❌'
-      case 'spam':
-        return '🚫'
-      case 'defer':
-        return '⏸️'
-      case 'flag':
-        return '🚩'
-      default:
-        return '🔔'
-    }
+    if (event.event_type === 'note') return EVENT_ICONS.note
+    return EVENT_ICONS[event.event_action] || DEFAULT_EVENT_ICON
   }
 
   function getEventBadge(event) {
     if (event.event_type === 'note') {
       return <Badge status="info">note</Badge>
     }
-    const statusMap = {
-      approve: 'success',
-      reject: 'critical',
-      spam: 'critical',
-      defer: 'warning',
-      flag: 'attention',
-    }
-    return (
-      <Badge status={statusMap[event.event_action] || 'info'}>
-        {event.event_action}
-      </Badge>
-    )
+    const status =
+      EVENT_BADGE_STATUS[event.event_action] || DEFAULT_BADGE_STATUS
+    return <Badge status={status}>{event.event_action}</Badge>
   }
 
   if (loading && events.length === 0) {
@@ -107,7 +118,7 @@ export default function ActivityFeed({ limit = 20, compact = false }) {
       <div className="cmcc-feed-header">
         <span className="cmcc-feed-title">Activity Feed</span>
         <Button plain onClick={fetchFeed} loading={loading}>
-          ↻
+          <RefreshCw size={14} />
         </Button>
       </div>
       <div className="cmcc-feed-list">

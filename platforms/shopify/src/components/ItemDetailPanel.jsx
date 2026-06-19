@@ -11,6 +11,7 @@ import {
   Badge,
   Banner,
 } from '@shopify/polaris'
+import { XCircle } from 'lucide-react'
 
 const API_BASE = '/api/cmcc'
 
@@ -18,8 +19,15 @@ const API_BASE = '/api/cmcc'
  * @param {Object} props
  * @param {Object|null} props.item - The queue item to show details for
  * @param {Function} props.onClose - Callback when panel is closed
+ * @param {string} props.moderatorId - Current moderator ID
+ * @param {string} props.moderatorName - Current moderator display name
  */
-export default function ItemDetailPanel({ item, onClose }) {
+export default function ItemDetailPanel({
+  item,
+  onClose,
+  moderatorId,
+  moderatorName,
+}) {
   const [history, setHistory] = useState([])
   const [notes, setNotes] = useState([])
   const [loading, setLoading] = useState(false)
@@ -70,8 +78,8 @@ export default function ItemDetailPanel({ item, onClose }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          moderatorId: 'current-user',
-          moderatorName: 'Current Moderator',
+          moderatorId,
+          moderatorName,
           note: noteText.trim(),
         }),
       })
@@ -95,8 +103,8 @@ export default function ItemDetailPanel({ item, onClose }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          moderatorId: 'current-user',
-          moderatorName: 'Current Moderator',
+          moderatorId,
+          moderatorName,
           assignTo,
         }),
       })
@@ -126,7 +134,7 @@ export default function ItemDetailPanel({ item, onClose }) {
         <div className="cmcc-detail-panel-header">
           <h2>Item Details</h2>
           <Button plain onClick={onClose}>
-            ✕
+            <XCircle size={16} />
           </Button>
         </div>
 

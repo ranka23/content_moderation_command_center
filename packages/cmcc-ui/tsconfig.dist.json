@@ -1,6 +1,9 @@
 {
   "extends": "./tsconfig.json",
-  "composite": false,
+  "compilerOptions": {
+    "composite": false,
+    "module": "commonjs",
+  },
   "exclude": [
     "node_modules",
     "dist",

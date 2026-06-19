@@ -1,4 +1,5 @@
 import React from 'react'
+import { UserPlus, ClipboardList } from 'lucide-react'
 import { SlideOutPanel, ModerationNotes, SkeletonTable } from '@cmcc/ui'
 
 /**
@@ -107,7 +108,9 @@ export function ItemDetailPanel({
               color: '#374151',
             }}
           >
-            {'\u{1F3AF}'} Assignment
+            <>
+              <UserPlus size={16} style={{ display: 'inline' }} /> Assignment
+            </>
           </h4>
           {assignment ? (
             <div>
@@ -141,7 +144,9 @@ export function ItemDetailPanel({
               color: '#374151',
             }}
           >
-            {'\u{1F4CB}'} History
+            <>
+              <ClipboardList size={16} style={{ display: 'inline' }} /> History
+            </>
           </h4>
           {historyLoading ? (
             <SkeletonTable rows={3} columns={2} />

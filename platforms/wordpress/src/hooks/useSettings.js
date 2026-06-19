@@ -25,7 +25,11 @@ export function useSettings({ addToast }) {
     const sections = []
     const initialValues = {}
 
-    if (data.general) {
+    // Always show all sections; use data from API when available, empty defaults otherwise
+    const s = (key) => data?.[key] || {}
+
+    {
+      const sectionData = s('general')
       sections.push({
         id: 'general',
         title: 'General',
@@ -64,10 +68,11 @@ export function useSettings({ addToast }) {
           },
         ],
       })
-      Object.assign(initialValues, data.general)
+      Object.assign(initialValues, sectionData)
     }
 
-    if (data.spam_firewall) {
+    {
+      const sectionData = s('spam_firewall')
       sections.push({
         id: 'spam_firewall',
         title: 'Spam Firewall',
@@ -118,10 +123,11 @@ export function useSettings({ addToast }) {
           },
         ],
       })
-      Object.assign(initialValues, data.spam_firewall)
+      Object.assign(initialValues, sectionData)
     }
 
-    if (data.notifications) {
+    {
+      const sectionData = s('notifications')
       sections.push({
         id: 'notifications',
         title: 'Notifications',
@@ -146,13 +152,14 @@ export function useSettings({ addToast }) {
           },
         ],
       })
-      Object.assign(initialValues, data.notifications)
+      Object.assign(initialValues, sectionData)
     }
 
-    if (data.appearance) {
+    {
+      const sectionData = s('appearance')
       sections.push({
         id: 'appearance',
-        title: '\uD83E\uDDD1\u200D\uD83C\uDFA8 Appearance & Display',
+        title: 'Appearance & Display',
         fields: [
           {
             name: 'theme',
@@ -206,13 +213,14 @@ export function useSettings({ addToast }) {
           },
         ],
       })
-      Object.assign(initialValues, data.appearance)
+      Object.assign(initialValues, sectionData)
     }
 
-    if (data.integrations) {
+    {
+      const sectionData = s('integrations')
       sections.push({
         id: 'integrations',
-        title: '\uD83D\uDD0C Integrations',
+        title: 'Integrations',
         fields: [
           {
             name: 'auto_import_comments',
@@ -255,13 +263,14 @@ export function useSettings({ addToast }) {
           },
         ],
       })
-      Object.assign(initialValues, data.integrations)
+      Object.assign(initialValues, sectionData)
     }
 
-    if (data.auto_moderation) {
+    {
+      const sectionData = s('auto_moderation')
       sections.push({
         id: 'auto_moderation',
-        title: '\uD83E\uDD16 Advanced Auto Moderation',
+        title: 'Advanced Auto Moderation',
         fields: [
           {
             name: 'ai_detection_engine',
@@ -487,13 +496,14 @@ export function useSettings({ addToast }) {
           },
         ],
       })
-      Object.assign(initialValues, data.auto_moderation)
+      Object.assign(initialValues, sectionData)
     }
 
-    if (data.moderator_management) {
+    {
+      const sectionData = s('moderator_management')
       sections.push({
         id: 'moderator_management',
-        title: '\uD83D\uDC65 Moderator Management',
+        title: 'Moderator Management',
         fields: [
           {
             name: 'secondary_approval_required',
@@ -509,13 +519,14 @@ export function useSettings({ addToast }) {
           },
         ],
       })
-      Object.assign(initialValues, data.moderator_management)
+      Object.assign(initialValues, sectionData)
     }
 
-    if (data.data_retention) {
+    {
+      const sectionData = s('data_retention')
       sections.push({
         id: 'data_retention',
-        title: '\uD83D\uDDC4\uFE0F Data Retention',
+        title: 'Data Retention',
         fields: [
           {
             name: 'activity_log_retention_days',
@@ -547,13 +558,14 @@ export function useSettings({ addToast }) {
           },
         ],
       })
-      Object.assign(initialValues, data.data_retention)
+      Object.assign(initialValues, sectionData)
     }
 
-    if (data.api_webhooks) {
+    {
+      const sectionData = s('api_webhooks')
       sections.push({
         id: 'api_webhooks',
-        title: '\uD83D\uDD17 API & Webhooks',
+        title: 'API & Webhooks',
         fields: [
           {
             name: 'webhook_new_items',
@@ -587,13 +599,14 @@ export function useSettings({ addToast }) {
           },
         ],
       })
-      Object.assign(initialValues, data.api_webhooks)
+      Object.assign(initialValues, sectionData)
     }
 
-    if (data.ai_moderation) {
+    {
+      const sectionData = s('ai_moderation')
       sections.push({
         id: 'ai_moderation',
-        title: '🤖 AI Moderation',
+        title: 'AI Moderation',
         fields: [
           {
             name: 'engine',
@@ -643,13 +656,14 @@ export function useSettings({ addToast }) {
           },
         ],
       })
-      Object.assign(initialValues, data.ai_moderation)
+      Object.assign(initialValues, sectionData)
     }
 
-    if (data.backup_restore) {
+    {
+      const sectionData = s('backup_restore')
       sections.push({
         id: 'backup_restore',
-        title: '\uD83D\uDCBE Backup & Restore',
+        title: 'Backup & Restore',
         fields: [
           {
             name: 'scheduled_backups',
@@ -663,7 +677,7 @@ export function useSettings({ addToast }) {
           },
         ],
       })
-      Object.assign(initialValues, data.backup_restore)
+      Object.assign(initialValues, sectionData)
     }
 
     setSettings(data)

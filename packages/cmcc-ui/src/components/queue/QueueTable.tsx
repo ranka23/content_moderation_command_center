@@ -6,6 +6,7 @@ import { Select } from '../ui/Select'
 import { Pagination } from '../ui/Pagination'
 import { useColumnResize } from '../ui/Table'
 import { SkeletonTable } from '../common/SkeletonTable'
+import { Icon } from '../../lib/icons'
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -97,18 +98,18 @@ const STATUS_ALIASES: Record<string, QueueItemStatus> = {
 }
 
 const CONTENT_TYPE_ICONS: Record<string, string> = {
-  comment: '💬',
-  post: '📝',
-  page: '📄',
-  media: '🖼️',
-  user: '👤',
-  form_entry: '📋',
-  woocommerce_review: '🛒',
-  bbpress_topic: '💬',
-  bbpress_reply: '💬',
-  buddypress_activity: '👥',
-  buddypress_group_post: '👥',
-  default: '📄',
+  comment: 'comment',
+  post: 'post',
+  page: 'page',
+  media: 'media',
+  user: 'user',
+  form_entry: 'form_entry',
+  woocommerce_review: 'woocommerce_review',
+  bbpress_topic: 'comment',
+  bbpress_reply: 'comment',
+  buddypress_activity: 'user',
+  buddypress_group_post: 'user',
+  default: 'page',
 }
 
 const STATUS_CONFIG: Record<QueueItemStatus, { label: string; color: string }> =
@@ -126,7 +127,7 @@ const PER_PAGE_OPTIONS = [10, 25, 50, 100]
 
 const getContentTypeIcon = (contentType: string): string => {
   const lower = contentType.toLowerCase()
-  return CONTENT_TYPE_ICONS[lower] ?? CONTENT_TYPE_ICONS['default'] ?? '📄'
+  return CONTENT_TYPE_ICONS[lower] ?? CONTENT_TYPE_ICONS['default'] ?? 'page'
 }
 
 const getStatusConfig = (status: string): { label: string; color: string } => {
@@ -162,92 +163,6 @@ const COLUMNS: ColumnDef[] = [
   },
 ]
 
-// ─── Content Modal ──────────────────────────────────────────────────────────
-
-interface ContentModalProps {
-  item: QueueItem | null
-  onClose: () => void
-  onAction: (action: string, id: string) => void
-}
-
-function ContentModal({
-  item,
-  onClose,
-  onAction,
-}: ContentModalProps): React.ReactElement | null {
-  if (!item) return null
-
-  const statusCfg = getStatusConfig(item.status)
-
-  return (
-    <div className="cmcc-modal-overlay" onClick={onClose}>
-      <div className="cmcc-modal" onClick={(e) => e.stopPropagation()}>
-        <div className="cmcc-modal-header">
-          <h2 className="cmcc-modal-title">{item.title}</h2>
-          <button className="cmcc-modal-close" onClick={onClose}>
-            ✕
-          </button>
-        </div>
-        <div className="cmcc-modal-body">
-          <div className="cmcc-modal-meta">
-            <span
-              className="cmcc-modal-badge"
-              style={{ backgroundColor: statusCfg.color }}
-            >
-              {statusCfg.label}
-            </span>
-            <span className="cmcc-modal-type">
-              {getContentTypeIcon(item.contentType)} {item.contentType}
-            </span>
-            <span className="cmcc-modal-author">By: {item.authorId}</span>
-            <span className="cmcc-modal-date">
-              {new Date(item.dateGmt).toLocaleString()}
-            </span>
-            <span className="cmcc-modal-score">
-              Spam Score: <strong>{item.spamScore.toFixed(2)}</strong>
-            </span>
-          </div>
-          <div className="cmcc-modal-content">
-            <p>{item.excerpt || 'No content available.'}</p>
-          </div>
-        </div>
-        <div className="cmcc-modal-actions">
-          <button
-            className="cmcc-btn cmcc-btn-approve"
-            onClick={() => {
-              onAction('approve', item.id)
-              onClose()
-            }}
-          >
-            ✓ Approve
-          </button>
-          <button
-            className="cmcc-btn cmcc-btn-reject"
-            onClick={() => {
-              onAction('reject', item.id)
-              onClose()
-            }}
-          >
-            ✕ Reject
-          </button>
-          <button
-            className="cmcc-btn cmcc-btn-spam"
-            onClick={() => {
-              onAction('spam', item.id)
-              onClose()
-            }}
-          >
-            🚫 Spam
-          </button>
-          <button className="cmcc-btn cmcc-btn-secondary" onClick={onClose}>
-            Close
-          </button>
-        </div>
-      </div>
-    </div>
-  )
-}
-
 // ─── QueueTable Component ───────────────────────────────────────────────────
 
 export const QueueTable: React.FC<QueueTableProps> = ({
@@ -271,7 +186,6 @@ export const QueueTable: React.FC<QueueTableProps> = ({
 }) => {
   // ── Selection state ─────────────────────────────────────────────────────
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
-  const [readItem, setReadItem] = useState<QueueItem | null>(null)
   const [changedItems, setChangedItems] = useState<Set<string>>(new Set())
   const [searchInput, setSearchInput] = useState(filters.search || '')
 
@@ -449,7 +363,8 @@ export const QueueTable: React.FC<QueueTableProps> = ({
               className="tw-w-64"
             />
             <Button variant="secondary" size="sm" onClick={handleSearchSubmit}>
-              🔍 Search
+              <Icon name="search" size={14} className="tw-inline tw-mr-1" />{' '}
+              Search
             </Button>
             {filters.search && (
               <Button
@@ -460,7 +375,7 @@ export const QueueTable: React.FC<QueueTableProps> = ({
                   onSearch?.('')
                 }}
               >
-                ✕
+                <Icon name="close" size={16} />
               </Button>
             )}
           </div>
@@ -504,7 +419,7 @@ export const QueueTable: React.FC<QueueTableProps> = ({
             title="Refresh queue"
             className="tw-text-gray-500"
           >
-            🔄
+            <Icon name="refresh" size={16} />
           </Button>
           {/* Bulk actions */}
           <Select
@@ -518,13 +433,28 @@ export const QueueTable: React.FC<QueueTableProps> = ({
                 ? `Bulk (${selectedIds.size} selected)`
                 : 'Bulk Actions'}
             </option>
-            <option value="approve-all">✓ Approve Selected</option>
-            <option value="move-to-trash">🗑 Reject Selected</option>
-            <option value="mark-as-spam">🚫 Mark Selected as Spam</option>
-            <option value="deactivate-users">
-              ⛔ Deactivate User Accounts
+            <option value="approve-all">
+              <>
+                <Icon name="approve" size={14} className="tw-inline tw-mr-1" />{' '}
+                Approve Selected
+              </>
             </option>
-            <option value="export-csv">📥 Export Selected as CSV</option>
+            <option value="move-to-trash">
+              <>
+                <Icon name="reject" size={14} className="tw-inline tw-mr-1" />{' '}
+                Reject Selected
+              </>
+            </option>
+            <option value="mark-as-spam">
+              <>
+                <Icon name="spam" size={14} className="tw-inline tw-mr-1" />{' '}
+                Mark Selected as Spam
+              </>
+            </option>
+            <option value="deactivate-users">Deactivate User Accounts</option>
+            <option value="export-csv">
+              <Icon name="download" size={14} /> Export Selected as CSV
+            </option>
           </Select>
           <Button
             variant="default"
@@ -540,6 +470,9 @@ export const QueueTable: React.FC<QueueTableProps> = ({
       {/* ── Loading Skeleton ──────────────────────────────────────────────── */}
       {isLoading && (
         <div className="cmcc-queue-loading-overlay">
+          <div className="tw-text-center tw-py-2 tw-text-sm tw-text-gray-500">
+            Loading...
+          </div>
           <SkeletonTable rows={5} columns={COLUMNS.length} />
         </div>
       )}
@@ -638,7 +571,9 @@ export const QueueTable: React.FC<QueueTableProps> = ({
               <tr>
                 <td colSpan={COLUMNS.length + 1} className="cmcc-empty-row">
                   <div className="cmcc-empty-state">
-                    <span className="cmcc-empty-icon">📋</span>
+                    <span className="cmcc-empty-icon">
+                      <Icon name="queue" size={24} />
+                    </span>
                     <p>No items match your filters.</p>
                     <p className="cmcc-empty-hint">
                       Try adjusting your search or filter criteria.
@@ -680,13 +615,15 @@ export const QueueTable: React.FC<QueueTableProps> = ({
                   </td>
                   <td className="cmcc-td-type" title={item.contentType}>
                     <span className="cmcc-type-icon">
-                      {getContentTypeIcon(item.contentType)}
+                      <Icon
+                        name={getContentTypeIcon(item.contentType)}
+                        size={16}
+                      />
                     </span>
                   </td>
                   <td
                     className="cmcc-td-title"
                     onClick={() => {
-                      setReadItem(item)
                       onReadItem?.(item)
                     }}
                   >
@@ -752,13 +689,12 @@ export const QueueTable: React.FC<QueueTableProps> = ({
                         variant="ghost"
                         size="sm"
                         onClick={() => {
-                          setReadItem(item)
                           onReadItem?.(item)
                         }}
                         title="View details"
                         className="tw-text-xs"
                       >
-                        📖
+                        <Icon name="view-details" size={16} />
                       </Button>
                       {showApprove && (
                         <Button
@@ -768,7 +704,7 @@ export const QueueTable: React.FC<QueueTableProps> = ({
                           title="Approve"
                           className="tw-text-green-600 hover:tw-bg-green-50"
                         >
-                          ✓
+                          <Icon name="approve" size={16} />
                         </Button>
                       )}
                       {showReject && (
@@ -779,7 +715,7 @@ export const QueueTable: React.FC<QueueTableProps> = ({
                           title="Reject"
                           className="tw-text-red-600 hover:tw-bg-red-50"
                         >
-                          ✕
+                          <Icon name="reject" size={16} />
                         </Button>
                       )}
                       {showSpam && (
@@ -790,7 +726,7 @@ export const QueueTable: React.FC<QueueTableProps> = ({
                           title="Mark as Spam"
                           className="tw-text-amber-600 hover:tw-bg-amber-50"
                         >
-                          🚫
+                          <Icon name="spam" size={16} />
                         </Button>
                       )}
                       {showDefer && (
@@ -801,7 +737,7 @@ export const QueueTable: React.FC<QueueTableProps> = ({
                           title="Defer"
                           className="tw-text-cyan-600 hover:tw-bg-cyan-50"
                         >
-                          ⏳
+                          <Icon name="defer" size={16} />
                         </Button>
                       )}
                     </div>
@@ -845,15 +781,6 @@ export const QueueTable: React.FC<QueueTableProps> = ({
           onPageChange={(p) => onPageChange?.(p)}
         />
       </div>
-
-      {/* ── Content Modal ───────────────────────────────────────────────── */}
-      {readItem && (
-        <ContentModal
-          item={readItem}
-          onClose={() => setReadItem(null)}
-          onAction={handleItemAction}
-        />
-      )}
     </div>
   )
 }

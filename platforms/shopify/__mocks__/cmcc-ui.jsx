@@ -57,10 +57,52 @@ export const NotificationBadge = ({
     String(count),
   )
 
+// Offline detection
+export const OfflineBanner = (props) =>
+  React.createElement('div', { 'data-testid': 'cmcc-offline-banner', ...props })
+export const useOnlineStatus = () => true
+
+// Icon component
+export const Icon = ({ name, size, className, ...props }) =>
+  React.createElement('svg', {
+    'data-testid': 'cmcc-icon',
+    'data-icon-name': name,
+    'data-size': size,
+    className,
+    ...props,
+  })
+
+// AI moderation components
+export const AiSettingsForm = (props) =>
+  React.createElement('div', {
+    'data-testid': 'cmcc-ai-settings-form',
+    ...props,
+  })
+export const AiEvaluationResult = (props) =>
+  React.createElement('div', {
+    'data-testid': 'cmcc-ai-evaluation-result',
+    ...props,
+  })
+
+// Hooks
+export const useKeyboardShortcuts = () => {}
+export const useSavedFilters = () => ({
+  savedFilters: [],
+  saveFilter: () => {},
+  deleteSavedFilter: () => {},
+})
+
 export default {
   QueueTable,
   HeatmapChart,
   SettingsForm,
   ActionButton,
   NotificationBadge,
+  OfflineBanner,
+  useOnlineStatus,
+  Icon,
+  AiSettingsForm,
+  AiEvaluationResult,
+  useKeyboardShortcuts,
+  useSavedFilters,
 }

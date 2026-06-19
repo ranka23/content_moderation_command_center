@@ -1,0 +1,443 @@
+/* ─── Empty State Enhancements ────────────────────────────────────────── */
+
+#cmcc-app .cmcc-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--cmcc-space-10) var(--cmcc-space-4);
+  animation: cmcc-fade-in 0.4s ease;
+}
+
+#cmcc-app .cmcc-empty-state svg {
+  display: block;
+  margin: 0 auto var(--cmcc-space-4);
+  max-width: 160px;
+  height: auto;
+}
+
+@keyframes cmcc-empty-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+#cmcc-app .cmcc-empty-state svg {
+  animation: cmcc-empty-float 3s ease-in-out infinite;
+}
+
+/* ─── Progress Bar (Dark Mode Friendly) ────────────────────────────────── */
+#cmcc-app .cmcc-progress-bar {
+  height: 8px;
+  background: #f0f0f1;
+  border-radius: var(--cmcc-radius-full);
+  overflow: hidden;
+}
+
+#cmcc-app .cmcc-progress-bar-fill {
+  height: 100%;
+  background: var(--cmcc-primary);
+  border-radius: var(--cmcc-radius-full);
+  transition: width 0.3s ease;
+}
+
+.dark #cmcc-app .cmcc-progress-bar {
+  background: #2a2a4a;
+}
+
+.dark #cmcc-app .cmcc-progress-bar-fill {
+  background: #60a5fa;
+}
+
+/* ─── Toast: Dark Mode Variations (info/warning) ────────────────────────── */
+#cmcc-app .cmcc-toast-info {
+  background: var(--cmcc-primary);
+}
+
+#cmcc-app .cmcc-toast-warning {
+  background: #f56e28;
+}
+
+.dark #cmcc-app .cmcc-toast-info {
+  background: #2563eb;
+}
+
+.dark #cmcc-app .cmcc-toast-warning {
+  background: #ea580c;
+}
+
+/* ─── Toast slide-in animation ────────────────────────────────────── */
+@keyframes cmcc-toast-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(100%) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+@keyframes cmcc-toast-fade-out {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(50px);
+  }
+}
+
+#cmcc-app .cmcc-toast-enter {
+  animation: cmcc-toast-slide-in 0.3s ease-out;
+}
+
+#cmcc-app .cmcc-toast-exit {
+  animation: cmcc-toast-fade-out 0.2s ease-in forwards;
+}
+
+/* ─── Row action flash feedback ────────────────────────────────────── */
+@keyframes cmcc-row-flash-green {
+  0% {
+    background-color: rgba(34, 197, 94, 0.15);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+@keyframes cmcc-row-flash-red {
+  0% {
+    background-color: rgba(239, 68, 68, 0.15);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+@keyframes cmcc-row-flash-amber {
+  0% {
+    background-color: rgba(245, 158, 11, 0.15);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+#cmcc-app .cmcc-row-flash-approve td {
+  animation: cmcc-row-flash-green 1.5s ease-out;
+}
+
+#cmcc-app .cmcc-row-flash-reject td,
+#cmcc-app .cmcc-row-flash-spam td {
+  animation: cmcc-row-flash-red 1.5s ease-out;
+}
+
+#cmcc-app .cmcc-row-flash-defer td {
+  animation: cmcc-row-flash-amber 1.5s ease-out;
+}
+
+/* ─── Focus-visible global accessibility ───────────────────────────────── */
+#cmcc-app *:focus-visible {
+  outline: 2px solid var(--cmcc-wp-blue);
+  outline-offset: 1px;
+}
+
+#cmcc-app select:focus-visible,
+#cmcc-app input:focus-visible,
+#cmcc-app textarea:focus-visible {
+  outline: 2px solid var(--cmcc-wp-blue);
+  outline-offset: 0px;
+  border-color: var(--cmcc-wp-blue);
+}
+
+/* ─── Button press feedback ────────────────────────────────────────── */
+#cmcc-app button:active:not(:disabled),
+#cmcc-app .cmcc-btn:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+/* ─── Skeleton shimmer enhancement ─────────────────────────────────── */
+#cmcc-app .cmcc-skeleton {
+  animation: cmcc-shimmer 1.5s ease-in-out infinite;
+}
+
+@keyframes cmcc-shimmer {
+  0% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.6;
+  }
+}
+
+/* ─── Smooth transitions for theme switching (only on theme-aware properties) ── */
+#cmcc-app,
+#cmcc-app .cmcc-top-bar,
+#cmcc-app .cmcc-tab,
+#cmcc-app .cmcc-tab-nav,
+#cmcc-app .cmcc-tab-content,
+#cmcc-app .cmcc-stat-card,
+#cmcc-app .cmcc-chart-card,
+#cmcc-app .cmcc-queue-toolbar,
+#cmcc-app .cmcc-queue-table-wrapper,
+#cmcc-app .cmcc-modal,
+#cmcc-app .cmcc-modal-header,
+#cmcc-app .cmcc-modal-body,
+#cmcc-app .cmcc-modal-footer,
+#cmcc-app .cmcc-theme-toggle,
+#cmcc-app .cmcc-onboarding-card,
+#cmcc-app .cmcc-search-input,
+#cmcc-app .cmcc-filter-select,
+#cmcc-app .cmcc-bulk-select,
+#cmcc-app .cmcc-per-page-select {
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+/* ─── D4 Fix: Cursor pointer on interactive elements ──────────────────── */
+#cmcc-app button:not(:disabled),
+#cmcc-app .cmcc-btn:not(:disabled),
+#cmcc-app .cmcc-tab:not(:disabled),
+#cmcc-app .cmcc-action-btn:not(:disabled),
+#cmcc-app .cmcc-page-btn:not(:disabled),
+#cmcc-app .cmcc-page-num:not(:disabled) {
+  cursor: pointer;
+}
+#cmcc-app button:disabled,
+#cmcc-app .cmcc-btn:disabled,
+#cmcc-app .cmcc-page-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* ─── D5 Fix: Card shadows ────────────────────────────────────────────── */
+#cmcc-app .cmcc-stat-card {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+#cmcc-app .cmcc-chart-card {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+/* ─── D7 Fix: Table row zebra-striping ────────────────────────────────── */
+#cmcc-app .cmcc-queue-table-inner tbody tr:nth-child(even) td,
+#cmcc-app .cmcc-activity-table tbody tr:nth-child(even) td {
+  background-color: rgba(0, 0, 0, 0.02);
+}
+.dark #cmcc-app .cmcc-queue-table-inner tbody tr:nth-child(even) td,
+.dark #cmcc-app .cmcc-activity-table tbody tr:nth-child(even) td {
+  background-color: rgba(255, 255, 255, 0.03);
+}
+
+/* ─── D9 Fix: Consistent input heights ────────────────────────────────── */
+#cmcc-app .cmcc-search-input,
+#cmcc-app #cmcc-save-filter-input,
+#cmcc-app .cmcc-filter-select,
+#cmcc-app .cmcc-bulk-select,
+#cmcc-app .cmcc-per-page-select {
+  height: 36px;
+  box-sizing: border-box;
+}
+
+/* ─── B11 Fix: Sortable header cursor and active state ───────────────────── */
+#cmcc-app .cmcc-th-sortable {
+  cursor: pointer;
+  user-select: none;
+}
+#cmcc-app .cmcc-th-sortable:hover {
+  background: #f0f0f1;
+}
+#cmcc-app .cmcc-sort-icons {
+  display: inline-flex;
+  flex-direction: column;
+  margin-left: 4px;
+  line-height: 1;
+  font-size: 10px;
+  color: #c3c4c7;
+}
+#cmcc-app .cmcc-sort-active {
+  color: #2563eb;
+}
+
+/* ─── D6 Fix: Responsive improvements (640px breakpoint) ──────────────── */
+@media screen and (max-width: 640px) {
+  #cmcc-app .cmcc-stats-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  #cmcc-app .cmcc-stat-card {
+    padding: 12px;
+  }
+  #cmcc-app .cmcc-stat-value {
+    font-size: 24px;
+  }
+  #cmcc-app .cmcc-filter-select,
+  #cmcc-app .cmcc-bulk-select {
+    min-width: 120px;
+  }
+  #cmcc-app .cmcc-action-group {
+    flex-wrap: wrap;
+  }
+  #cmcc-app .cmcc-activity-table {
+    font-size: 11px;
+  }
+  #cmcc-app .cmcc-activity-table th,
+  #cmcc-app .cmcc-activity-table td {
+    padding: 6px 6px;
+  }
+  #cmcc-app .cmcc-tab {
+    font-size: 12px;
+    padding: 8px 10px;
+  }
+  #cmcc-app .cmcc-tab-nav {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* ─── D6 Fix: Responsive improvements (enhanced 782px) ────────────────── */
+@media screen and (max-width: 782px) {
+  #cmcc-app .cmcc-charts-row {
+    flex-direction: column;
+  }
+  #cmcc-app .cmcc-tab-content {
+    padding: 12px;
+  }
+  #cmcc-app .cmcc-queue-toolbar-left,
+  #cmcc-app .cmcc-queue-toolbar-right {
+    width: 100%;
+  }
+  #cmcc-app .cmcc-queue-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  #cmcc-app .cmcc-search-box {
+    width: 100%;
+  }
+  #cmcc-app .cmcc-search-input {
+    width: 100%;
+  }
+}
+
+/* ─── B14 Fix: Activity log table header styling ──────────────────────── */
+#cmcc-app .cmcc-activity-table th {
+  font-weight: 600;
+  background: #f9fafb;
+  border-bottom: 2px solid #e5e7eb;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* ─── Settings Side Panel: Responsive (collapses on mobile) ───────────── */
+@media screen and (max-width: 640px) {
+  #cmcc-app .cmcc-settings-layout {
+    flex-direction: column !important;
+    gap: 12px !important;
+  }
+
+  #cmcc-app .cmcc-settings-layout nav[role='tablist'] {
+    width: 100% !important;
+    min-width: unset !important;
+    flex-direction: row !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    border-right: none !important;
+    border-bottom: 1px solid #e5e7eb !important;
+    padding-right: 0 !important;
+    padding-bottom: 8px !important;
+    gap: 4px !important;
+  }
+
+  #cmcc-app .cmcc-settings-layout nav[role='tablist'] button {
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+  }
+}
+
+/* ── QueueTable → card layout on mobile ────────────── */
+@media screen and (max-width: 640px) {
+  #cmcc-app .cmcc-queue-table thead {
+    display: none;
+  }
+  #cmcc-app .cmcc-queue-table tbody tr {
+    display: block;
+    border: 1px solid var(--cmcc-border, #c3c4c7);
+    border-radius: var(--cmcc-radius-lg, 6px);
+    padding: var(--cmcc-space-3, 12px);
+    margin-bottom: var(--cmcc-space-3, 12px);
+    background: var(--cmcc-bg-card, #fff);
+  }
+  #cmcc-app .cmcc-queue-table tbody td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--cmcc-space-1, 4px) 0;
+    border: none;
+    font-size: var(--cmcc-small, 0.75rem);
+  }
+  #cmcc-app .cmcc-queue-table tbody td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: var(--cmcc-text-secondary, #50575e);
+    margin-right: var(--cmcc-space-2, 8px);
+  }
+  #cmcc-app .cmcc-queue-table .cmcc-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--cmcc-space-1, 4px);
+    margin-top: var(--cmcc-space-2, 8px);
+  }
+
+  /* ── Tab nav → horizontal scroll (strengthen) ──────── */
+  #cmcc-app .cmcc-tab-nav {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    flex-wrap: nowrap;
+    scrollbar-width: none;
+  }
+  #cmcc-app .cmcc-tab-nav::-webkit-scrollbar {
+    display: none;
+  }
+  #cmcc-app .cmcc-tab {
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  /* ── Filters → collapsible ─────────────────────────── */
+  #cmcc-app .cmcc-queue-filters,
+  #cmcc-app .cmcc-queue-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  #cmcc-app .cmcc-queue-filters-row,
+  #cmcc-app .cmcc-queue-toolbar-right {
+    flex-wrap: wrap;
+  }
+  #cmcc-app .cmcc-filter-select {
+    width: 100%;
+  }
+
+  /* ── Action buttons → icon-only ────────────────────── */
+  #cmcc-app .cmcc-actions button,
+  #cmcc-app .cmcc-actions .cmcc-btn {
+    padding: 6px 8px;
+    font-size: 0;
+    min-width: 32px;
+    min-height: 32px;
+  }
+  #cmcc-app .cmcc-actions button::after {
+    font-size: 0.75rem;
+  }
+}

@@ -1,4 +1,5 @@
 import { cn } from '../../lib/cn'
+import { Icon } from '../../lib/icons'
 
 // ─── Types ───────────────────────────────────────────────────────────────
 
@@ -29,11 +30,11 @@ export interface ActivityFeedProps {
 }
 
 const EVENT_ICONS: Record<FeedEvent['type'], string> = {
-  action: '⚡',
-  note: '📝',
-  assignment: '👤',
-  escalation: '🚨',
-  team_change: '👥',
+  action: 'activity',
+  note: 'note',
+  assignment: 'assignment',
+  escalation: 'escalation',
+  team_change: 'team_change',
 }
 
 const EVENT_COLORS: Record<FeedEvent['type'], string> = {
@@ -42,6 +43,43 @@ const EVENT_COLORS: Record<FeedEvent['type'], string> = {
   assignment: 'tw-border-l-purple-400',
   escalation: 'tw-border-l-red-500',
   team_change: 'tw-border-l-green-400',
+}
+
+/** B3 fix: Proper action label mapping for human-readable display. */
+const ACTION_LABELS: Record<string, string> = {
+  approved: 'Approved',
+  rejected: 'Rejected',
+  spammed: 'Marked as spam',
+  flagged: 'Flagged',
+  deferred: 'Deferred',
+  marked_as_spam: 'Marked as spam',
+  markedasspam: 'Marked as spam',
+  trashed: 'Trashed',
+  created: 'Created',
+  approve: 'Approved',
+  reject: 'Rejected',
+  spam: 'Marked as spam',
+  flag: 'Flagged',
+  defer: 'Deferred',
+  trash: 'Trashed',
+  unapprove: 'Unapproved',
+  unspam: 'Unmarked as spam',
+  untrash: 'Restored from trash',
+  deactivate_user: 'User deactivated',
+  activate_user: 'User activated',
+}
+
+/**
+ * Format action descriptions to be human-readable (B3 fix).
+ * Uses a proper label mapping for known actions, falls back to
+ * cleaning up snake_case for unknown values.
+ */
+function formatDescription(desc: string): string {
+  if (!desc) return ''
+  const lower = desc.toLowerCase().trim()
+  if (ACTION_LABELS[lower]) return ACTION_LABELS[lower]
+  // Fallback: clean up snake_case for unrecognized values
+  return desc.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
 }
 
 /**
@@ -58,8 +96,9 @@ export function ActivityFeed({
 }: ActivityFeedProps): React.ReactElement {
   return (
     <div className={cn('tw-space-y-3', className)}>
-      <h4 className="tw-text-sm tw-font-semibold tw-text-gray-700">
-        🔄 {title}
+      <h4 className="tw-text-sm tw-font-semibold tw-text-gray-700 tw-flex tw-items-center tw-gap-1.5">
+        <Icon name="activity" size={16} />
+        {title}
       </h4>
 
       {/* Error state */}
@@ -106,7 +145,7 @@ export function ActivityFeed({
               )}
             >
               <div className="tw-flex tw-items-center tw-gap-1.5 tw-text-xs">
-                <span>{EVENT_ICONS[event.type]}</span>
+                <Icon name={EVENT_ICONS[event.type]} size={14} />
                 <span className="tw-font-medium tw-text-gray-800">
                   {event.actorName}
                 </span>
@@ -116,13 +155,15 @@ export function ActivityFeed({
                 </span>
               </div>
               <p className="tw-text-sm tw-text-gray-600 tw-mt-0.5">
-                {event.description}
+                {formatDescription(event.description)}
               </p>
-              {event.itemTitle && (
-                <span className="tw-text-xs tw-text-gray-400 tw-mt-0.5 tw-block">
-                  on &quot;{event.itemTitle}&quot;
-                </span>
-              )}
+              {/* B8 fix: Only show item title if not already in description */}
+              {event.itemTitle &&
+                !event.description?.includes(event.itemTitle) && (
+                  <span className="tw-text-xs tw-text-gray-400 tw-mt-0.5 tw-block">
+                    on &quot;{event.itemTitle}&quot;
+                  </span>
+                )}
             </div>
           ))}
         </div>

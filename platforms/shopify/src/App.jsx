@@ -16,12 +16,20 @@ import { Provider as AppBridgeProvider } from '@shopify/app-bridge-react'
 import {
   AppProvider,
   Page,
-  Tabs,
   Toast,
   Spinner,
   Banner,
   Frame,
 } from '@shopify/polaris'
+
+import {
+  OfflineBanner,
+  NotificationBadge,
+  useKeyboardShortcuts,
+  useSavedFilters,
+  ConfirmationModal,
+} from '@cmcc/ui'
+import { Keyboard, Heart, ListChecks } from 'lucide-react'
 
 import OnboardingWizard from './components/OnboardingWizard'
 import QueueTab from './components/QueueTab'
@@ -29,6 +37,17 @@ import AnalyticsTab from './components/AnalyticsTab'
 import ActivityLogTab from './components/ActivityLogTab'
 import ReportsTab from './components/ReportsTab'
 import SettingsTab from './components/SettingsTab'
+
+import {
+  processAnalytics,
+  getEmptyAnalytics,
+  generateContentTypeBreakdown,
+} from '@cmcc/core'
+
+import {
+  normalizeQueueItemForCore,
+  normalizeEventForCore,
+} from './lib/normalizers'
 
 const API_BASE = '/api/cmcc'
 
@@ -56,7 +75,6 @@ const appBridgeConfig = {
 }
 
 const THEME_STORAGE_KEY = 'cmcc-shopify-theme'
-const FILTERS_STORAGE_KEY = 'cmcc-shopify-saved-filters'
 
 /** Entry point for CMCC Shopify App. */
 function App() {
@@ -81,13 +99,14 @@ function App() {
   // ── Data state ──────────────────────────────────────────
   const [queueItems, setQueueItems] = useState([])
 
-  const [analytics, setAnalytics] = useState({
-    totalModerated: 0,
-    spamDetected: 0,
-    approved: 0,
-    pendingReview: 0,
-    spamRatio: 0,
-    contentBreakdown: [],
+  const [processedAnalytics, setProcessedAnalytics] =
+    useState(getEmptyAnalytics())
+  const [rawEvents, setRawEvents] = useState([])
+  const [moderatorNames, setModeratorNames] = useState({})
+
+  const [activeModerator, setActiveModerator] = useState({
+    id: null,
+    name: null,
   })
 
   const [activityLog, setActivityLog] = useState([])
@@ -123,41 +142,22 @@ function App() {
   const [aiEvaluationError, setAiEvaluationError] = useState(null)
 
   // ── Theme ──────────────────────────────────────────────
-  const [darkMode, setDarkMode] = useState(() => {
+  const [theme, setTheme] = useState(() => {
     try {
-      return localStorage.getItem(THEME_STORAGE_KEY) === 'dark'
+      return localStorage.getItem(THEME_STORAGE_KEY) || 'light'
     } catch {
-      return false
+      return 'light'
     }
   })
 
   useEffect(() => {
     try {
-      localStorage.setItem(THEME_STORAGE_KEY, darkMode ? 'dark' : 'light')
+      localStorage.setItem(THEME_STORAGE_KEY, theme)
+      document.documentElement.classList.toggle('dark', theme === 'dark')
     } catch {
       // localStorage unavailable
     }
-  }, [darkMode])
-
-  // ── Saved filters ─────────────────────────────────────
-  const [savedFilters, setSavedFilters] = useState(() => {
-    try {
-      const stored = localStorage.getItem(FILTERS_STORAGE_KEY)
-      return stored ? JSON.parse(stored) : []
-    } catch {
-      return []
-    }
-  })
-  const [filterNameInput, setFilterNameInput] = useState('')
-  const [filterPopoverActive, setFilterPopoverActive] = useState(false)
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(FILTERS_STORAGE_KEY, JSON.stringify(savedFilters))
-    } catch {
-      // localStorage unavailable
-    }
-  }, [savedFilters])
+  }, [theme])
 
   // ── Queue filters ─────────────────────────────────────
   const [queueFilters, setQueueFilters] = useState({
@@ -165,6 +165,19 @@ function App() {
     contentType: 'all',
     riskMin: '',
   })
+
+  // ── Saved filters (via @cmcc/ui hook) ──────────────────
+  const { savedFilters, saveFilter, deleteSavedFilter } = useSavedFilters(
+    'shopify-queue',
+    {
+      status: queueFilters.status,
+      contentType: queueFilters.contentType,
+      riskMin: queueFilters.riskMin || '',
+    },
+  )
+
+  // ── Confirmation state ─────────────────────────────────
+  const [confirmAction, setConfirmAction] = useState(null)
 
   // ── Keyboard shortcuts ────────────────────────────────
   const [showShortcuts, setShowShortcuts] = useState(false)
@@ -180,46 +193,111 @@ function App() {
           return
         }
       }
-      if (
-        e.key === '?' &&
-        !e.ctrlKey &&
-        !e.metaKey &&
-        !e.shiftKey &&
-        !e.altKey
-      ) {
-        e.preventDefault()
-        setShowShortcuts((prev) => !prev)
-      }
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [])
+
+  // ── Action shortcuts (via @cmcc/ui) ───────────────────
+  useKeyboardShortcuts([
+    {
+      key: 'a',
+      description: 'Approve selected item',
+      handler: () => {
+        if (selectedTab === 0 && queueItems.length > 0) {
+          handleModerate(queueItems[0].id, 'approve')
+        }
+      },
+    },
+    {
+      key: 'r',
+      description: 'Reject selected item',
+      handler: () => {
+        if (selectedTab === 0 && queueItems.length > 0) {
+          handleModerate(queueItems[0].id, 'reject')
+        }
+      },
+    },
+    {
+      key: 's',
+      description: 'Mark as spam',
+      handler: () => {
+        if (selectedTab === 0 && queueItems.length > 0) {
+          handleModerate(queueItems[0].id, 'spam')
+        }
+      },
+    },
+    {
+      key: 'd',
+      description: 'Defer selected item',
+      handler: () => {
+        if (selectedTab === 0 && queueItems.length > 0) {
+          handleModerate(queueItems[0].id, 'defer')
+        }
+      },
+    },
+    {
+      key: 'v',
+      description: 'View item details',
+      handler: () => {
+        if (selectedTab === 0 && queueItems.length > 0) {
+          const detailsBtns = document.querySelectorAll('.cmcc-actions button')
+          for (const btn of detailsBtns) {
+            if (btn.textContent === 'Details') {
+              btn.click()
+              break
+            }
+          }
+        }
+      },
+    },
+    {
+      key: 'f',
+      description: 'Focus search',
+      handler: () => {
+        document.querySelector('input[type="text"]')?.focus()
+      },
+    },
+    {
+      key: 'Escape',
+      description: 'Close panel / Cancel',
+      handler: () => {
+        if (showShortcuts) {
+          setShowShortcuts(false)
+        }
+      },
+    },
+    {
+      key: '?',
+      description: 'Toggle keyboard shortcut help',
+      handler: () => setShowShortcuts((p) => !p),
+    },
+  ])
 
   // ── Data fetching ─────────────────────────────────────
   const fetchInitialData = useCallback(async () => {
     setLoading(true)
     setError(null)
     try {
-      const [queueRes, analyticsRes, logRes, settingsRes, reportsRes] =
+      const [queueRes, logRes, settingsRes, reportsRes, eventsRes] =
         await Promise.all([
           fetch(`${API_BASE}/queue`),
-          fetch(`${API_BASE}/analytics`),
           fetch(`${API_BASE}/activity-log`),
           fetch(`${API_BASE}/settings`),
           fetch(`${API_BASE}/reports`).catch(() => null),
+          fetch(`${API_BASE}/events`).catch(() => null),
         ])
 
-      if (!queueRes.ok || !analyticsRes.ok || !logRes.ok || !settingsRes.ok) {
+      if (!queueRes.ok || !logRes.ok || !settingsRes.ok) {
         throw new Error('Failed to fetch initial data')
       }
 
       const queueData = await queueRes.json()
-      const analyticsData = await analyticsRes.json()
       const logData = await logRes.json()
       const settingsData = await settingsRes.json()
 
-      setQueueItems(queueData.items || [])
-      setAnalytics(analyticsData)
+      const rawQueueItems = queueData.items || []
+      setQueueItems(rawQueueItems)
       setActivityLog(logData.items || logData.entries || [])
       setSettings(settingsData)
       setSettingsForm({ ...settingsData })
@@ -231,6 +309,87 @@ function App() {
         const reportsData = await reportsRes.json()
         setReports(reportsData.data || reportsData)
       }
+
+      // ── Normalize and process analytics ────────────────
+      // Normalize queue items to core QueueItem shape
+      const normalizedQueueItems = rawQueueItems.map(normalizeQueueItemForCore)
+
+      // Try to get events from /api/cmcc/events; fall back to activity-log
+      let rawEventsData = []
+      if (eventsRes && eventsRes.ok) {
+        const eventsData = await eventsRes.json()
+        rawEventsData =
+          eventsData.data ||
+          eventsData.items ||
+          eventsData.events ||
+          eventsData ||
+          []
+      } else {
+        // Derive events from activity-log entries
+        const logEntries = logData.items || logData.entries || []
+        rawEventsData = logEntries.map((entry) => ({
+          id: entry.id,
+          timestamp: entry.timestamp || entry.created_at,
+          content_type: entry.content_type || entry.contentType,
+          action: entry.action || entry.event_action,
+          item_id: entry.item_id || entry.contentId,
+          author_id: entry.author_id || entry.userId,
+          moderator_id: entry.moderator_id || entry.performedBy,
+        }))
+      }
+
+      // Normalize events to core ModerationEvent shape
+      const normalizedEvents = rawEventsData.map(normalizeEventForCore)
+
+      // Build moderator names map from activity log and settings
+      const namesMap = {}
+      ;(logData.items || logData.entries || []).forEach((entry) => {
+        const mid = entry.moderator_id || entry.performedBy || entry.moderatorId
+        const mname = entry.moderator_name || entry.moderatorName
+        if (mid && mname && !namesMap[mid]) {
+          namesMap[mid] = mname
+        }
+      })
+
+      // Try to get moderator info from settings
+      if (settingsData.moderatorId) {
+        setActiveModerator((prev) => ({
+          ...prev,
+          id: settingsData.moderatorId,
+          name: settingsData.moderatorName || prev.name,
+        }))
+      }
+
+      // Fetch current moderator info from session
+      try {
+        const meRes = await fetch(`${API_BASE}/me`)
+        if (meRes.ok) {
+          const meData = await meRes.json()
+          setActiveModerator({
+            id: meData.id || meData.moderatorId || meData.userId || 'unknown',
+            name:
+              meData.name ||
+              meData.moderatorName ||
+              meData.username ||
+              'Unknown',
+          })
+        } else {
+          setActiveModerator({ id: 'unknown', name: 'Unknown' })
+        }
+      } catch {
+        setActiveModerator({ id: 'unknown', name: 'Unknown' })
+      }
+
+      setModeratorNames(namesMap)
+      setRawEvents(normalizedEvents)
+
+      // Process analytics using core function
+      const processed = processAnalytics(
+        normalizedEvents,
+        normalizedQueueItems,
+        namesMap,
+      )
+      setProcessedAnalytics(processed)
     } catch (err) {
       setError(err.message)
     } finally {
@@ -244,14 +403,17 @@ function App() {
     })
   }, [fetchInitialData])
 
-  // ── Moderation handler ────────────────────────────────
-  const handleModerate = useCallback(
+  // ── Moderation handler (with confirmation for destructive actions) ──
+  const performModerate = useCallback(
     async (id, action) => {
       try {
         const res = await fetch(`${API_BASE}/queue/${id}/moderate`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action, moderatorId: 'current-user' }),
+          body: JSON.stringify({
+            action,
+            moderatorId: activeModerator.id || 'unknown',
+          }),
         })
         if (!res.ok) throw new Error(`Failed to ${action} item`)
         const updated = await res.json()
@@ -263,11 +425,22 @@ function App() {
         showToast(err.message, true)
       }
     },
-    [showToast],
+    [showToast, activeModerator.id],
   )
 
-  // ── Bulk action handler ──────────────────────────────
-  const handleBulkAction = useCallback(
+  const handleModerate = useCallback(
+    async (id, action) => {
+      if (['reject', 'spam', 'defer'].includes(action)) {
+        setConfirmAction({ action, itemId: id })
+        return
+      }
+      await performModerate(id, action)
+    },
+    [performModerate],
+  )
+
+  // ── Bulk action handler (with confirmation for destructive actions) ──
+  const performBulkAction = useCallback(
     async (action, ids) => {
       try {
         const res = await fetch(`${API_BASE}/queue/bulk`, {
@@ -289,6 +462,28 @@ function App() {
     },
     [showToast],
   )
+
+  const handleBulkAction = useCallback(
+    async (action, ids) => {
+      if (['reject', 'spam', 'defer'].includes(action)) {
+        setConfirmAction({ action, ids })
+        return
+      }
+      await performBulkAction(action, ids)
+    },
+    [performBulkAction],
+  )
+
+  // ── Confirm and execute ──────────────────────────────
+  const confirmAndExecute = useCallback(async () => {
+    if (!confirmAction) return
+    if (confirmAction.itemId) {
+      await performModerate(confirmAction.itemId, confirmAction.action)
+    } else if (confirmAction.ids) {
+      await performBulkAction(confirmAction.action, confirmAction.ids)
+    }
+    setConfirmAction(null)
+  }, [confirmAction, performModerate, performBulkAction])
 
   // ── Settings handler ──────────────────────────────────
   const handleSaveSettings = useCallback(
@@ -338,38 +533,14 @@ function App() {
     [aiConfig, showToast],
   )
 
-  // ── Saved filter handlers ─────────────────────────────
-  function handleSaveFilter() {
-    const name = filterNameInput.trim()
-    if (!name) return
-    const newFilter = {
-      id: `filter-${Date.now()}`,
-      name,
-      filters: { ...queueFilters },
-    }
-    setSavedFilters((prev) => [...prev, newFilter])
-    setFilterNameInput('')
-    setFilterPopoverActive(false)
-    showToast(`Filter "${name}" saved`)
-  }
-
-  function handleApplyFilter(filter) {
-    setQueueFilters(filter.filters)
-    showToast(`Applied filter "${filter.name}"`)
-  }
-
-  function handleDeleteFilter(id) {
-    setSavedFilters((prev) => prev.filter((f) => f.id !== id))
-  }
-
   // ── Derived options ───────────────────────────────────
   const contentTypeOptions = (() => {
-    const types = new Set(
-      queueItems.map((i) => i.contentType || i.content_type).filter(Boolean),
+    const breakdown = generateContentTypeBreakdown(
+      queueItems.map(normalizeQueueItemForCore),
     )
     return [
       { label: 'All types', value: 'all' },
-      ...Array.from(types).map((t) => ({ label: t, value: t })),
+      ...breakdown.map((b) => ({ label: b.contentType, value: b.contentType })),
     ]
   })()
 
@@ -414,26 +585,41 @@ function App() {
             contentTypeOptions={contentTypeOptions}
             statusOptions={statusOptions}
             savedFilters={savedFilters}
-            handleSaveFilter={handleSaveFilter}
-            handleApplyFilter={handleApplyFilter}
-            handleDeleteFilter={handleDeleteFilter}
-            filterNameInput={filterNameInput}
-            setFilterNameInput={setFilterNameInput}
-            filterPopoverActive={filterPopoverActive}
-            setFilterPopoverActive={setFilterPopoverActive}
+            saveFilter={saveFilter}
+            deleteSavedFilter={deleteSavedFilter}
             aiConfig={aiConfig}
             aiEvaluatingId={aiEvaluatingId}
             aiEvaluationResult={aiEvaluationResult}
             aiEvaluationError={aiEvaluationError}
             onAiEvaluate={handleAiEvaluate}
+            moderatorId={activeModerator.id}
+            moderatorName={activeModerator.name}
           />
         )
       case 1:
-        return <AnalyticsTab analytics={analytics} />
+        return (
+          <AnalyticsTab
+            processedAnalytics={processedAnalytics}
+            rawEvents={rawEvents}
+            queueItems={queueItems.map(normalizeQueueItemForCore)}
+          />
+        )
       case 2:
-        return <ActivityLogTab activityLog={activityLog} />
+        return (
+          <ActivityLogTab
+            activityLog={activityLog}
+            moderatorId={activeModerator.id}
+          />
+        )
       case 3:
-        return <ReportsTab reports={reports} showToast={showToast} />
+        return (
+          <ReportsTab
+            reports={reports}
+            showToast={showToast}
+            rawEvents={rawEvents}
+            moderatorNames={moderatorNames}
+          />
+        )
       case 4:
         return (
           <SettingsTab
@@ -441,10 +627,10 @@ function App() {
             setSettingsForm={setSettingsForm}
             saving={saving}
             onSave={() => handleSaveSettings(settingsForm)}
-            darkMode={darkMode}
-            setDarkMode={setDarkMode}
+            darkMode={theme === 'dark'}
+            setDarkMode={(v) => setTheme(v ? 'dark' : 'light')}
             savedFilters={savedFilters}
-            handleDeleteFilter={handleDeleteFilter}
+            handleDeleteFilter={deleteSavedFilter}
             showToast={showToast}
             fetchInitialData={fetchInitialData}
             aiConfig={aiConfig}
@@ -465,6 +651,18 @@ function App() {
           key: `Ctrl+${i + 1}`,
           label: `Switch to ${tab.content}`,
         })),
+      },
+      {
+        heading: 'Actions (Queue tab)',
+        shortcuts: [
+          { key: 'A', label: 'Approve selected item' },
+          { key: 'R', label: 'Reject selected item' },
+          { key: 'S', label: 'Mark as spam' },
+          { key: 'D', label: 'Defer selected item' },
+          { key: 'V', label: 'View item details' },
+          { key: 'F', label: 'Focus search' },
+          { key: 'Escape', label: 'Close panel / Cancel' },
+        ],
       },
       {
         heading: 'General',
@@ -507,12 +705,17 @@ function App() {
             title="Keyboard shortcuts (?)"
             type="button"
           >
-            ⌨
+            <Keyboard size={18} />
           </button>
         </div>
       </div>
     )
   }
+
+  // ── Derived state ───────────────────────────────────────
+  const pendingCount = queueItems.filter(
+    (item) => item.status === 'pending',
+  ).length
 
   // ── Render ─────────────────────────────────────────────
   const toastMarkup = toastActive ? (
@@ -532,29 +735,67 @@ function App() {
         }}
       >
         <Frame>
-          <div className={`cmcc-shopify-app ${darkMode ? 'cmcc-dark' : ''}`}>
+          <OfflineBanner />
+          <div
+            className={`cmcc-shopify-app ${theme === 'dark' ? 'cmcc-dark' : ''}`}
+          >
             <Page
               fullWidth
               title="CMCC Content Moderation"
               secondaryActions={[
                 {
-                  content: '❤️ Donate $1',
+                  icon: Heart,
+                  content: 'Donate $1',
                   url: 'https://rzp.io/rzp/IbvR3pMx',
                   external: true,
                 },
               ]}
             >
-              <Tabs
-                tabs={TABS}
-                selected={selectedTab}
-                onSelect={setSelectedTab}
-                fitted
-              />
+              <div className="cmcc-tab-bar">
+                {TABS.map((tab, index) => {
+                  const isActive = selectedTab === index
+                  return (
+                    <button
+                      key={tab.id}
+                      className={`cmcc-tab-btn${isActive ? ' cmcc-tab-btn-active' : ''}`}
+                      onClick={() => setSelectedTab(index)}
+                      role="tab"
+                      aria-selected={isActive}
+                    >
+                      {tab.id === 'queue' && (
+                        <ListChecks size={16} className="cmcc-tab-icon" />
+                      )}
+                      {tab.content}
+                      {tab.id === 'queue' && pendingCount > 0 && (
+                        <NotificationBadge
+                          count={pendingCount}
+                          type="pending"
+                          size="sm"
+                        />
+                      )}
+                    </button>
+                  )
+                })}
+              </div>
               <div className="cmcc-content">{renderContent()}</div>
             </Page>
             <OnboardingWizard />
             {renderKeyboardShortcuts()}
             {toastMarkup}
+            {confirmAction && (
+              <ConfirmationModal
+                open={!!confirmAction}
+                title={`Confirm ${confirmAction.action}`}
+                message={`Are you sure you want to ${confirmAction.action} this item?`}
+                confirmLabel={
+                  confirmAction.action.charAt(0).toUpperCase() +
+                  confirmAction.action.slice(1)
+                }
+                cancelLabel="Cancel"
+                onConfirm={confirmAndExecute}
+                onCancel={() => setConfirmAction(null)}
+              />
+            )}
           </div>
         </Frame>
       </AppProvider>

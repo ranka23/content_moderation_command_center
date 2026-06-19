@@ -4,11 +4,16 @@
 const express = require('express')
 
 const PLATFORMS = [
-  { name: 'Storyblok', icon: '🖼️', status: 'active', connected: true },
-  { name: 'WordPress', icon: '🌐', status: 'available', connected: false },
-  { name: 'Shopify', icon: '🛍️', status: 'available', connected: false },
-  { name: 'Strapi', icon: '🟣', status: 'available', connected: false },
-  { name: 'Wix', icon: '🎪', status: 'available', connected: false },
+  { name: 'Storyblok', icon: 'storyblok', status: 'active', connected: true },
+  {
+    name: 'WordPress',
+    icon: 'wordpress',
+    status: 'available',
+    connected: false,
+  },
+  { name: 'Shopify', icon: 'shopify', status: 'available', connected: false },
+  { name: 'Strapi', icon: 'strapi', status: 'available', connected: false },
+  { name: 'Wix', icon: 'wix', status: 'available', connected: false },
 ]
 
 function createPlatformsRouter(db, _services = {}) {

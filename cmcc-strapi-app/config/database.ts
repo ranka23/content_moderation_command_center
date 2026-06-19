@@ -1,8 +1,7 @@
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-nocheck
+import type { Core } from '@strapi/strapi'
 import path from 'path'
 
-export default ({ env }) => {
+export default ({ env }: Core.Config.Shared.ConfigParams) => {
   const client = env('DATABASE_CLIENT', 'sqlite')
 
   const connections = {

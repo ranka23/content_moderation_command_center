@@ -1,0 +1,227 @@
+
+/* ─── Responsive ───────────────────────────────────────────────────────── */
+
+@media screen and (max-width: 782px) {
+  #cmcc-app .cmcc-tab-nav {
+    flex-wrap: wrap;
+  }
+
+  #cmcc-app .cmcc-tab {
+    flex: 1 1 auto;
+    justify-content: center;
+    font-size: 13px;
+    padding: 8px 12px;
+  }
+
+  #cmcc-app .cmcc-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  #cmcc-app .cmcc-queue-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  #cmcc-app .cmcc-queue-toolbar-left,
+  #cmcc-app .cmcc-queue-toolbar-right {
+    flex-wrap: wrap;
+  }
+
+  #cmcc-app .cmcc-search-input {
+    min-width: 140px;
+  }
+
+  #cmcc-app .cmcc-pagination-bar {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  #cmcc-app .cmcc-pagination-right {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  #cmcc-app .cmcc-queue-table-inner {
+    font-size: 12px;
+  }
+
+  #cmcc-app .cmcc-activity-table {
+    font-size: 12px;
+  }
+
+  #cmcc-app .cmcc-td-title {
+    max-width: 200px;
+  }
+}
+
+@media screen and (max-width: 600px) {
+  #cmcc-app .cmcc-queue-table-inner th:nth-child(3),
+  #cmcc-app .cmcc-queue-table-inner td:nth-child(3),
+  #cmcc-app .cmcc-queue-table-inner th:nth-child(5),
+  #cmcc-app .cmcc-queue-table-inner td:nth-child(5),
+  #cmcc-app .cmcc-activity-table th:nth-child(6),
+  #cmcc-app .cmcc-activity-table td:nth-child(6),
+  #cmcc-app .cmcc-activity-table th:nth-child(7),
+  #cmcc-app .cmcc-activity-table td:nth-child(7),
+  #cmcc-app .cmcc-activity-table th:nth-child(8),
+  #cmcc-app .cmcc-activity-table td:nth-child(8) {
+    display: none;
+  }
+
+  #cmcc-app .cmcc-modal {
+    max-width: 100%;
+    margin: 10px;
+    max-height: 95vh;
+  }
+
+  #cmcc-app .cmcc-modal-header {
+    padding: 16px;
+  }
+
+  #cmcc-app .cmcc-modal-body {
+    padding: 16px;
+  }
+}
+
+/* ===========================================================
+   SECTION: Responsive
+   =========================================================== */
+
+/* ─── Responsive improvements ──────────────────────────── */
+
+@media screen and (max-width: 600px) {
+  #cmcc-app .cmcc-settings-form {
+    max-width: 100%;
+  }
+
+  #cmcc-app .cmcc-settings-form input[type='text'],
+  #cmcc-app .cmcc-settings-form input[type='number'],
+  #cmcc-app .cmcc-settings-form textarea,
+  #cmcc-app .cmcc-settings-form select {
+    font-size: 16px;
+  }
+
+  #cmcc-app .cmcc-stats-grid {
+    grid-template-columns: 1fr;
+    gap: var(--cmcc-space-3);
+  }
+
+  #cmcc-app .cmcc-chart-card {
+    padding: var(--cmcc-space-3);
+  }
+}
+
+/* ─── Responsive: Multi-Platform Hub Grid ──────────────────────────────── */
+
+#cmcc-app .cmcc-hub-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--cmcc-space-4, 16px);
+}
+
+@media screen and (max-width: 600px) {
+  #cmcc-app .cmcc-hub-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ─── Responsive: Reports Tab Layout ───────────────────────────────────── */
+@media screen and (max-width: 782px) {
+  #cmcc-app .cmcc-reports-layout {
+    flex-direction: column;
+  }
+
+  #cmcc-app .cmcc-reports-sidebar {
+    width: 100%;
+    margin-bottom: 16px;
+  }
+
+  #cmcc-app .cmcc-reports-main {
+    width: 100%;
+  }
+}
+
+/* ─── Responsive: Slide-Out Panel ──────────────────────────────────────── */
+@media screen and (max-width: 600px) {
+  #cmcc-app [role='dialog'] {
+    max-width: 100% !important;
+    width: 100% !important;
+    border-radius: 0 !important;
+  }
+}
+
+/* ── QueueTable → card layout on mobile ────────────── */
+@media screen and (max-width: 640px) {
+  #cmcc-app .cmcc-queue-table thead {
+    display: none;
+  }
+  #cmcc-app .cmcc-queue-table tbody tr {
+    display: block;
+    border: 1px solid var(--cmcc-border, #c3c4c7);
+    border-radius: var(--cmcc-radius-lg, 6px);
+    padding: var(--cmcc-space-3, 12px);
+    margin-bottom: var(--cmcc-space-3, 12px);
+    background: var(--cmcc-bg-card, #fff);
+  }
+  #cmcc-app .cmcc-queue-table tbody td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--cmcc-space-1, 4px) 0;
+    border: none;
+    font-size: var(--cmcc-small, 0.75rem);
+  }
+  #cmcc-app .cmcc-queue-table tbody td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: var(--cmcc-text-secondary, #50575e);
+    margin-right: var(--cmcc-space-2, 8px);
+  }
+  #cmcc-app .cmcc-queue-table .cmcc-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--cmcc-space-1, 4px);
+    margin-top: var(--cmcc-space-2, 8px);
+  }
+
+  /* ── Tab nav → horizontal scroll (strengthen) ──────── */
+  #cmcc-app .cmcc-tab-nav {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    flex-wrap: nowrap;
+    scrollbar-width: none;
+  }
+  #cmcc-app .cmcc-tab-nav::-webkit-scrollbar {
+    display: none;
+  }
+  #cmcc-app .cmcc-tab {
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  /* ── Filters → collapsible ─────────────────────────── */
+  #cmcc-app .cmcc-queue-filters,
+  #cmcc-app .cmcc-queue-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  #cmcc-app .cmcc-queue-filters-row,
+  #cmcc-app .cmcc-queue-toolbar-right {
+    flex-wrap: wrap;
+  }
+  #cmcc-app .cmcc-filter-select {
+    width: 100%;
+  }
+
+  /* ── Action buttons → icon-only ────────────────────── */
+  #cmcc-app .cmcc-actions button,
+  #cmcc-app .cmcc-actions .cmcc-btn {
+    padding: 6px 8px;
+    font-size: 0;
+    min-width: 32px;
+    min-height: 32px;
+  }
+  #cmcc-app .cmcc-actions button::after {
+    font-size: 0.75rem;
+  }
+}

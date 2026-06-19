@@ -131,3 +131,14 @@ export class QueueManager {
     }
   }
 }
+
+/**
+ * Count queue items with a given status.
+ * Standalone utility (does not require a QueueManager instance).
+ */
+export function getQueueBadgeCount(
+  items: QueueItem[],
+  status: QueueItem['status'],
+): number {
+  return items.filter((i) => i.status === status).length
+}

@@ -1,0 +1,166 @@
+/* ===========================================================
+   SECTION: Onboarding
+   =========================================================== */
+
+/* ─── Onboarding / Tutorial Overlay ──────────────────── */
+
+#cmcc-app .cmcc-onboarding-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100002;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 20px;
+  animation: cmcc-fade-in 0.3s ease;
+}
+
+#cmcc-app .cmcc-onboarding-card {
+  background: #fff;
+  border-radius: var(--cmcc-radius-xl);
+  box-shadow: var(--cmcc-shadow-xl);
+  max-width: 480px;
+  width: 100%;
+  padding: var(--cmcc-space-8);
+  text-align: center;
+  animation: cmcc-onboarding-slide-up 0.4s ease;
+}
+
+@keyframes cmcc-onboarding-slide-up {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+#cmcc-app .cmcc-onboarding-card h3 {
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0 0 var(--cmcc-space-2);
+  color: #1d2327;
+}
+
+#cmcc-app .cmcc-onboarding-card p {
+  font-size: 14px;
+  color: #50575e;
+  margin: 0 0 var(--cmcc-space-6);
+  line-height: 1.6;
+}
+
+#cmcc-app .cmcc-onboarding-steps {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cmcc-space-3);
+  margin-bottom: var(--cmcc-space-6);
+  text-align: left;
+}
+
+#cmcc-app .cmcc-onboarding-step {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--cmcc-space-3);
+  padding: var(--cmcc-space-3);
+  border-radius: var(--cmcc-radius-md);
+  background: #f9fafb;
+  transition: all 0.2s ease;
+}
+
+#cmcc-app .cmcc-onboarding-step.active {
+  background: #eff6ff;
+  border-left: 3px solid var(--cmcc-primary);
+}
+
+#cmcc-app .cmcc-onboarding-step.completed {
+  background: #f0fdf4;
+  border-left: 3px solid #22c55e;
+  opacity: 0.8;
+}
+
+#cmcc-app .cmcc-onboarding-step:hover {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+#cmcc-app .cmcc-onboarding-step-number {
+  cursor: pointer;
+}
+
+.dark #cmcc-app .cmcc-onboarding-step {
+  background: #1e293b;
+}
+
+.dark #cmcc-app .cmcc-onboarding-step.active {
+  background: rgba(59, 130, 246, 0.1);
+  border-left-color: #60a5fa;
+}
+
+.dark #cmcc-app .cmcc-onboarding-step.completed {
+  background: rgba(34, 197, 94, 0.1);
+  border-left-color: #4ade80;
+}
+
+#cmcc-app .cmcc-onboarding-progress {
+  width: 100%;
+  height: 4px;
+  background: #f0f0f1;
+  border-radius: var(--cmcc-radius-sm);
+  overflow: hidden;
+  margin-bottom: var(--cmcc-space-4);
+}
+
+#cmcc-app .cmcc-onboarding-progress::after {
+  content: '';
+  display: block;
+  height: 100%;
+  width: 0%;
+  background: var(--cmcc-primary);
+  border-radius: var(--cmcc-radius-sm);
+  transition: width 0.3s ease;
+}
+
+#cmcc-app .cmcc-onboarding-skip {
+  background: none;
+  border: none;
+  color: #757575;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+
+#cmcc-app .cmcc-onboarding-skip:hover {
+  color: #1d2327;
+}
+
+/* ─── U1 Fix: Onboarding step cards (override dot indicators) ─────────── */
+#cmcc-app .cmcc-onboarding-step-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  border-radius: 50%;
+  background: #2271b1;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+}
+#cmcc-app .cmcc-onboarding-step.active .cmcc-onboarding-step-number {
+  background: #135e96;
+}
+#cmcc-app .cmcc-onboarding-step strong {
+  display: block;
+  font-size: 14px;
+  color: #1d2327;
+  margin-bottom: 2px;
+}
+#cmcc-app .cmcc-onboarding-step p {
+  font-size: 12px;
+  color: #50575e;
+  margin: 0;
+  line-height: 1.4;
+}

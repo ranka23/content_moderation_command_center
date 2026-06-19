@@ -2,18 +2,82 @@
  * SettingsTab - Full settings with 11 sections, import/export, and theme toggle.
  */
 
-import React, { useState, useRef, useCallback } from 'react'
-import {
-  Layout,
-  Card,
-  Select,
-  TextField,
-  Button,
-  Banner,
-} from '@shopify/polaris'
-import { AiSettingsForm } from '@cmcc/ui'
+import React, { useState, useRef, useCallback, useMemo } from 'react'
+import { Layout, Card, Select, Button, Banner } from '@shopify/polaris'
+import { SettingsForm, AiSettingsForm } from '@cmcc/ui'
 
 const API_BASE = '/api/cmcc'
+
+/** Settings sections for the SettingsForm component */
+const SETTINGS_SECTIONS = [
+  {
+    id: 'general',
+    title: 'General',
+    icon: 'general',
+    fields: [
+      { name: 'backendUrl', label: 'Backend URL', type: 'text' },
+      { name: 'siteName', label: 'Site Name', type: 'text' },
+    ],
+  },
+  {
+    id: 'moderation',
+    title: 'Moderation',
+    icon: 'moderation',
+    fields: [
+      { name: 'autoModerate', label: 'Auto-moderate', type: 'toggle' },
+      {
+        name: 'spamThreshold',
+        label: 'Spam Threshold',
+        type: 'number',
+        placeholder: '0.8',
+        helpText: 'Score from 0 to 1. Higher values are stricter.',
+      },
+      { name: 'notifyOnFlag', label: 'Notify on Flag', type: 'toggle' },
+    ],
+  },
+  {
+    id: 'notifications',
+    title: 'Notifications',
+    icon: 'notifications',
+    fields: [
+      { name: 'notifyOnSpike', label: 'Notify on Spike', type: 'toggle' },
+      { name: 'notifyOnSpam', label: 'Notify on Spam', type: 'toggle' },
+    ],
+  },
+  {
+    id: 'performance',
+    title: 'Performance',
+    icon: 'performance',
+    fields: [
+      {
+        name: 'maxQueueSize',
+        label: 'Max Queue Size',
+        type: 'number',
+        helpText: 'Maximum items in the moderation queue',
+      },
+      {
+        name: 'queuePollInterval',
+        label: 'Queue Poll Interval (ms)',
+        type: 'number',
+        helpText: 'How often to poll for new items',
+      },
+    ],
+  },
+  {
+    id: 'backup_restore',
+    title: 'Backup & Restore',
+    icon: 'backup_restore',
+    fields: [
+      {
+        name: 'note',
+        label: 'Note',
+        type: 'textarea',
+        helpText:
+          'Use the Export and Import buttons above to backup and restore your JSON settings.',
+      },
+    ],
+  },
+]
 
 /**
  * @param {Object} props
@@ -55,12 +119,62 @@ export default function SettingsTab({
     [setAiConfig],
   )
 
-  /** Update a single form field */
-  function updateField(field) {
-    return (value) => {
-      setSettingsForm((prev) => ({ ...prev, [field]: value }))
-    }
-  }
+  /** Handle SettingsForm submission */
+  const handleSettingsSubmit = useCallback(
+    (formData) => {
+      setSettingsForm((prev) => ({ ...prev, ...formData }))
+      onSave()
+    },
+    [setSettingsForm, onSave],
+  )
+
+  /** Build initial values from settingsForm with defaults */
+  const initialValues = useMemo(
+    () => ({
+      backendUrl: settingsForm.backendUrl ?? '',
+      siteName: settingsForm.siteName ?? '',
+      autoModerate: settingsForm.autoModerate ?? false,
+      spamThreshold: settingsForm.spamThreshold ?? 0.8,
+      notifyOnFlag: settingsForm.notifyOnFlag ?? false,
+      notifyOnSpike: settingsForm.notifyOnSpike ?? false,
+      notifyOnSpam: settingsForm.notifyOnSpam ?? false,
+      maxQueueSize: settingsForm.maxQueueSize ?? 1000,
+      queuePollInterval: settingsForm.queuePollInterval ?? 5000,
+      note: settingsForm.note ?? '',
+    }),
+    [settingsForm],
+  )
+
+  /** Validators for SettingsForm fields */
+  const validators = useMemo(
+    () => ({
+      backendUrl: (value) => {
+        if (!value) return 'Backend URL is required'
+        try {
+          new URL(value)
+          return null
+        } catch {
+          return 'Invalid URL format'
+        }
+      },
+      spamThreshold: (value) => {
+        const num = Number(value)
+        if (isNaN(num) || num < 0 || num > 1) return 'Must be between 0 and 1'
+        return null
+      },
+      maxQueueSize: (value) => {
+        const num = Number(value)
+        if (isNaN(num) || num <= 0) return 'Must be greater than 0'
+        return null
+      },
+      queuePollInterval: (value) => {
+        const num = Number(value)
+        if (isNaN(num) || num <= 0) return 'Must be greater than 0'
+        return null
+      },
+    }),
+    [],
+  )
 
   // ── Export ────────────────────────────────────────────────
   async function handleExport() {
@@ -141,316 +255,9 @@ export default function SettingsTab({
         </Layout.Section>
       )}
 
-      {/* 1. General Settings */}
+      {/* Import / Export */}
       <Layout.Section>
-        <Card title="General Settings">
-          <Card.Section>
-            <Select
-              label="Auto-moderation"
-              value={settingsForm.autoModerate ? 'enabled' : 'disabled'}
-              onChange={(val) => updateField('autoModerate')(val === 'enabled')}
-              options={[
-                { label: 'Disabled', value: 'disabled' },
-                { label: 'Enabled', value: 'enabled' },
-              ]}
-              helpText="Automatically moderate content based on spam threshold"
-            />
-          </Card.Section>
-          <Card.Section>
-            <TextField
-              label="Spam threshold"
-              type="number"
-              min={0}
-              max={1}
-              step={0.05}
-              value={String(settingsForm.spamThreshold ?? 0.8)}
-              onChange={updateField('spamThreshold')}
-              autoComplete="off"
-              helpText="Score from 0 to 1. Higher values are stricter."
-            />
-          </Card.Section>
-          <Card.Section>
-            <TextField
-              label="Max queue size"
-              type="number"
-              min={100}
-              max={10000}
-              step={100}
-              value={String(settingsForm.maxQueueSize ?? 1000)}
-              onChange={updateField('maxQueueSize')}
-              autoComplete="off"
-              helpText="Maximum items in the moderation queue"
-            />
-          </Card.Section>
-        </Card>
-      </Layout.Section>
-
-      {/* 2. Spam Firewall */}
-      <Layout.Section>
-        <Card title="Spam Firewall">
-          <Card.Section>
-            <Select
-              label="Spam firewall enabled"
-              value={settingsForm.spamFirewallEnabled ? 'enabled' : 'disabled'}
-              onChange={(val) =>
-                updateField('spamFirewallEnabled')(val === 'enabled')
-              }
-              options={[
-                { label: 'Disabled', value: 'disabled' },
-                { label: 'Enabled', value: 'enabled' },
-              ]}
-            />
-          </Card.Section>
-          <Card.Section>
-            <TextField
-              label="Max links per post"
-              type="number"
-              min={0}
-              max={50}
-              value={String(settingsForm.maxLinksPerPost ?? 2)}
-              onChange={updateField('maxLinksPerPost')}
-              autoComplete="off"
-            />
-          </Card.Section>
-          <Card.Section>
-            <TextField
-              label="Blocked keywords (comma separated)"
-              value={settingsForm.blockedKeywords ?? ''}
-              onChange={updateField('blockedKeywords')}
-              autoComplete="off"
-              multiline={2}
-              helpText="Content containing these keywords will be flagged"
-            />
-          </Card.Section>
-        </Card>
-      </Layout.Section>
-
-      {/* 3. Notifications */}
-      <Layout.Section>
-        <Card title="Notifications">
-          <Card.Section>
-            <Select
-              label="Notify on flag"
-              value={settingsForm.notifyOnFlag ? 'yes' : 'no'}
-              onChange={(val) => updateField('notifyOnFlag')(val === 'yes')}
-              options={[
-                { label: 'Yes', value: 'yes' },
-                { label: 'No', value: 'no' },
-              ]}
-            />
-          </Card.Section>
-          <Card.Section>
-            <Select
-              label="Email notifications"
-              value={settingsForm.emailNotifications ? 'enabled' : 'disabled'}
-              onChange={(val) =>
-                updateField('emailNotifications')(val === 'enabled')
-              }
-              options={[
-                { label: 'Disabled', value: 'disabled' },
-                { label: 'Enabled', value: 'enabled' },
-              ]}
-            />
-          </Card.Section>
-          <Card.Section>
-            <TextField
-              label="Notification emails (comma separated)"
-              value={settingsForm.notificationEmails ?? ''}
-              onChange={updateField('notificationEmails')}
-              autoComplete="off"
-              helpText="Email addresses to receive moderation alerts"
-            />
-          </Card.Section>
-        </Card>
-      </Layout.Section>
-
-      {/* 4. Appearance */}
-      <Layout.Section>
-        <Card title="Appearance">
-          <Card.Section>
-            <Select
-              label="Theme"
-              value={darkMode ? 'dark' : 'light'}
-              onChange={(v) => setDarkMode(v === 'dark')}
-              options={[
-                { label: 'Light', value: 'light' },
-                { label: 'Dark', value: 'dark' },
-              ]}
-              helpText="Theme preference is saved to your browser."
-            />
-          </Card.Section>
-        </Card>
-      </Layout.Section>
-
-      {/* 5. Integrations */}
-      <Layout.Section>
-        <Card title="Integrations">
-          <Card.Section>
-            <Select
-              label="WordPress sync"
-              value={settingsForm.wpSyncEnabled ? 'enabled' : 'disabled'}
-              onChange={(val) =>
-                updateField('wpSyncEnabled')(val === 'enabled')
-              }
-              options={[
-                { label: 'Disabled', value: 'disabled' },
-                { label: 'Enabled', value: 'enabled' },
-              ]}
-              helpText="Sync moderation data with connected WordPress site"
-            />
-          </Card.Section>
-          <Card.Section>
-            <TextField
-              label="WordPress API URL"
-              value={settingsForm.wpApiUrl ?? ''}
-              onChange={updateField('wpApiUrl')}
-              autoComplete="off"
-              placeholder="https://example.com/wp-json/cmcc/v1"
-            />
-          </Card.Section>
-          <Card.Section>
-            <TextField
-              label="WordPress API key"
-              value={settingsForm.wpApiKey ?? ''}
-              onChange={updateField('wpApiKey')}
-              autoComplete="off"
-              type="password"
-            />
-          </Card.Section>
-        </Card>
-      </Layout.Section>
-
-      {/* 6. Auto Moderation Rules */}
-      <Layout.Section>
-        <Card title="Auto Moderation">
-          <Card.Section>
-            <Select
-              label="Auto-approve trusted users"
-              value={settingsForm.autoApproveTrusted ? 'enabled' : 'disabled'}
-              onChange={(val) =>
-                updateField('autoApproveTrusted')(val === 'enabled')
-              }
-              options={[
-                { label: 'Disabled', value: 'disabled' },
-                { label: 'Enabled', value: 'enabled' },
-              ]}
-            />
-          </Card.Section>
-          <Card.Section>
-            <Select
-              label="Auto-flag new users"
-              value={settingsForm.autoFlagNewUsers ? 'enabled' : 'disabled'}
-              onChange={(val) =>
-                updateField('autoFlagNewUsers')(val === 'enabled')
-              }
-              options={[
-                { label: 'Disabled', value: 'disabled' },
-                { label: 'Enabled', value: 'enabled' },
-              ]}
-            />
-          </Card.Section>
-          <Card.Section>
-            <TextField
-              label="Min reputation score for auto-approve"
-              type="number"
-              min={0}
-              max={100}
-              value={String(settingsForm.minReputationScore ?? 80)}
-              onChange={updateField('minReputationScore')}
-              autoComplete="off"
-              helpText="Users with reputation above this score are auto-approved"
-            />
-          </Card.Section>
-        </Card>
-      </Layout.Section>
-
-      {/* 7. Moderator Management */}
-      <Layout.Section>
-        <Card title="Moderator Management">
-          <Card.Section>
-            <TextField
-              label="Max moderators"
-              type="number"
-              min={1}
-              max={100}
-              value={String(settingsForm.maxModerators ?? 10)}
-              onChange={updateField('maxModerators')}
-              autoComplete="off"
-            />
-          </Card.Section>
-          <Card.Section>
-            <Select
-              label="Moderator registration"
-              value={settingsForm.moderatorRegistration ? 'open' : 'closed'}
-              onChange={(val) => updateField('moderatorRegistration')(val)}
-              options={[
-                { label: 'Open', value: 'open' },
-                { label: 'Closed', value: 'closed' },
-              ]}
-            />
-          </Card.Section>
-        </Card>
-      </Layout.Section>
-
-      {/* 8. Data Retention */}
-      <Layout.Section>
-        <Card title="Data Retention">
-          <Card.Section>
-            <Select
-              label="Auto-purge old data"
-              value={settingsForm.autoPurge ? 'enabled' : 'disabled'}
-              onChange={(val) => updateField('autoPurge')(val === 'enabled')}
-              options={[
-                { label: 'Disabled', value: 'disabled' },
-                { label: 'Enabled', value: 'enabled' },
-              ]}
-            />
-          </Card.Section>
-          <Card.Section>
-            <TextField
-              label="Retention period (days)"
-              type="number"
-              min={1}
-              max={365}
-              value={String(settingsForm.retentionDays ?? 90)}
-              onChange={updateField('retentionDays')}
-              autoComplete="off"
-              helpText="Older activity logs and moderated items will be purged"
-            />
-          </Card.Section>
-        </Card>
-      </Layout.Section>
-
-      {/* 9. API Webhooks */}
-      <Layout.Section>
-        <Card title="API Webhooks">
-          <Card.Section>
-            <TextField
-              label="Webhook URL"
-              value={settingsForm.webhookUrl ?? ''}
-              onChange={updateField('webhookUrl')}
-              autoComplete="off"
-              placeholder="https://example.com/webhook"
-            />
-          </Card.Section>
-          <Card.Section>
-            <Select
-              label="Webhook events"
-              value={settingsForm.webhookEvents ?? 'all'}
-              onChange={updateField('webhookEvents')}
-              options={[
-                { label: 'All events', value: 'all' },
-                { label: 'Moderation only', value: 'moderation' },
-                { label: 'Flags only', value: 'flags' },
-              ]}
-            />
-          </Card.Section>
-        </Card>
-      </Layout.Section>
-
-      {/* 10. Backup & Restore */}
-      <Layout.Section>
-        <Card title="Backup & Restore">
+        <Card title="Import / Export">
           <Card.Section>
             <div className="cmcc-settings-import-export">
               <Button onClick={handleExport}>Export Settings (JSON)</Button>
@@ -469,7 +276,37 @@ export default function SettingsTab({
         </Card>
       </Layout.Section>
 
-      {/* 11. AI Moderation */}
+      {/* Settings Form */}
+      <Layout.Section>
+        <SettingsForm
+          sections={SETTINGS_SECTIONS}
+          initialValues={initialValues}
+          onSubmit={handleSettingsSubmit}
+          validators={validators}
+          submitLabel="Save All Settings"
+          isSubmitting={saving}
+        />
+      </Layout.Section>
+
+      {/* Appearance */}
+      <Layout.Section>
+        <Card title="Appearance">
+          <Card.Section>
+            <Select
+              label="Theme"
+              value={darkMode ? 'dark' : 'light'}
+              onChange={(v) => setDarkMode(v === 'dark')}
+              options={[
+                { label: 'Light', value: 'light' },
+                { label: 'Dark', value: 'dark' },
+              ]}
+              helpText="Theme preference is saved to your browser."
+            />
+          </Card.Section>
+        </Card>
+      </Layout.Section>
+
+      {/* AI Moderation */}
       <Layout.Section>
         <Card title="AI Moderation">
           <Card.Section>
@@ -478,7 +315,7 @@ export default function SettingsTab({
         </Card>
       </Layout.Section>
 
-      {/* 12. Saved Filters */}
+      {/* Saved Filters */}
       <Layout.Section>
         <Card title="Saved Filters">
           <Card.Section>
@@ -503,15 +340,6 @@ export default function SettingsTab({
               </p>
             )}
           </Card.Section>
-        </Card>
-      </Layout.Section>
-
-      {/* Save Button */}
-      <Layout.Section>
-        <Card sectioned>
-          <Button primary onClick={onSave} loading={saving} disabled={saving}>
-            Save All Settings
-          </Button>
         </Card>
       </Layout.Section>
     </Layout>

@@ -1,5 +1,6 @@
 import React, { useRef, useCallback } from 'react'
 import { SettingsForm, AiSettingsForm } from '@cmcc/ui'
+import { Bot, Download, Upload } from 'lucide-react'
 
 /**
  * All settings sections matching WordPress feature parity.
@@ -518,7 +519,10 @@ export function SettingsTab({
       {/* Import/Export buttons */}
       <div className="cmcc-card cmcc-mb" style={{ padding: '16px' }}>
         <h3 className="cmcc-card-title">
-          {'\u{1F4E5}'} Import / Export Settings
+          <>
+            <Download size={16} style={{ display: 'inline' }} /> Import / Export
+            Settings
+          </>
         </h3>
         <div
           style={{
@@ -533,14 +537,18 @@ export function SettingsTab({
             onClick={handleExport}
             style={{ fontSize: 13, padding: '8px 18px' }}
           >
-            {'\u{2B07}'} Export JSON
+            <>
+              <Download size={14} style={{ display: 'inline' }} /> Export JSON
+            </>
           </button>
           <button
             className="cmcc-btn-secondary"
             onClick={() => fileInputRef.current?.click()}
             style={{ fontSize: 13, padding: '8px 18px' }}
           >
-            {'\u{1F4C2}'} Import JSON
+            <>
+              <Upload size={14} style={{ display: 'inline' }} /> Import JSON
+            </>
           </button>
           <input
             ref={fileInputRef}
@@ -564,7 +572,9 @@ export function SettingsTab({
 
       {/* AI Moderation Settings */}
       <div className="cmcc-card cmcc-mt" style={{ padding: '16px' }}>
-        <h3 className="cmcc-card-title">{'\u{1F916}'} AI Moderation</h3>
+        <h3 className="cmcc-card-title">
+          <Bot size={16} style={{ display: 'inline' }} /> AI Moderation
+        </h3>
         <AiSettingsForm config={aiConfig} onChange={handleAiConfigChange} />
       </div>
     </div>

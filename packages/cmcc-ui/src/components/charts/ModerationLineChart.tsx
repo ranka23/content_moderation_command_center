@@ -43,7 +43,16 @@ export const ModerationLineChart: React.FC<ModerationLineChartProps> = ({
   title = 'Moderation Volume Over Time',
   height = 260,
 }) => {
-  if (!data || !data.labels || data.labels.length === 0) {
+  if (
+    !data ||
+    !data.labels ||
+    data.labels.length === 0 ||
+    !Array.isArray(data.approved) ||
+    !Array.isArray(data.rejected) ||
+    !Array.isArray(data.spam) ||
+    !Array.isArray(data.flagged) ||
+    !Array.isArray(data.deferred)
+  ) {
     return (
       <div className="cmcc-chart-empty">
         <p>No moderation volume data available</p>

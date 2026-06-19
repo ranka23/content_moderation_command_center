@@ -1,3 +1,4 @@
+import { ErrorBoundary } from '@cmcc/ui'
 import { StoryblokApp } from '@storyblok/app-sdk'
 import { createRoot } from 'react-dom/client'
 import React from 'react'
@@ -45,12 +46,14 @@ async function init() {
     const root = createRoot(container)
     root.render(
       <React.StrictMode>
-        <App
-          sdk={sdk}
-          space={context.space}
-          user={context.user}
-          accessToken={context.accessToken}
-        />
+        <ErrorBoundary>
+          <App
+            sdk={sdk}
+            space={context.space}
+            user={context.user}
+            accessToken={context.accessToken}
+          />
+        </ErrorBoundary>
       </React.StrictMode>,
     )
   } catch (error) {

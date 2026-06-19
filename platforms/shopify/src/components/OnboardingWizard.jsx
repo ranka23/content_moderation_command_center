@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect, startTransition } from 'react'
-import { Button, Card } from '@shopify/polaris'
+import { Shield } from 'lucide-react'
 
 const ONBOARDING_KEY = 'cmcc-shopify-onboarding-dismissed'
 
@@ -42,56 +42,56 @@ export default function OnboardingWizard() {
   return (
     <div className="cmcc-onboarding-overlay">
       <div className="cmcc-onboarding-modal">
-        <Card>
-          <div className="cmcc-onboarding-content">
-            <div className="cmcc-onboarding-icon">🛡️</div>
-            <h2 className="cmcc-onboarding-title">
-              Welcome to CMCC Content Moderation
-            </h2>
-            <p className="cmcc-onboarding-description">
-              Your all-in-one content moderation command center for Shopify.
-              Manage your moderation queue, review analytics, generate reports,
-              and collaborate with your team — all from one place.
-            </p>
+        <div className="cmcc-onboarding-content">
+          <div className="cmcc-onboarding-icon">
+            <Shield size={24} />
+          </div>
+          <h2 className="cmcc-onboarding-title">
+            Welcome to CMCC Content Moderation
+          </h2>
+          <p className="cmcc-onboarding-description">
+            Your all-in-one content moderation command center for Shopify.
+            Manage your moderation queue, review analytics, generate reports,
+            and collaborate with your team — all from one place.
+          </p>
 
-            <div className="cmcc-onboarding-steps">
-              <div className="cmcc-onboarding-step">
-                <span className="cmcc-onboarding-step-num">1</span>
-                <div>
-                  <strong>Queue</strong>
-                  <p>Review and moderate incoming content</p>
-                </div>
-              </div>
-              <div className="cmcc-onboarding-step">
-                <span className="cmcc-onboarding-step-num">2</span>
-                <div>
-                  <strong>Analytics</strong>
-                  <p>Track spam ratios and content breakdowns</p>
-                </div>
-              </div>
-              <div className="cmcc-onboarding-step">
-                <span className="cmcc-onboarding-step-num">3</span>
-                <div>
-                  <strong>Reports</strong>
-                  <p>Export CSV reports and audit compliance</p>
-                </div>
-              </div>
-              <div className="cmcc-onboarding-step">
-                <span className="cmcc-onboarding-step-num">4</span>
-                <div>
-                  <strong>Settings</strong>
-                  <p>Configure auto-moderation, notifications, and more</p>
-                </div>
+          <div className="cmcc-onboarding-steps">
+            <div className="cmcc-onboarding-step">
+              <span className="cmcc-onboarding-step-num">1</span>
+              <div>
+                <strong>Queue</strong>
+                <p>Review and moderate incoming content</p>
               </div>
             </div>
-
-            <div className="cmcc-onboarding-actions">
-              <Button primary onClick={handleDismiss}>
-                Get Started
-              </Button>
+            <div className="cmcc-onboarding-step">
+              <span className="cmcc-onboarding-step-num">2</span>
+              <div>
+                <strong>Analytics</strong>
+                <p>Track spam ratios and content breakdowns</p>
+              </div>
+            </div>
+            <div className="cmcc-onboarding-step">
+              <span className="cmcc-onboarding-step-num">3</span>
+              <div>
+                <strong>Reports</strong>
+                <p>Export CSV reports and audit compliance</p>
+              </div>
+            </div>
+            <div className="cmcc-onboarding-step">
+              <span className="cmcc-onboarding-step-num">4</span>
+              <div>
+                <strong>Settings</strong>
+                <p>Configure auto-moderation, notifications, and more</p>
+              </div>
             </div>
           </div>
-        </Card>
+
+          <div className="cmcc-onboarding-actions">
+            <button className="cmcc-onboarding-btn" onClick={handleDismiss}>
+              Get Started
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   )

@@ -1,5 +1,6 @@
 import React, { useEffect, startTransition, useState, useCallback } from 'react'
 import { Button, SettingsForm, AiSettingsForm } from '@cmcc/ui'
+import { Cpu, Download, Upload } from 'lucide-react'
 import { apiFetch } from '../lib/api'
 
 /**
@@ -121,7 +122,7 @@ export default function SettingsPage({ settings, addToast }) {
       {settingsSections.some((s) => s.id === 'ai_moderation') && (
         <div className="tw-mt-8">
           <h3 className="tw-text-lg tw-font-semibold tw-mb-4">
-            🤖 AI Moderation
+            <Cpu size={20} className="tw-inline tw-mr-2" /> AI Moderation
           </h3>
           <div className="tw-rounded-lg tw-border tw-border-gray-200 tw-bg-white tw-p-6">
             <AiSettingsForm config={aiConfig} onChange={handleAiConfigChange} />
@@ -133,10 +134,10 @@ export default function SettingsPage({ settings, addToast }) {
       {settingsSections.some((s) => s.id === 'backup_restore') && (
         <div className="tw-mt-6 tw-flex tw-gap-3">
           <Button variant="outline" size="sm" onClick={handleExport}>
-            📥 Export Settings
+            <Download size={14} className="tw-inline tw-mr-1" /> Export Settings
           </Button>
           <label className="tw-cursor-pointer tw-inline-flex tw-items-center tw-justify-center tw-rounded-md tw-text-xs tw-font-medium tw-transition-colors tw-h-9 tw-px-3 tw-bg-white tw-text-gray-900 hover:tw-bg-gray-100 tw-border tw-border-gray-300">
-            📤 Import Settings
+            <Upload size={14} className="tw-inline tw-mr-1" /> Import Settings
             <input
               type="file"
               accept=".json"

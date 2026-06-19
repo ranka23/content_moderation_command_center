@@ -1,7 +1,6 @@
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-nocheck
+import type { Core } from '@strapi/strapi'
 
-const config = ({ env }) => ({
+const config = ({ env }: Core.Config.Shared.ConfigParams) => ({
   auth: {
     secret: env('ADMIN_JWT_SECRET'),
   },

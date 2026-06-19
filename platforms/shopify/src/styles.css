@@ -1,3 +1,48 @@
+/* ── CMCC Design Tokens ──────────────────────────── */
+:root {
+  --cmcc-primary: #2563eb;
+  --cmcc-primary-hover: #1d4ed8;
+  --cmcc-danger: #dc2626;
+  --cmcc-success: #16a34a;
+  --cmcc-warning: #f59e0b;
+  --cmcc-text: #111827;
+  --cmcc-text-secondary: #6b7280;
+  --cmcc-bg: #f9fafb;
+  --cmcc-bg-card: #ffffff;
+  --cmcc-border: #e5e7eb;
+
+  /* Type scale */
+  --cmcc-h1: 1.5rem;
+  --cmcc-h2: 1.25rem;
+  --cmcc-h3: 1.125rem;
+  --cmcc-body: 0.875rem;
+  --cmcc-small: 0.75rem;
+
+  /* Spacing */
+  --cmcc-space-1: 4px;
+  --cmcc-space-2: 8px;
+  --cmcc-space-3: 12px;
+  --cmcc-space-4: 16px;
+  --cmcc-space-5: 20px;
+  --cmcc-space-6: 24px;
+  --cmcc-space-8: 32px;
+
+  /* Elevation */
+  --cmcc-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --cmcc-shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --cmcc-shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+  --cmcc-radius: 6px;
+  --cmcc-radius-lg: 12px;
+}
+
+.dark {
+  --cmcc-text: #f3f4f6;
+  --cmcc-text-secondary: #9ca3af;
+  --cmcc-bg: #1f2937;
+  --cmcc-bg-card: #111827;
+  --cmcc-border: #374151;
+}
+
 .cmcc-shopify-app {
   font-family:
     -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -16,7 +61,7 @@
 /* ── Tab header ────────────────────────────────────────── */
 
 .cmcc-tab-header h2 {
-  font-size: 1.25rem;
+  font-size: var(--cmcc-h2);
   font-weight: 600;
   margin: 0 0 16px;
   color: #202223;
@@ -27,11 +72,11 @@
 .cmcc-analytics-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 16px;
+  gap: var(--cmcc-space-4, 16px);
 }
 
 .cmcc-stat-label {
-  font-size: 0.75rem;
+  font-size: var(--cmcc-small);
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -64,7 +109,7 @@
 .cmcc-spam-ratio p {
   margin: 0;
   color: #6d7175;
-  font-size: 0.875rem;
+  font-size: var(--cmcc-body);
 }
 
 /* ── Action buttons row ────────────────────────────────── */
@@ -78,6 +123,80 @@
 
 .cmcc-content {
   margin-top: 16px;
+  animation: cmcc-fade-in 0.15s ease-in-out;
+}
+
+@keyframes cmcc-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ── Custom tab bar (replaces Polaris Tabs) ──────────── */
+
+.cmcc-tab-bar {
+  display: flex;
+  flex-wrap: wrap;
+  border-bottom: 1px solid #e1e3e5;
+  gap: 0;
+}
+
+.cmcc-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: 10px 16px;
+  margin-bottom: -1px;
+  font-size: var(--cmcc-body);
+  font-weight: 500;
+  color: #6d7175;
+  cursor: pointer;
+  position: relative;
+  transition:
+    color 0.15s,
+    border-color 0.15s;
+  white-space: nowrap;
+}
+
+.cmcc-tab-btn:hover {
+  color: #202223;
+}
+
+.cmcc-tab-btn-active {
+  color: #202223;
+  border-bottom-color: #008060;
+  font-weight: 600;
+}
+
+.cmcc-tab-btn .cmcc-tab-icon {
+  flex-shrink: 0;
+}
+
+/* ── Dark mode tab bar ──────────────────────────────── */
+
+.cmcc-dark .cmcc-tab-bar {
+  border-bottom-color: #3a3b3c;
+}
+
+.cmcc-dark .cmcc-tab-btn {
+  color: #9c9fa3;
+}
+
+.cmcc-dark .cmcc-tab-btn:hover {
+  color: #e3e5e7;
+}
+
+.cmcc-dark .cmcc-tab-btn-active {
+  color: #e3e5e7;
+  border-bottom-color: #008060;
 }
 
 /* ── Polaris override: Shopify green accent ───────────── */
@@ -91,12 +210,12 @@
 /* ── Queue filter bar ──────────────────────────────────── */
 
 .cmcc-queue-filters {
-  margin-bottom: 16px;
+  margin-bottom: var(--cmcc-space-4, 16px);
 }
 
 .cmcc-queue-filters-row {
   display: flex;
-  gap: 12px;
+  gap: var(--cmcc-space-3, 12px);
   align-items: flex-end;
   flex-wrap: wrap;
 }
@@ -146,7 +265,7 @@
 
 .cmcc-bulk-action-count {
   font-weight: 600;
-  font-size: 0.875rem;
+  font-size: var(--cmcc-body);
   color: #006e52;
 }
 
@@ -167,7 +286,7 @@
 /* ── Save filter popover ──────────────────────────────── */
 
 .cmcc-save-filter-popover {
-  padding: 16px;
+  padding: var(--cmcc-space-4, 16px);
   min-width: 240px;
 }
 
@@ -216,7 +335,7 @@
 }
 
 .cmcc-platform-stat .cmcc-stat-value {
-  font-size: 1.25rem;
+  font-size: var(--cmcc-h2);
 }
 
 /* ── Keyboard shortcuts ───────────────────────────────── */
@@ -235,7 +354,7 @@
   border: none;
   background: #008060;
   color: #fff;
-  font-size: 1.25rem;
+  font-size: var(--cmcc-h2);
   cursor: pointer;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
   display: flex;
@@ -274,7 +393,7 @@
 
 .cmcc-shortcuts-group-heading {
   margin: 0 0 6px;
-  font-size: 0.75rem;
+  font-size: var(--cmcc-small);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -291,7 +410,7 @@
 
 .cmcc-shortcut-key {
   font-family: 'SF Mono', 'Menlo', 'Monaco', 'Courier New', monospace;
-  font-size: 0.75rem;
+  font-size: var(--cmcc-small);
   background: #f1f1f1;
   border: 1px solid #d2d5d8;
   border-radius: 4px;
@@ -310,7 +429,7 @@
   margin-top: 12px;
   padding-top: 8px;
   border-top: 1px solid #e1e3e5;
-  font-size: 0.75rem;
+  font-size: var(--cmcc-small);
   color: #6d7175;
 }
 
@@ -322,6 +441,34 @@
   border-radius: 3px;
   padding: 1px 5px;
   color: #202223;
+}
+
+/* ── Pagination ──────────────────────────────────────── */
+
+.cmcc-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-top: 1px solid #e1e3e5;
+}
+
+.cmcc-pagination-info {
+  font-size: 0.8125rem;
+  color: #6d7175;
+}
+
+.cmcc-pagination-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.cmcc-dark .cmcc-pagination {
+  border-top-color: #3a3b3c;
+}
+
+.cmcc-dark .cmcc-pagination-info {
+  color: #9c9fa3;
 }
 
 /* ── Saved filters list (Settings tab) ────────────────── */
@@ -339,7 +486,7 @@
   padding: 8px 12px;
   background: #f6f6f7;
   border-radius: 6px;
-  font-size: 0.875rem;
+  font-size: var(--cmcc-body);
   color: #202223;
 }
 
@@ -414,7 +561,7 @@
 }
 
 .cmcc-onboarding-title {
-  font-size: 1.5rem;
+  font-size: var(--cmcc-h1);
   font-weight: 700;
   color: #202223;
   margin: 0 0 8px;
@@ -528,16 +675,16 @@
 
 .cmcc-detail-panel-header h2 {
   margin: 0;
-  font-size: 1.125rem;
+  font-size: var(--cmcc-h3);
   font-weight: 600;
   color: #202223;
 }
 
 .cmcc-detail-panel-body {
-  padding: 16px;
+  padding: var(--cmcc-space-4, 16px);
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--cmcc-space-4, 16px);
 }
 
 .cmcc-detail-toast {
@@ -554,7 +701,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 0.875rem;
+  font-size: var(--cmcc-body);
 }
 
 .cmcc-detail-label {
@@ -614,12 +761,12 @@
 
 .cmcc-detail-note-date {
   color: #6d7175;
-  font-size: 0.75rem;
+  font-size: var(--cmcc-small);
 }
 
 .cmcc-detail-note-text {
   margin: 0;
-  font-size: 0.875rem;
+  font-size: var(--cmcc-body);
   color: #202223;
   line-height: 1.4;
 }
@@ -657,7 +804,7 @@
 
 .cmcc-detail-history-date {
   color: #6d7175;
-  font-size: 0.75rem;
+  font-size: var(--cmcc-small);
 }
 
 .cmcc-detail-history-notes {
@@ -686,7 +833,7 @@
 
 .cmcc-feed-title {
   font-weight: 600;
-  font-size: 0.875rem;
+  font-size: var(--cmcc-body);
   color: #202223;
 }
 
@@ -711,7 +858,7 @@
 }
 
 .cmcc-feed-item-icon {
-  font-size: 1.125rem;
+  font-size: var(--cmcc-h3);
   flex-shrink: 0;
   margin-top: 2px;
 }
@@ -851,4 +998,204 @@
 
 .cmcc-dark .cmcc-onboarding-step strong {
   color: #e3e5e7;
+}
+
+/* ── Responsive: Mobile ──────────────────────────────── */
+@media (max-width: 640px) {
+  .cmcc-shopify-app .cmcc-tab-bar {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    gap: 0;
+  }
+  .cmcc-shopify-app .cmcc-tab-btn {
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .cmcc-shopify-app .cmcc-analytics-grid {
+    grid-template-columns: 1fr;
+  }
+  .cmcc-shopify-app .cmcc-queue-filters-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  .cmcc-shopify-app .cmcc-platform-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Responsive: Tablet ─────────────────────────────── */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .cmcc-shopify-app .cmcc-analytics-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .cmcc-shopify-app .cmcc-platform-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* ── QueueTable → card layout on mobile ────────────── */
+@media (max-width: 640px) {
+  .cmcc-shopify-app .cmcc-queue-table thead {
+    display: none;
+  }
+  .cmcc-shopify-app .cmcc-queue-table tbody tr {
+    display: block;
+    border: 1px solid var(--cmcc-border, #e5e7eb);
+    border-radius: var(--cmcc-radius, 6px);
+    padding: var(--cmcc-space-3, 12px);
+    margin-bottom: var(--cmcc-space-3, 12px);
+    background: var(--cmcc-bg-card, #fff);
+  }
+  .cmcc-shopify-app .cmcc-queue-table tbody td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--cmcc-space-1, 4px) 0;
+    border: none;
+    font-size: var(--cmcc-small, 0.75rem);
+  }
+  .cmcc-shopify-app .cmcc-queue-table tbody td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: var(--cmcc-text-secondary, #6b7280);
+    margin-right: var(--cmcc-space-2, 8px);
+  }
+  .cmcc-shopify-app .cmcc-queue-table .cmcc-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--cmcc-space-1, 4px);
+    margin-top: var(--cmcc-space-2, 8px);
+  }
+
+  /* ── Tab nav → horizontal scroll (strengthen) ──────── */
+  .cmcc-shopify-app .cmcc-tab-bar,
+  .cmcc-shopify-app .cmcc-tabnav {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    flex-wrap: nowrap;
+    scrollbar-width: none;
+  }
+  .cmcc-shopify-app .cmcc-tab-bar::-webkit-scrollbar,
+  .cmcc-shopify-app .cmcc-tabnav::-webkit-scrollbar {
+    display: none;
+  }
+  .cmcc-shopify-app .cmcc-tab-btn {
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  /* ── Filters → collapsible ─────────────────────────── */
+  .cmcc-shopify-app .cmcc-queue-filters,
+  .cmcc-shopify-app .cmcc-queue-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .cmcc-shopify-app .cmcc-queue-filters-row {
+    flex-wrap: wrap;
+  }
+  .cmcc-shopify-app .cmcc-filter-select {
+    width: 100%;
+  }
+
+  /* ── Action buttons → icon-only ────────────────────── */
+  .cmcc-shopify-app .cmcc-actions button,
+  .cmcc-shopify-app .cmcc-actions .cmcc-btn {
+    padding: 6px 8px;
+    font-size: 0;
+    min-width: 32px;
+    min-height: 32px;
+  }
+  .cmcc-shopify-app .cmcc-actions button::after {
+    font-size: 0.75rem;
+  }
+}
+
+/* ─── D5 Fix: Card elevation ────────────────────────────────────────────── */
+.cmcc-shopify-app .cmcc-stat-card {
+  box-shadow: var(--cmcc-shadow-sm, 0 1px 2px rgba(0, 0, 0, 0.05));
+}
+.cmcc-shopify-app .cmcc-card {
+  box-shadow: var(--cmcc-shadow-sm, 0 1px 2px rgba(0, 0, 0, 0.05));
+}
+
+/* ─── D7 Fix: Table row zebra-striping ──────────────────────────────────── */
+.cmcc-shopify-app .cmcc-queue-table tbody tr:nth-child(even) td,
+.cmcc-shopify-app .cmcc-activity-table tbody tr:nth-child(even) td {
+  background-color: rgba(0, 0, 0, 0.02);
+}
+.dark .cmcc-shopify-app .cmcc-queue-table tbody tr:nth-child(even) td,
+.dark .cmcc-shopify-app .cmcc-activity-table tbody tr:nth-child(even) td {
+  background-color: rgba(255, 255, 255, 0.03);
+}
+
+/* ─── D3 Fix: Semantic status colors ────────────────────────────────────── */
+.cmcc-shopify-app .cmcc-status-badge--pending {
+  background: #b45309;
+  color: #fff;
+}
+.cmcc-shopify-app .cmcc-status-badge--approved {
+  background: #15803d;
+  color: #fff;
+}
+.cmcc-shopify-app .cmcc-status-badge--rejected {
+  background: #b91c1c;
+  color: #fff;
+}
+.cmcc-shopify-app .cmcc-status-badge--spam {
+  background: #c2410c;
+  color: #fff;
+}
+.cmcc-shopify-app .cmcc-status-badge--flagged {
+  background: #7c3aed;
+  color: #fff;
+}
+.cmcc-shopify-app .cmcc-status-badge--deferred {
+  background: #4f46e5;
+  color: #fff;
+}
+
+/* ── Status badge colors ────────────────────────────── */
+.cmcc-status-pending {
+  color: #b45309;
+  background: #fef3c7;
+}
+.cmcc-status-approved {
+  color: #15803d;
+  background: #dcfce7;
+}
+.cmcc-status-rejected {
+  color: #b91c1c;
+  background: #fee2e2;
+}
+.cmcc-status-spam {
+  color: #c2410c;
+  background: #ffedd5;
+}
+.cmcc-status-flagged {
+  color: #7c3aed;
+  background: #f3e8ff;
+}
+.cmcc-status-deferred {
+  color: #4f46e5;
+  background: #eef2ff;
+}
+
+/* ── Card elevation ──────────────────────────────────── */
+.cmcc-shopify-app .Polaris-Card {
+  box-shadow: var(--cmcc-shadow-sm, 0 1px 2px rgba(0, 0, 0, 0.05));
+}
+
+/* ── Table zebra-striping ────────────────────────────── */
+.cmcc-shopify-app .Polaris-DataTable tbody tr:nth-child(even) {
+  background: var(--cmcc-bg-table-stripe, #f6f7f7);
+}
+.cmcc-shopify-app .Polaris-DataTable tbody tr:hover {
+  background: var(--cmcc-bg-table-hover, #e5e7eb);
+}
+
+/* ── Input height consistency ────────────────────────── */
+.cmcc-shopify-app .Polaris-TextField__Input,
+.cmcc-shopify-app .Polaris-Select__Backdrop {
+  min-height: 36px;
 }

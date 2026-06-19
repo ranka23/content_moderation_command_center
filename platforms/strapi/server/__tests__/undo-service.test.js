@@ -30,7 +30,7 @@ const mockCtx = {
 }
 
 describe('CMCC Undo Integration', () => {
-  let _controller
+  let controller
 
   beforeEach(() => {
     jest.clearAllMocks()

@@ -1,5 +1,6 @@
 import React from 'react'
 import { createRoot } from 'react-dom/client'
+import { ErrorBoundary } from '@cmcc/ui'
 import { App } from './App'
 import './styles.css'
 
@@ -145,6 +146,7 @@ function getWixContext() {
 
     // siteOwnerId is optional; just warn if absent
     if (!siteOwnerId) {
+      // eslint-disable-next-line no-console
       console.warn(
         '[CMCC] Optional parameter "siteOwnerId" is missing. ' +
           'Some features may be limited.',
@@ -154,11 +156,13 @@ function getWixContext() {
     const isValid = errors.length === 0
 
     if (!isValid) {
+      // eslint-disable-next-line no-console
       console.warn('[CMCC] Wix context validation failed:', errors)
     }
 
     return { instance, token, siteOwnerId, isValid, errors }
   } catch (err) {
+    // eslint-disable-next-line no-console
     console.error('[CMCC] Failed to parse Wix context:', err.message)
     return {
       instance: '',
@@ -184,6 +188,7 @@ function getBackendUrl() {
   try {
     const stored = window.localStorage.getItem('cmcc_backend_url')
     if (stored) {
+      // eslint-disable-next-line no-console
       console.log('[CMCC] Using backend URL from localStorage:', stored)
       return stored
     }
@@ -194,10 +199,12 @@ function getBackendUrl() {
 
   const envUrl = process.env.CMCC_API_URL
   if (envUrl) {
+    // eslint-disable-next-line no-console
     console.log('[CMCC] Using backend URL from environment:', envUrl)
     return envUrl
   }
 
+  // eslint-disable-next-line no-console
   console.log('[CMCC] Using default backend URL: http://localhost:3000/api')
   return 'http://localhost:3000/api'
 }
@@ -212,6 +219,7 @@ function init() {
   const wixContext = getWixContext()
   const backendUrl = getBackendUrl()
 
+  // eslint-disable-next-line no-console
   console.log('[CMCC] Initializing app', {
     isValid: wixContext.isValid,
     hasToken: !!wixContext.token,
@@ -220,6 +228,7 @@ function init() {
 
   const container = document.getElementById(WIX_APP_CONTAINER_ID)
   if (!container) {
+    // eslint-disable-next-line no-console
     console.error(
       `[CMCC] Container #${WIX_APP_CONTAINER_ID} not found. ` +
         'Ensure the app is mounted in a Wix dashboard iframe.',
@@ -228,7 +237,13 @@ function init() {
   }
 
   const root = createRoot(container)
-  root.render(<App wixContext={wixContext} backendUrl={backendUrl} />)
+  root.render(
+    <React.StrictMode>
+      <ErrorBoundary>
+        <App wixContext={wixContext} backendUrl={backendUrl} />
+      </ErrorBoundary>
+    </React.StrictMode>,
+  )
 }
 
 // Wait for DOM to be ready

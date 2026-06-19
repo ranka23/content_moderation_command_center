@@ -11,7 +11,7 @@ module.exports = {
     ],
   },
   moduleNameMapper: {
-    '^@cmcc/(.*)$': '<rootDir>/../$1/dist',
+    '^@cmcc/(.*)$': '<rootDir>/../cmcc-$1/dist',
   },
   collectCoverageFrom: ['src/**/*.ts', '!src/**/__tests__/**', '!src/index.ts'],
 }

@@ -1,4 +1,5 @@
-import React, { useState, type ChangeEvent } from 'react'
+import React, { useState, useEffect, useRef, type ChangeEvent } from 'react'
+import { Icon } from '../../lib/icons'
 
 export interface SettingsField {
   name: string
@@ -14,6 +15,7 @@ export interface SettingsSection {
   id: string
   title: string
   fields: SettingsField[]
+  icon?: string
 }
 
 export interface SettingsFormProps {
@@ -23,6 +25,34 @@ export interface SettingsFormProps {
   validators: Record<string, (value: unknown) => string | null>
   submitLabel?: string
   isSubmitting?: boolean
+}
+
+const DEFAULT_SECTION_ICONS: Record<string, string> = {
+  general: 'general',
+  moderation: 'moderation',
+  ai_moderation: 'ai_moderation',
+  backup_restore: 'backup_restore',
+  notifications: 'notifications',
+  collaboration: 'collaboration',
+  firewall: 'firewall',
+  reporting: 'reporting',
+  advanced: 'advanced',
+  appearance: 'appearance',
+  security: 'security',
+  performance: 'performance',
+  integration: 'integration',
+  // B12 fix: Additional mappings to match useSettings.js section IDs
+  spam_firewall: 'spam_firewall',
+  integrations: 'integrations',
+  auto_moderation: 'auto_moderation',
+  moderator_management: 'moderator_management',
+  data_retention: 'data_retention',
+  api_webhooks: 'api_webhooks',
+}
+
+function getSectionIcon(section: SettingsSection): string {
+  if (section.icon) return section.icon
+  return DEFAULT_SECTION_ICONS[section.id] || 'page'
 }
 
 function validateField(
@@ -185,7 +215,22 @@ export function SettingsForm({
   const [dirtyFields, setDirtyFields] = useState<Set<string>>(new Set())
   const [errors, setErrors] = useState<Record<string, string | null>>({})
 
+  const [submitted, setSubmitted] = useState(false)
   const isDirty = dirtyFields.size > 0
+
+  // B6 fix: Only initialize from initialValues on first mount.
+  // After that, ignore re-fetches so the user's in-progress edits
+  // are not discarded. The savedValuesRef tracks the canonical values
+  // and is updated only on explicit save.
+  const savedValuesRef = useRef(initialValues)
+  const initializedRef = useRef(false)
+  useEffect(() => {
+    if (!initializedRef.current) {
+      initializedRef.current = true
+      setValues(initialValues)
+      savedValuesRef.current = initialValues
+    }
+  }, [initialValues])
 
   const handleFieldChange = (name: string, value: unknown): void => {
     setValues((prev: Record<string, unknown>): Record<string, unknown> => {
@@ -196,6 +241,19 @@ export function SettingsForm({
     setDirtyFields(
       (prev: Set<string>): Set<string> => new Set<string>(prev).add(name),
     )
+    // After first submit attempt, validate on every change for immediate feedback
+    if (submitted === true) {
+      const error = validateField(name, value, validators)
+      setErrors(
+        (
+          prev: Record<string, string | null>,
+        ): Record<string, string | null> => {
+          const next = { ...prev }
+          next[name] = error
+          return next
+        },
+      )
+    }
   }
 
   const handleBlur = (name: string): void => {
@@ -213,6 +271,7 @@ export function SettingsForm({
 
   const handleSubmit = (e: React.FormEvent): void => {
     e.preventDefault()
+    setSubmitted(true)
 
     const newErrors: Record<string, string | null> = {}
     let hasError = false
@@ -232,6 +291,10 @@ export function SettingsForm({
 
     if (!hasError) {
       onSubmit(values)
+      // B6 fix: After submit, update savedValuesRef so subsequent
+      // initialValues changes (re-fetch) are treated as canonical.
+      savedValuesRef.current = { ...values }
+      setDirtyFields(new Set())
     }
   }
 
@@ -239,6 +302,7 @@ export function SettingsForm({
     setValues({ ...initialValues })
     setDirtyFields(new Set<string>())
     setErrors({})
+    setSubmitted(false)
   }
 
   const activeSection = sections.find(
@@ -251,135 +315,169 @@ export function SettingsForm({
       className="cmcc-settings-form"
       style={{ fontFamily: 'system-ui, sans-serif' }}
     >
-      {/* Tab navigation */}
+      {/* ── Side panel + content layout (desktop) ───────────────────── */}
       <div
-        role="tablist"
         style={{
           display: 'flex',
-          borderBottom: '2px solid #e5e7eb',
-          marginBottom: '24px',
-          gap: '4px',
+          gap: '24px',
+          alignItems: 'flex-start',
         }}
+        className="cmcc-settings-layout"
       >
-        {sections.map((section: SettingsSection): React.ReactElement => {
-          const isActive = section.id === activeTab
-          return (
-            <button
-              key={section.id}
-              role="tab"
-              type="button"
-              aria-selected={isActive}
-              aria-controls={`cmcc-panel-${section.id}`}
-              onClick={(): void => {
-                setActiveTab(section.id)
-              }}
-              style={{
-                padding: '10px 20px',
-                border: 'none',
-                borderBottom: isActive
-                  ? '2px solid #2563eb'
-                  : '2px solid transparent',
-                marginBottom: '-2px',
-                backgroundColor: 'transparent',
-                color: isActive ? '#2563eb' : '#6b7280',
-                fontWeight: isActive ? 600 : 400,
-                fontSize: '14px',
-                cursor: 'pointer',
-              }}
-            >
-              {section.title}
-            </button>
-          )
-        })}
-      </div>
-
-      {/* Active section fields */}
-      {activeSection && (
-        <div
-          role="tabpanel"
-          id={`cmcc-panel-${activeSection.id}`}
-          style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}
+        {/* ── Side navigation ──────────────────────────────────────── */}
+        <nav
+          role="tablist"
+          aria-label="Settings sections"
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '2px',
+            width: '220px',
+            minWidth: '180px',
+            borderRight: '1px solid #e5e7eb',
+            paddingRight: '16px',
+          }}
         >
-          {activeSection.fields.map(
-            (field: SettingsField): React.ReactElement => {
-              const fieldError = errors[field.name]
-              const isToggle = field.type === 'toggle'
+          {sections.map((section: SettingsSection): React.ReactElement => {
+            const isActive = section.id === activeTab
+            return (
+              <button
+                key={section.id}
+                role="tab"
+                type="button"
+                aria-selected={isActive}
+                aria-controls={`cmcc-panel-${section.id}`}
+                onClick={(): void => {
+                  setActiveTab(section.id)
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  padding: '10px 14px',
+                  border: 'none',
+                  borderRadius: '8px',
+                  backgroundColor: isActive ? '#eff6ff' : 'transparent',
+                  color: isActive ? '#2563eb' : '#4b5563',
+                  fontWeight: isActive ? 600 : 450,
+                  fontSize: '14px',
+                  lineHeight: 1.4,
+                  cursor: 'pointer',
+                  textAlign: 'left' as const,
+                  width: '100%',
+                  transition: 'all 0.15s ease',
+                }}
+                onMouseEnter={(e) => {
+                  if (!isActive) {
+                    e.currentTarget.style.backgroundColor = '#f9fafb'
+                    e.currentTarget.style.color = '#111827'
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!isActive) {
+                    e.currentTarget.style.backgroundColor = 'transparent'
+                    e.currentTarget.style.color = '#4b5563'
+                  }
+                }}
+              >
+                <span style={{ flexShrink: 0 }}>
+                  <Icon name={getSectionIcon(section)} size={16} />
+                </span>
+                <span>{section.title}</span>
+              </button>
+            )
+          })}
+        </nav>
 
-              return (
-                <div
-                  key={field.name}
-                  style={{
-                    display: 'flex',
-                    flexDirection: isToggle ? 'row' : 'column',
-                    alignItems: isToggle ? 'center' : undefined,
-                    gap: isToggle ? '0' : '6px',
-                    justifyContent: isToggle ? 'space-between' : undefined,
-                  }}
-                >
-                  {/* Label - not shown inline for toggle since it's in the label */}
-                  {!isToggle && (
-                    <label
-                      htmlFor={`cmcc-field-${field.name}`}
-                      style={{
-                        fontSize: '14px',
-                        fontWeight: 500,
-                        color: '#374151',
-                      }}
-                    >
-                      {field.label}
-                      {field.required && (
-                        <span
-                          aria-hidden="true"
-                          style={{ color: '#dc2626', marginLeft: '2px' }}
-                        >
-                          *
-                        </span>
-                      )}
-                    </label>
-                  )}
+        {/* Active section fields */}
+        {activeSection && (
+          <div
+            role="tabpanel"
+            id={`cmcc-panel-${activeSection.id}`}
+            style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}
+          >
+            {activeSection.fields.map(
+              (field: SettingsField): React.ReactElement => {
+                const fieldError = errors[field.name]
+                const isToggle = field.type === 'toggle'
 
-                  {/* Input */}
-                  {renderFieldInput(
-                    field,
-                    values[field.name],
-                    fieldError ?? null,
-                    handleFieldChange,
-                    handleBlur,
-                  )}
+                return (
+                  <div
+                    key={field.name}
+                    style={{
+                      display: 'flex',
+                      flexDirection: isToggle ? 'row' : 'column',
+                      alignItems: isToggle ? 'center' : undefined,
+                      gap: isToggle ? '0' : '6px',
+                      justifyContent: isToggle ? 'space-between' : undefined,
+                    }}
+                  >
+                    {/* Label - not shown inline for toggle since it's in the label */}
+                    {!isToggle && (
+                      <label
+                        htmlFor={`cmcc-field-${field.name}`}
+                        style={{
+                          fontSize: '14px',
+                          fontWeight: 500,
+                          color: '#374151',
+                        }}
+                      >
+                        {field.label}
+                        {field.required && (
+                          <span
+                            aria-hidden="true"
+                            style={{ color: '#dc2626', marginLeft: '2px' }}
+                          >
+                            *
+                          </span>
+                        )}
+                      </label>
+                    )}
 
-                  {/* Help text */}
-                  {field.helpText && !fieldError && (
-                    <span
-                      style={{
-                        fontSize: '12px',
-                        color: '#6b7280',
-                        marginTop: '2px',
-                      }}
-                    >
-                      {field.helpText}
-                    </span>
-                  )}
+                    {/* Input */}
+                    {renderFieldInput(
+                      field,
+                      values[field.name],
+                      fieldError ?? null,
+                      handleFieldChange,
+                      handleBlur,
+                    )}
 
-                  {/* Error message */}
-                  {fieldError && (
-                    <span
-                      id={`cmcc-field-${field.name}-error`}
-                      role="alert"
-                      style={{
-                        fontSize: '12px',
-                        color: '#dc2626',
-                        marginTop: '2px',
-                      }}
-                    >
-                      {fieldError}
-                    </span>
-                  )}
-                </div>
-              )
-            },
-          )}
-        </div>
-      )}
+                    {/* Help text */}
+                    {field.helpText && !fieldError && (
+                      <span
+                        style={{
+                          fontSize: '12px',
+                          color: '#6b7280',
+                          marginTop: '2px',
+                        }}
+                      >
+                        {field.helpText}
+                      </span>
+                    )}
+
+                    {/* Error message */}
+                    {fieldError && (
+                      <span
+                        id={`cmcc-field-${field.name}-error`}
+                        role="alert"
+                        style={{
+                          fontSize: '12px',
+                          color: '#dc2626',
+                          marginTop: '2px',
+                        }}
+                      >
+                        {fieldError}
+                      </span>
+                    )}
+                  </div>
+                )
+              },
+            )}
+          </div>
+        )}
+      </div>
+      {/* ── end .cmcc-settings-layout ── */}
 
       {/* No active section found */}
       {!activeSection && sections.length > 0 && (

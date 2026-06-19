@@ -21,7 +21,13 @@ export const StatusPieChart: React.FC<StatusPieChartProps> = ({
   title = 'Status Distribution',
   height = 250,
 }) => {
-  if (!data || !data.values || data.values.length === 0) {
+  if (
+    !data ||
+    !data.values ||
+    data.values.length === 0 ||
+    !data.labels ||
+    data.labels.length === 0
+  ) {
     return (
       <div className="cmcc-chart-empty">
         <p>No status data available</p>

@@ -1,6 +1,12 @@
 import { useState, useCallback, useEffect } from 'react'
 import { startTransition } from 'react'
 import { apiFetch } from '../lib/api'
+import {
+  generateUserReputationSummary,
+  classifyRiskLevel,
+  getDefaultRiskLevelThresholds,
+  getDefaultReputationOptions,
+} from '@cmcc/core'
 
 /**
  * Reports hook.
@@ -28,15 +34,63 @@ export function useReports({ addToast: _addToast }) {
   const fetchUserReputation = useCallback(async () => {
     setIsReputationLoading(true)
     try {
-      const data = await apiFetch('users/reputation')
-      setReputationUsers(data.users || [])
+      const data = await apiFetch(
+        'reputation-raw?page=' +
+          reputationPage +
+          '&per_page=' +
+          reputationPerPage,
+      )
+      const rawUsers = data.data || []
+
+      const thresholds = getDefaultRiskLevelThresholds()
+      const options = getDefaultReputationOptions()
+
+      // Process each raw user through the core reputation system
+      const processed = rawUsers.map((u) => {
+        const score = {
+          score:
+            u.approvedCount * options.approvedItemScore +
+            u.rejectedCount * options.rejectedItemScore +
+            u.spamCount * options.rejectedItemScore,
+          lastUpdated: u.lastSeen || new Date().toISOString(),
+          totalApproved: u.approvedCount || 0,
+          totalRejected: u.rejectedCount || 0,
+          timesDeactivated: 0,
+        }
+        const summary = generateUserReputationSummary(
+          score,
+          [],
+          options,
+          thresholds,
+        )
+        const riskLevel = classifyRiskLevel(
+          summary.currentScore,
+          summary.recentBreachCount,
+          thresholds,
+        )
+        const spamRatio = u.totalItems > 0 ? u.spamCount / u.totalItems : 0
+        return {
+          authorId: u.authorId,
+          totalItems: u.totalItems,
+          spamCount: u.spamCount,
+          approvedCount: u.approvedCount,
+          flaggedCount: u.flaggedCount,
+          rejectedCount: u.rejectedCount,
+          lastSeen: u.lastSeen,
+          reputationScore: summary.currentScore,
+          riskLevel,
+          spamRatio,
+        }
+      })
+
+      setReputationUsers(processed)
     } catch (err) {
       // eslint-disable-next-line no-console
       console.error('Failed to fetch user reputation:', err)
     } finally {
       setIsReputationLoading(false)
     }
-  }, [])
+  }, [reputationPage, reputationPerPage])
 
   // ── Fetch Activity Feed ────────────────────────────────────────────
   const fetchActivityFeed = useCallback(async () => {

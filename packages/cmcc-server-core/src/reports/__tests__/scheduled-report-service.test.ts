@@ -119,7 +119,8 @@ describe('ScheduledReportService', () => {
       await service.toggleActive(report.id, false)
 
       const due = await service.getDueReports()
-      expect(due.find((r) => r.id === report.id)?.active).toBe(false)
+      // Inactive reports should NOT appear in the due list at all
+      expect(due.find((r) => r.id === report.id)).toBeUndefined()
     })
   })
 

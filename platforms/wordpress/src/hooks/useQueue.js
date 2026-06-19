@@ -75,6 +75,10 @@ export function useQueue({ addToast }) {
       if (filters.search) {
         params.set('search', filters.search)
       }
+      // B9 fix: Include date_range in API request
+      if (filters.dateRange && filters.dateRange !== 'all') {
+        params.set('date_range', filters.dateRange)
+      }
       if (sortField) {
         params.set('sort_field', sortField)
         params.set('sort_direction', sortDirection)
@@ -137,12 +141,20 @@ export function useQueue({ addToast }) {
   const handleItemAction = useCallback(
     async (actionType, itemId) => {
       try {
-        await apiFetch(`queue/${encodeURIComponent(itemId)}/action`, {
-          method: 'POST',
-          body: JSON.stringify({ action: actionType }),
-        })
+        const response = await apiFetch(
+          `queue/${encodeURIComponent(itemId)}/action`,
+          {
+            method: 'POST',
+            body: JSON.stringify({ action: actionType }),
+          },
+        )
         fetchQueue(queuePage)
-        addToast(`Item ${actionType}d successfully`, 'success')
+        // Use the API response message (e.g. "Item rejected successfully.")
+        // falling back to client-side construction for safety
+        addToast(
+          response?.message || `Item ${actionType}d successfully`,
+          'success',
+        )
       } catch (err) {
         // eslint-disable-next-line no-console
         console.error('Action failed:', err)
@@ -344,12 +356,12 @@ export function useQueue({ addToast }) {
     setQueuePage(1)
   }, [])
 
-  // Load on mount when queue page changes
+  // Fetch whenever page or fetch function (filters/sort) changes
   useEffect(() => {
     startTransition(() => {
       fetchQueue(queuePage)
     })
-  }, [])
+  }, [fetchQueue, queuePage])
 
   return {
     // State

@@ -5,10 +5,10 @@ import { ContentHookService } from '../content-hook-service'
 
 describe('ContentHookService', () => {
   let service: ContentHookService
-  const mockAddToQueue = jest.fn()
+  let mockAddToQueue: jest.Mock
 
   beforeEach(() => {
-    jest.clearAllMocks()
+    mockAddToQueue = jest.fn()
     service = new ContentHookService(mockAddToQueue)
   })
 
@@ -23,14 +23,29 @@ describe('ContentHookService', () => {
 
       const hooks = service.getHooks()
       expect(hooks).toHaveLength(1)
-      expect(hooks[0].name).toBe('Strapi Comment Hook')
-      expect(hooks[0].contentType).toBe('comment')
+      expect(hooks[0]!.name).toBe('Strapi Comment Hook')
+      expect(hooks[0]!.contentType).toBe('comment')
     })
 
     it('registers multiple hooks for different content types', () => {
-      service.registerHook({ name: 'Comment Hook', contentType: 'comment', description: '', enabled: true })
-      service.registerHook({ name: 'Post Hook', contentType: 'post', description: '', enabled: true })
-      service.registerHook({ name: 'Review Hook', contentType: 'review', description: '', enabled: true })
+      service.registerHook({
+        name: 'Comment Hook',
+        contentType: 'comment',
+        description: '',
+        enabled: true,
+      })
+      service.registerHook({
+        name: 'Post Hook',
+        contentType: 'post',
+        description: '',
+        enabled: true,
+      })
+      service.registerHook({
+        name: 'Review Hook',
+        contentType: 'review',
+        description: '',
+        enabled: true,
+      })
 
       expect(service.getHooks()).toHaveLength(3)
     })
@@ -131,13 +146,18 @@ describe('ContentHookService', () => {
 
   describe('enableHook / disableHook', () => {
     it('enables and disables hooks by name', () => {
-      service.registerHook({ name: 'Test Hook', contentType: 'comment', description: '', enabled: false })
+      service.registerHook({
+        name: 'Test Hook',
+        contentType: 'comment',
+        description: '',
+        enabled: false,
+      })
 
       service.enableHook('Test Hook')
-      expect(service.getHooks()[0].enabled).toBe(true)
+      expect(service.getHooks()[0]!.enabled).toBe(true)
 
       service.disableHook('Test Hook')
-      expect(service.getHooks()[0].enabled).toBe(false)
+      expect(service.getHooks()[0]!.enabled).toBe(false)
     })
   })
 })

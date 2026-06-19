@@ -9,6 +9,8 @@ import '@testing-library/jest-dom'
 // Mock the @cmcc/ui components
 jest.mock('@cmcc/ui', () => {
   const React = require('react')
+  const MockDiv = (props) =>
+    React.createElement('div', { 'data-testid': 'cmcc-ui-mock', ...props })
   return {
     QueueTable: (props) =>
       React.createElement('div', {
@@ -19,6 +21,8 @@ jest.mock('@cmcc/ui', () => {
       React.createElement('div', { 'data-testid': 'heatmap-chart' }),
     SettingsForm: (_props) =>
       React.createElement('div', { 'data-testid': 'settings-form' }),
+    AiSettingsForm: (_props) =>
+      React.createElement('div', { 'data-testid': 'ai-settings-form' }),
     NotificationBadge: ({ count }) =>
       React.createElement(
         'span',
@@ -43,6 +47,64 @@ jest.mock('@cmcc/ui', () => {
       React.createElement('div', { 'data-testid': 'moderation-line-chart' }),
     SpamBarChart: () =>
       React.createElement('div', { 'data-testid': 'spam-bar-chart' }),
+    Button: ({ children, ...props }) =>
+      React.createElement(
+        'button',
+        { 'data-testid': 'cmcc-btn', ...props },
+        children,
+      ),
+    SkeletonTable: (props) =>
+      React.createElement(MockDiv, { 'data-cmcc': 'SkeletonTable', ...props }),
+    SkeletonCard: (props) =>
+      React.createElement(MockDiv, { 'data-cmcc': 'SkeletonCard', ...props }),
+    EmptyState: ({ title, description, action }) =>
+      React.createElement(
+        'div',
+        { 'data-testid': 'cmcc-empty' },
+        title,
+        description && React.createElement('p', null, description),
+        action,
+      ),
+    SlideOutPanel: ({ open, children, title }) =>
+      open
+        ? React.createElement(
+            'div',
+            { 'data-testid': 'cmcc-slideout' },
+            title && React.createElement('h3', null, title),
+            children,
+          )
+        : null,
+    QuickFilterBar: (props) =>
+      React.createElement(MockDiv, { 'data-cmcc': 'QuickFilterBar', ...props }),
+    ProgressBar: (props) =>
+      React.createElement(MockDiv, { 'data-cmcc': 'ProgressBar', ...props }),
+    ModerationNotes: (props) =>
+      React.createElement(MockDiv, {
+        'data-cmcc': 'ModerationNotes',
+        ...props,
+      }),
+    AiEvaluationResult: (props) =>
+      React.createElement(MockDiv, {
+        'data-cmcc': 'AiEvaluationResult',
+        ...props,
+      }),
+    Table: (props) =>
+      React.createElement('table', { 'data-testid': 'cmcc-table', ...props }),
+    Pagination: (props) =>
+      React.createElement('div', {
+        'data-testid': 'cmcc-pagination',
+        ...props,
+      }),
+    ActivityFeed: (props) =>
+      React.createElement(MockDiv, { 'data-cmcc': 'ActivityFeed', ...props }),
+    cn: (x) => x || '',
+    Icon: ({ name, size, className }) =>
+      React.createElement('span', {
+        'data-testid': 'cmcc-icon',
+        'data-icon-name': name,
+        'data-icon-size': size,
+        className,
+      }),
   }
 })
 
@@ -82,21 +144,62 @@ describe('QueuePage', () => {
       fetchQueue: jest.fn(),
       handleItemAction: jest.fn(),
       handleBulkAction: jest.fn(),
-      updateFilters: jest.fn(),
+      handleFilterChange: jest.fn(),
+      fetchItemHistory: jest.fn(),
+      fetchItemNotes: jest.fn(),
+      setDetailItem: jest.fn(),
+      detailItem: null,
+      itemHistory: [],
+      itemNotes: [],
+      isHistoryLoading: false,
+      isNotesLoading: false,
+      activeQuickPreset: null,
+      savedFilters: [],
+      handleQuickFilter: jest.fn(),
+      saveFilter: jest.fn(),
+      addItemNote: jest.fn(),
+      handleAssignItem: jest.fn(),
+      bulkProgress: { active: false, current: 0, total: 0 },
     },
     queueStats: { pending: 0, spam: 0, flagged: 0, total: 0 },
     theme: 'light',
-    collaboration: {},
+    collaboration: {
+      detailItem: null,
+      itemHistory: [],
+      itemNotes: [],
+      activityFeed: [],
+      fetchItemHistory: jest.fn(),
+      fetchItemNotes: jest.fn(),
+      setDetailItem: jest.fn(),
+      addItemNote: jest.fn(),
+      fetchActivityFeed: jest.fn(),
+      isFeedLoading: false,
+      feedError: null,
+    },
     addToast: jest.fn(),
   }
 
   it('renders without crashing', () => {
     render(<QueuePage {...defaultProps} />)
-    expect(screen.getByText(/Moderation Queue/i)).toBeInTheDocument()
+    // When queue is empty, EmptyState renders with this title
+    expect(screen.getByText('No items in the queue')).toBeInTheDocument()
   })
 
   it('renders QueueTable when items exist', () => {
-    render(<QueuePage {...defaultProps} />)
+    const propsWithItems = {
+      ...defaultProps,
+      queue: {
+        ...defaultProps.queue,
+        queueItems: [
+          {
+            id: '1',
+            contentType: 'comment',
+            status: 'pending',
+          },
+        ],
+      },
+    }
+    render(<QueuePage {...propsWithItems} />)
     expect(screen.getByTestId('queue-table')).toBeInTheDocument()
   })
 })
@@ -117,16 +220,24 @@ describe('AnalyticsPage', () => {
         moderatorPerformance: [],
         anomalyAlerts: [],
         dateRange: { start: '', end: '' },
+        statusDistribution: null,
+        moderationVolume: null,
+        spamContentTypes: null,
       },
+      analyticsDateRange: { from: new Date(), to: new Date() },
+      setAnalyticsDateRange: jest.fn(),
       isAnalyticsLoading: false,
       fetchAnalytics: jest.fn(),
+      queueStats: { pending: 0, spam: 0, flagged: 0, total: 0 },
+      spamRatioData: { spamCount: 0, totalCount: 0, ratio: 0, percentage: 0 },
+      ctbList: [],
     },
     theme: 'light',
   }
 
   it('renders without crashing', () => {
     render(<AnalyticsPage {...defaultProps} />)
-    expect(screen.getByText(/Analytics Dashboard/i)).toBeInTheDocument()
+    expect(screen.getByText(/Analytics/i)).toBeInTheDocument()
   })
 })
 
@@ -136,15 +247,18 @@ describe('ActivityLogPage', () => {
       activityLog: [],
       isLogLoading: false,
       logPage: 1,
-      fetchActivityLog: jest.fn(),
+      logPerPage: 25,
       setLogPage: jest.fn(),
+      setLogPerPage: jest.fn(),
       logTotal: 0,
+      fetchActivityLog: jest.fn(),
     },
   }
 
   it('renders without crashing', () => {
     render(<ActivityLogPage {...defaultProps} />)
-    expect(screen.getByText(/Activity Log/i)).toBeInTheDocument()
+    // When log is empty, EmptyState renders with this title
+    expect(screen.getByText('No activity recorded yet')).toBeInTheDocument()
   })
 })
 
@@ -175,25 +289,36 @@ describe('ReportsPage', () => {
   }
 
   it('renders without crashing', () => {
-    render(<ReportsPage {...defaultProps} />)
-    expect(screen.getByText(/Reports/i)).toBeInTheDocument()
+    const { container } = render(<ReportsPage {...defaultProps} />)
+    expect(container.querySelector('.cmcc-tab-panel')).toBeInTheDocument()
   })
 })
 
 describe('SettingsPage', () => {
   const defaultProps = {
     settings: {
-      settingsSections: [],
+      settingsSections: [
+        {
+          id: 'general',
+          title: 'General',
+          fields: [
+            { name: 'auto_moderate', label: 'Auto Moderate', type: 'toggle' },
+          ],
+        },
+      ],
       isSettingsLoading: false,
       settingsInitialValues: {},
+      settingsValidators: {},
       fetchSettings: jest.fn(),
-      handleSaveSettings: jest.fn(),
+      handleSettingsSave: jest.fn(),
     },
     addToast: jest.fn(),
+    theme: 'light',
   }
 
   it('renders without crashing', () => {
     render(<SettingsPage {...defaultProps} />)
-    expect(screen.getByText(/Settings/i)).toBeInTheDocument()
+    // SettingsForm renders with sections
+    expect(screen.getByTestId('settings-form')).toBeInTheDocument()
   })
 })

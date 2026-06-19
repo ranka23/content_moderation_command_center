@@ -6,16 +6,27 @@ import {
   EmptyState,
   Pagination,
   ActivityFeed,
+  Icon,
 } from '@cmcc/ui'
+import {
+  FileText,
+  Calendar,
+  Users,
+  RefreshCw,
+  BarChart3,
+  Globe,
+  Download,
+  Plus,
+} from 'lucide-react'
 import { apiFetch } from '../lib/api'
 
 const PO = [10, 25, 50, 100]
 const PF = [
-  { n: 'WordPress', i: '🔵', c: true },
-  { n: 'Shopify', i: '🟢', c: false },
-  { n: 'Storyblok', i: '🔴', c: false },
-  { n: 'Strapi', i: '🟣', c: false },
-  { n: 'Wix', i: '⚫', c: false },
+  { n: 'WordPress', i: 'wordpress', c: true },
+  { n: 'Shopify', i: 'shopify', c: false },
+  { n: 'Storyblok', i: 'storyblok', c: false },
+  { n: 'Strapi', i: 'strapi', c: false },
+  { n: 'Wix', i: 'wix', c: false },
 ]
 const tlBadge = (r) => {
   const m = {
@@ -23,7 +34,8 @@ const tlBadge = (r) => {
     New: 'tw-bg-blue-100 tw-text-blue-800',
     Suspicious: 'tw-bg-orange-100 tw-text-orange-800',
   }
-  const c = m[r.trust_level] || 'tw-bg-red-100 tw-text-red-800'
+  const label = r.riskLevel || 'Unknown'
+  const c = m[label] || 'tw-bg-red-100 tw-text-red-800'
   return (
     <span
       className={
@@ -31,57 +43,130 @@ const tlBadge = (r) => {
         c
       }
     >
-      {r.trust_level}
+      {label}
     </span>
   )
 }
 const srBadge = (r) => {
+  const ratio = r.spamRatio ?? 0
   const c =
-    r.spam_ratio > 0.5
+    ratio > 0.5
       ? 'tw-text-red-600 tw-font-bold'
-      : r.spam_ratio > 0.2
+      : ratio > 0.2
         ? 'tw-text-orange-600'
         : 'tw-text-gray-600'
-  return <span className={c}>{(r.spam_ratio * 100).toFixed(0)}%</span>
+  return <span className={c}>{(ratio * 100).toFixed(0)}%</span>
 }
 const RC = [
-  { key: 'author_id', label: 'User', sortable: true, align: 'left' },
+  { key: 'authorId', label: 'User', sortable: true, align: 'left' },
   {
-    key: 'trust_level',
+    key: 'riskLevel',
     label: 'Trust Level',
     sortable: true,
     align: 'center',
     cell: tlBadge,
   },
-  { key: 'total_items', label: 'Total Items', sortable: true, align: 'right' },
+  { key: 'totalItems', label: 'Total Items', sortable: true, align: 'right' },
   {
-    key: 'spam_count',
+    key: 'spamCount',
     label: 'Spam',
     sortable: true,
     align: 'right',
-    cell: (r) => <span className="tw-text-red-600">{r.spam_count}</span>,
+    cell: (r) => <span className="tw-text-red-600">{r.spamCount}</span>,
   },
   {
-    key: 'approved_count',
+    key: 'approvedCount',
     label: 'Approved',
     sortable: true,
     align: 'right',
-    cell: (r) => <span className="tw-text-green-600">{r.approved_count}</span>,
+    cell: (r) => <span className="tw-text-green-600">{r.approvedCount}</span>,
   },
   {
-    key: 'spam_ratio',
+    key: 'spamRatio',
     label: 'Spam Ratio',
     sortable: true,
     align: 'right',
     cell: srBadge,
   },
 ]
+
+// B10 fix: Moderator column with fallback for various key names and broken images
+const ModeratorCell = ({ row }) => {
+  const name =
+    row.moderator || row.moderatorName || row.moderator_name || 'Unknown'
+  const nameStr = String(name)
+  const [imgError, setImgError] = useState(false)
+
+  // If the value contains an <img> tag, extract src and render with React onError
+  if (/<img\s/i.test(nameStr) && !imgError) {
+    const srcMatch = nameStr.match(/src=["']([^"']*)["']/i)
+    const altMatch = nameStr.match(/alt=["']([^"']*)["']/i)
+    const src = srcMatch ? srcMatch[1] : ''
+    const alt = altMatch ? altMatch[1] : 'Moderator avatar'
+    return (
+      <img
+        src={src}
+        alt={alt}
+        onError={() => setImgError(true)}
+        className="tw-w-8 tw-h-8 tw-rounded-full tw-object-cover"
+      />
+    )
+  }
+
+  // Fallback: show initials avatar when image fails or no img tag
+  const initials = nameStr
+    .split(' ')
+    .map((n) => n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2)
+  return (
+    <span
+      className="tw-inline-flex tw-items-center tw-justify-center tw-w-8 tw-h-8 tw-rounded-full tw-bg-gray-200 tw-text-gray-600 tw-text-xs tw-font-medium"
+      title={nameStr}
+    >
+      {initials || '?'}
+    </span>
+  )
+}
+
 const PC = [
-  { key: 'moderator', label: 'Moderator', sortable: true, align: 'left' },
-  { key: 'actions', label: 'Total Actions', sortable: true, align: 'right' },
-  { key: 'approvals', label: 'Approvals', sortable: true, align: 'right' },
-  { key: 'rejections', label: 'Rejections', sortable: true, align: 'right' },
-  { key: 'spam', label: 'Spam Marks', sortable: true, align: 'right' },
+  {
+    key: 'moderator',
+    label: 'Moderator',
+    sortable: true,
+    align: 'left',
+    cell: (row) => <ModeratorCell row={row} />,
+  },
+  {
+    key: 'actions',
+    label: 'Total Actions',
+    sortable: true,
+    align: 'right',
+    cell: (row) =>
+      String(row.actions ?? row.totalActions ?? row.total_actions ?? 0),
+  },
+  {
+    key: 'approvals',
+    label: 'Approvals',
+    sortable: true,
+    align: 'right',
+    cell: (row) => String(row.approvals ?? 0),
+  },
+  {
+    key: 'rejections',
+    label: 'Rejections',
+    sortable: true,
+    align: 'right',
+    cell: (row) => String(row.rejections ?? row.trashes ?? 0),
+  },
+  {
+    key: 'spam',
+    label: 'Spam Marks',
+    sortable: true,
+    align: 'right',
+    cell: (row) => String(row.spam ?? row.spamCount ?? row.spam_actions ?? 0),
+  },
 ]
 const SF = [
   {
@@ -260,7 +345,8 @@ export default function ReportsPage({
   return (
     <div className="cmcc-tab-panel" role="tabpanel">
       <h2 className="tw-text-lg tw-font-semibold tw-mb-4">
-        📄 Reports &amp; Compliance
+        <FileText size={20} className="tw-inline tw-mr-2" />
+        Reports &amp; Compliance
       </h2>
       <div className="tw-grid tw-grid-cols-1 md:tw-grid-cols-2 tw-gap-4 tw-mb-6">
         <div className="tw-rounded-lg tw-border tw-border-gray-200 tw-bg-white tw-p-4 tw-shadow-sm">
@@ -278,14 +364,14 @@ export default function ReportsPage({
                 hex('reports/moderation-activity', 'cmcc-moderation')
               }
             >
-              📥 Export CSV
+              <Download size={14} className="tw-inline tw-mr-1" /> Export CSV
             </Button>
             <Button
               variant="outline"
               size="sm"
               onClick={() => addToast('PDF export coming soon', 'info')}
             >
-              📥 Export PDF
+              <Download size={14} className="tw-inline tw-mr-1" /> Export PDF
             </Button>
           </div>
         </div>
@@ -301,13 +387,17 @@ export default function ReportsPage({
             size="sm"
             onClick={() => hex('reports/compliance-audit', 'cmcc-compliance')}
           >
-            📥 Export Audit Log
+            <Download size={14} className="tw-inline tw-mr-1" /> Export Audit
+            Log
           </Button>
         </div>
       </div>
       <div className="tw-rounded-lg tw-border tw-border-gray-200 tw-bg-white tw-shadow-sm tw-mb-6">
         <div className="tw-px-4 tw-py-3 tw-border-b tw-border-gray-100">
-          <h3 className="tw-text-sm tw-font-semibold">📅 Scheduled Reports</h3>
+          <h3 className="tw-text-sm tw-font-semibold">
+            <Calendar size={16} className="tw-inline tw-mr-1" /> Scheduled
+            Reports
+          </h3>
         </div>
         <div className="tw-p-4">
           <p className="tw-text-sm tw-text-gray-500 tw-mb-4">
@@ -335,7 +425,7 @@ export default function ReportsPage({
               </div>
             ))}
             <Button variant="primary" size="sm" onClick={hs}>
-              + Schedule Report
+              <Plus size={14} className="tw-inline tw-mr-1" /> Schedule Report
             </Button>
           </div>
         </div>
@@ -343,7 +433,8 @@ export default function ReportsPage({
       <div className="tw-rounded-lg tw-border tw-border-gray-200 tw-bg-white tw-shadow-sm tw-mb-6">
         <div className="tw-px-4 tw-py-3 tw-border-b tw-border-gray-100">
           <h3 className="tw-text-sm tw-font-semibold">
-            👤 User Reputation Dashboard
+            <Users size={16} className="tw-inline tw-mr-1" /> User Reputation
+            Dashboard
           </h3>
         </div>
         <div className="tw-p-4">
@@ -365,7 +456,9 @@ export default function ReportsPage({
       </div>
       <div className="tw-rounded-lg tw-border tw-border-gray-200 tw-bg-white tw-shadow-sm tw-mb-6">
         <div className="tw-px-4 tw-py-3 tw-border-b tw-border-gray-100">
-          <h3 className="tw-text-sm tw-font-semibold">🔄 Activity Feed</h3>
+          <h3 className="tw-text-sm tw-font-semibold">
+            <RefreshCw size={16} className="tw-inline tw-mr-1" /> Activity Feed
+          </h3>
         </div>
         <div className="tw-p-4">
           <ActivityFeed events={af} isLoading={ifl} error={fe} onRetry={faf} />
@@ -374,7 +467,8 @@ export default function ReportsPage({
       <div className="tw-rounded-lg tw-border tw-border-gray-200 tw-bg-white tw-shadow-sm tw-mb-6">
         <div className="tw-px-4 tw-py-3 tw-border-b tw-border-gray-100">
           <h3 className="tw-text-sm tw-font-semibold">
-            📊 Moderator Performance
+            <BarChart3 size={16} className="tw-inline tw-mr-1" /> Moderator
+            Performance
           </h3>
         </div>
         <div className="tw-p-4">
@@ -401,7 +495,9 @@ export default function ReportsPage({
       </div>
       <div className="tw-rounded-lg tw-border tw-border-gray-200 tw-bg-white tw-shadow-sm">
         <div className="tw-px-4 tw-py-3 tw-border-b tw-border-gray-100">
-          <h3 className="tw-text-sm tw-font-semibold">🌐 Multi-Platform Hub</h3>
+          <h3 className="tw-text-sm tw-font-semibold">
+            <Globe size={16} className="tw-inline tw-mr-1" /> Multi-Platform Hub
+          </h3>
         </div>
         <div className="tw-p-4">
           <p className="tw-text-sm tw-text-gray-500 tw-mb-4">
@@ -421,7 +517,9 @@ export default function ReportsPage({
                     : 'tw-border-gray-200 tw-bg-gray-50 hover:tw-border-primary-300 hover:tw-bg-primary-50 tw-cursor-pointer')
                 }
               >
-                <div className="tw-text-2xl tw-mb-1">{p.i}</div>
+                <div className="tw-text-2xl tw-mb-1">
+                  <Icon name={p.i} size={24} />
+                </div>
                 <div className="tw-text-sm tw-font-medium">{p.n}</div>
                 {p.c ? (
                   <span className="tw-text-xs tw-text-green-600">

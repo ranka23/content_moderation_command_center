@@ -302,7 +302,7 @@ module.exports = async ({ strapi }) => {
   strapi.log.info('CMCC: Bootstrap started')
 
   // Initialize default settings from config
-  const config = strapi.plugin(PLUGIN_ID).config('default')
+  const pluginConfig = strapi.plugin(PLUGIN_ID).config('default') || {}
   const settingsService = strapi.plugin(PLUGIN_ID).service('cmccService')
 
   try {
@@ -312,12 +312,14 @@ module.exports = async ({ strapi }) => {
     if (!existingSettings) {
       // Create default settings entry
       const settingsData = {
-        autoModerate: config.autoModerate,
-        moderationBehavior: config.moderationBehavior,
-        maxLinks: config.maxLinks,
-        blacklistedKeywords: JSON.stringify(config.blacklistedKeywords),
-        duplicateDetection: config.duplicateDetection,
-        notifyOnSpam: config.notifyOnSpam,
+        autoModerate: pluginConfig.autoModerate ?? false,
+        moderationBehavior: pluginConfig.moderationBehavior ?? 'flag',
+        maxLinks: pluginConfig.maxLinks ?? 5,
+        blacklistedKeywords: JSON.stringify(
+          pluginConfig.blacklistedKeywords ?? [],
+        ),
+        duplicateDetection: pluginConfig.duplicateDetection ?? true,
+        notifyOnSpam: pluginConfig.notifyOnSpam ?? true,
       }
 
       await strapi

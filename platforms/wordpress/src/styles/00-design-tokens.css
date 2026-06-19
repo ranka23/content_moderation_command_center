@@ -1,0 +1,273 @@
+/* stylelint-disable at-rule-no-unknown */
+@tailwind components;
+@tailwind utilities;
+/* stylelint-enable at-rule-no-unknown */
+
+/* =========================================================================
+   CMCC Admin App Styles — WordPress Design System
+   Scoped under #cmcc-app to avoid conflicts with other WP admin styles
+   ========================================================================= */
+
+/* ===========================================================
+   SECTION: Global Reset & Base Styles
+   =========================================================== */
+
+#cmcc-app {
+  /* ─── Design Tokens ──────────────────────────────────────────────── */
+  --cmcc-space-1: 4px;
+  --cmcc-space-2: 8px;
+  --cmcc-space-3: 12px;
+  --cmcc-space-4: 16px;
+  --cmcc-space-5: 20px;
+  --cmcc-space-6: 24px;
+  --cmcc-space-8: 32px;
+  --cmcc-space-10: 40px;
+  --cmcc-space-12: 48px;
+  --cmcc-space-16: 64px;
+
+  /* WordPress Admin Blue palette */
+  --cmcc-primary: #007cba;
+  --cmcc-primary-hover: #005a87;
+  --cmcc-primary-light: #e5f5ff;
+  --cmcc-primary-dark: #004b6e;
+  --cmcc-primary-600: #007cba;
+  --cmcc-primary-700: #005a87;
+  --cmcc-wp-blue: #2271b1;
+  --cmcc-wp-blue-hover: #135e96;
+
+  /* ─── Semantic Color Tokens ───────────────────────────────────── */
+  /* Light mode defaults (overridden in .dark) */
+  --cmcc-bg-primary: #fff;
+  --cmcc-bg-secondary: #f6f7f7;
+  --cmcc-bg-tertiary: #f0f0f1;
+  --cmcc-bg-card: #fff;
+  --cmcc-bg-input: #fff;
+  --cmcc-bg-table-stripe: #f6f7f7;
+  --cmcc-bg-table-hover: #f6f7f7;
+  --cmcc-bg-table-header: #f6f7f7;
+  --cmcc-bg-toolbar: #f6f7f7;
+  --cmcc-bg-badge: #f0f0f1;
+  --cmcc-bg-modal-overlay: rgba(0, 0, 0, 0.6);
+  --cmcc-bg-onboarding-overlay: rgba(0, 0, 0, 0.7);
+  --cmcc-bg-toast: #fff;
+  --cmcc-bg-code: #f6f7f7;
+  --cmcc-bg-disabled: #f0f0f1;
+  --cmcc-bg-selected: #edf2ff;
+  --cmcc-bg-row-flash: #fef8ee;
+
+  --cmcc-text-primary: #1d2327;
+  --cmcc-text-secondary: #50575e;
+  --cmcc-text-tertiary: #757575;
+  --cmcc-text-muted: #8c8f94;
+  --cmcc-text-disabled: #8c8f94;
+  --cmcc-text-inverse: #fff;
+  --cmcc-text-placeholder: #757575;
+  --cmcc-text-link: #2271b1;
+  --cmcc-text-heading: #1d2327;
+
+  --cmcc-border-primary: #c3c4c7;
+  --cmcc-border-secondary: #e2e4e7;
+  --cmcc-border-light: #f0f0f1;
+  --cmcc-border-input: #c3c4c7;
+  --cmcc-border-focus: #2271b1;
+  --cmcc-border-card: #e2e4e7;
+  --cmcc-border-table: #c3c4c7;
+  --cmcc-border-table-row: #f0f0f1;
+
+  --cmcc-success: #00a32a;
+  --cmcc-success-hover: #008a20;
+  --cmcc-success-bg: #e2f0d9;
+  --cmcc-success-text: #237739;
+  --cmcc-error: #d63638;
+  --cmcc-error-hover: #b32d2e;
+  --cmcc-error-bg: #fbe9e9;
+  --cmcc-error-text: #b32d2e;
+  --cmcc-warning: #f0ad4e;
+  --cmcc-warning-bg: #fef8ee;
+  --cmcc-warning-text: #b2620f;
+  --cmcc-spam: #f56e28;
+  --cmcc-spam-hover: #d54e21;
+  --cmcc-spam-bg: #fde8d7;
+  --cmcc-spam-text: #c35b1a;
+  --cmcc-info: #007cba;
+  --cmcc-info-bg: #e5f5fa;
+  --cmcc-info-text: #007cba;
+
+  /* ─── Type Scale (cross-platform standard) ────────────────────── */
+  --cmcc-h1: 1.5rem;
+  --cmcc-h2: 1.25rem;
+  --cmcc-h3: 1.125rem;
+  --cmcc-body: 0.875rem;
+  --cmcc-small: 0.75rem;
+
+  /* ─── Standard color aliases (cross-platform consistency) ─────── */
+  --cmcc-text: var(--cmcc-text-primary);
+  --cmcc-bg: var(--cmcc-bg-primary);
+  --cmcc-border: var(--cmcc-border-primary);
+
+  /* ─── Spacing & Sizing ─────────────────────────────────────────── */
+  --cmcc-font-sans:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --cmcc-font-mono: 'SFMono-Regular', Consolas, monospace;
+  --cmcc-font-size-xs: 11px;
+  --cmcc-font-size-sm: 12px;
+  --cmcc-font-size-base: 13px;
+  --cmcc-font-size-md: 14px;
+  --cmcc-font-size-lg: 16px;
+  --cmcc-font-size-xl: 20px;
+  --cmcc-font-size-2xl: 23px;
+  --cmcc-font-size-3xl: 30px;
+  --cmcc-line-height-tight: 1.3;
+  --cmcc-line-height-normal: 1.5;
+  --cmcc-line-height-relaxed: 1.7;
+
+  /* ─── Shadows ──────────────────────────────────────────────────── */
+  --cmcc-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --cmcc-shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
+  --cmcc-shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+  --cmcc-shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.15);
+  --cmcc-shadow-modal: 0 8px 32px rgba(0, 0, 0, 0.2);
+  --cmcc-shadow-toast: 0 4px 12px rgba(0, 0, 0, 0.15);
+
+  /* ─── Border Radius ────────────────────────────────────────────── */
+  --cmcc-radius-sm: 3px;
+  --cmcc-radius-md: 4px;
+  --cmcc-radius-lg: 6px;
+  --cmcc-radius-xl: 8px;
+  --cmcc-radius-2xl: 12px;
+  --cmcc-radius-full: 9999px;
+
+  /* ─── Transitions ──────────────────────────────────────────────── */
+  --cmcc-transition-fast: 0.1s ease;
+  --cmcc-transition-normal: 0.2s ease;
+  --cmcc-transition-slow: 0.3s ease;
+
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen-Sans, Ubuntu,
+    Cantarell, 'Helvetica Neue', sans-serif;
+  color: var(--cmcc-text-primary);
+  line-height: 1.5;
+  background: var(--cmcc-bg-primary);
+}
+
+#cmcc-app *,
+#cmcc-app *::before,
+#cmcc-app *::after {
+  box-sizing: border-box;
+}
+
+/* ─── Dark Mode Design Tokens ────────────────────────────────────────── */
+.dark #cmcc-app {
+  --cmcc-bg-primary: #1e293b;
+  --cmcc-bg-secondary: #1a1a2e;
+  --cmcc-bg-tertiary: #2a2a4a;
+  --cmcc-bg-card: #1e293b;
+  --cmcc-bg-input: #1a1a2e;
+  --cmcc-bg-table-stripe: #1a1a2e;
+  --cmcc-bg-table-hover: rgba(30, 41, 59, 0.8);
+  --cmcc-bg-table-header: #1a1a2e;
+  --cmcc-bg-toolbar: #1a1a2e;
+  --cmcc-bg-badge: #2a2a4a;
+  --cmcc-bg-modal-overlay: rgba(0, 0, 0, 0.7);
+  --cmcc-bg-onboarding-overlay: rgba(0, 0, 0, 0.8);
+  --cmcc-bg-toast: #1e293b;
+  --cmcc-bg-code: #1a1a2e;
+  --cmcc-bg-disabled: #2a2a4a;
+  --cmcc-bg-selected: rgba(96, 165, 250, 0.1);
+  --cmcc-bg-row-flash: rgba(251, 191, 36, 0.15);
+
+  --cmcc-text-primary: #e2e8f0;
+  --cmcc-text-secondary: #cbd5e1;
+  --cmcc-text-tertiary: #94a3b8;
+  --cmcc-text-muted: #64748b;
+  --cmcc-text-disabled: #4b5563;
+  --cmcc-text-inverse: #1d2327;
+  --cmcc-text-placeholder: #cbd5e1;
+  --cmcc-text-link: #60a5fa;
+  --cmcc-text-heading: #f1f5f9;
+
+  --cmcc-border-primary: #334155;
+  --cmcc-border-secondary: #2a2a4a;
+  --cmcc-border-light: #2a2a4a;
+  --cmcc-border-input: #334155;
+  --cmcc-border-focus: #3b82f6;
+  --cmcc-border-card: #2a2a4a;
+  --cmcc-border-table: #334155;
+  --cmcc-border-table-row: #2a2a4a;
+
+  --cmcc-success: #16a34a;
+  --cmcc-success-hover: #15803d;
+  --cmcc-success-bg: rgba(22, 163, 74, 0.15);
+  --cmcc-success-text: #86efac;
+  --cmcc-error: #ef4444;
+  --cmcc-error-hover: #dc2626;
+  --cmcc-error-bg: rgba(239, 68, 68, 0.15);
+  --cmcc-error-text: #fca5a5;
+  --cmcc-warning: #f59e0b;
+  --cmcc-warning-bg: rgba(245, 158, 11, 0.15);
+  --cmcc-warning-text: #fde68a;
+  --cmcc-spam: #fb923c;
+  --cmcc-spam-hover: #ea580c;
+  --cmcc-spam-bg: rgba(251, 146, 60, 0.15);
+  --cmcc-spam-text: #fdba74;
+  --cmcc-info: #60a5fa;
+  --cmcc-info-bg: rgba(96, 165, 250, 0.15);
+  --cmcc-info-text: #93c5fd;
+
+  --cmcc-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --cmcc-shadow-md: 0 4px 6px rgba(0, 0, 0, 0.35);
+  --cmcc-shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.4);
+  --cmcc-shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.5);
+  --cmcc-shadow-modal: 0 8px 32px rgba(0, 0, 0, 0.5);
+  --cmcc-shadow-toast: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+/* ─── Elevation / Shadow Utility Classes ────────────────────────────── */
+#cmcc-app .cmcc-elevation-sm {
+  box-shadow: var(--cmcc-shadow-sm);
+}
+#cmcc-app .cmcc-elevation-md {
+  box-shadow: var(--cmcc-shadow-md);
+}
+#cmcc-app .cmcc-elevation-lg {
+  box-shadow: var(--cmcc-shadow-lg);
+}
+#cmcc-app .cmcc-elevation-xl {
+  box-shadow: var(--cmcc-shadow-xl);
+}
+
+/* ─── Border Radius Utility Classes ────────────────────────────────── */
+#cmcc-app .cmcc-rounded-sm {
+  border-radius: var(--cmcc-radius-sm);
+}
+#cmcc-app .cmcc-rounded-md {
+  border-radius: var(--cmcc-radius-md);
+}
+#cmcc-app .cmcc-rounded-lg {
+  border-radius: var(--cmcc-radius-lg);
+}
+#cmcc-app .cmcc-rounded-xl {
+  border-radius: var(--cmcc-radius-xl);
+}
+#cmcc-app .cmcc-rounded-2xl {
+  border-radius: var(--cmcc-radius-2xl);
+}
+#cmcc-app .cmcc-rounded-full {
+  border-radius: var(--cmcc-radius-full);
+}
+
+/* ─── Scrollbar Styles ──────────────────────────────────────────────── */
+#cmcc-app ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+#cmcc-app ::-webkit-scrollbar-track {
+  background: transparent;
+}
+#cmcc-app ::-webkit-scrollbar-thumb {
+  background: var(--cmcc-border-primary);
+  border-radius: var(--cmcc-radius-full);
+}
+#cmcc-app ::-webkit-scrollbar-thumb:hover {
+  background: var(--cmcc-text-muted);
+}

@@ -15,7 +15,7 @@ const mockQueueItems: QueueItem[] = [
     dateGmt: '2023-06-15T10:30:00Z',
     title: 'Test comment',
     excerpt: 'This is a test comment',
-    typeIcon: '💬',
+    typeIcon: 'comment',
     statusLabel: 'Pending',
     statusColor: '#ffc107',
   },
@@ -30,7 +30,7 @@ const mockQueueItems: QueueItem[] = [
     dateGmt: '2023-06-15T09:15:00Z',
     title: 'Test post',
     excerpt: 'This is a test post',
-    typeIcon: '📝',
+    typeIcon: 'post',
     statusLabel: 'Spam',
     statusColor: '#dc3545',
   },
@@ -45,7 +45,7 @@ const mockQueueItems: QueueItem[] = [
     dateGmt: '2023-06-14T14:00:00Z',
     title: 'Test media',
     excerpt: 'This is a test media item',
-    typeIcon: '🖼️',
+    typeIcon: 'media',
     statusLabel: 'Flagged',
     statusColor: '#fd7e14',
   },
@@ -60,7 +60,7 @@ const mockQueueItems: QueueItem[] = [
     dateGmt: '2023-06-13T08:00:00Z',
     title: 'Test user',
     excerpt: 'This is a test user profile',
-    typeIcon: '👤',
+    typeIcon: 'user',
     statusLabel: 'Pending',
     statusColor: '#ffc107',
   },
@@ -75,7 +75,7 @@ const mockQueueItems: QueueItem[] = [
     dateGmt: '2023-06-12T16:45:00Z',
     title: 'Form entry',
     excerpt: 'This is a form submission',
-    typeIcon: '📋',
+    typeIcon: 'form_entry',
     statusLabel: 'Pending',
     statusColor: '#ffc107',
   },
@@ -144,12 +144,15 @@ describe('QueueTable Component', () => {
   })
 
   it('renders different content type icons', () => {
-    render(<QueueTable {...mockProps} />)
-    expect(screen.getByText('💬')).toBeInTheDocument()
-    expect(screen.getByText('📝')).toBeInTheDocument()
-    expect(screen.getByText('🖼️')).toBeInTheDocument()
-    expect(screen.getByText('👤')).toBeInTheDocument()
-    expect(screen.getByText('📋')).toBeInTheDocument()
+    const { container } = render(<QueueTable {...mockProps} />)
+    // Content type icons are now rendered as SVG icons (lucide-react) instead of emoji
+    const typeCells = container.querySelectorAll('.cmcc-td-type')
+    expect(typeCells.length).toBe(5)
+    // Each type cell should contain an SVG icon
+    typeCells.forEach((cell) => {
+      const svg = cell.querySelector('svg')
+      expect(svg).toBeInTheDocument()
+    })
   })
 
   it('shows Pending status badge', () => {
@@ -271,9 +274,9 @@ describe('QueueTable Component', () => {
   })
 
   it('renders content type icons in type column', () => {
-    render(<QueueTable {...mockProps} />)
-    // Content type icons should be visible
-    const typeIcons = screen.getAllByText('💬')
+    const { container } = render(<QueueTable {...mockProps} />)
+    // Content type icons should be visible as SVGs in the type column
+    const typeIcons = container.querySelectorAll('.cmcc-td-type svg')
     expect(typeIcons.length).toBeGreaterThanOrEqual(1)
   })
 

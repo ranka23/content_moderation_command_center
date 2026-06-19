@@ -17,7 +17,7 @@ import {
   Tag,
 } from '@shopify/polaris'
 import ItemDetailPanel from './ItemDetailPanel'
-import { AiEvaluationResult } from '@cmcc/ui'
+import { AiEvaluationResult, SkeletonTable } from '@cmcc/ui'
 
 /**
  * @param {Object} props
@@ -28,18 +28,15 @@ import { AiEvaluationResult } from '@cmcc/ui'
  * @param {Array} props.contentTypeOptions - Available content types
  * @param {Array} props.statusOptions - Available status options
  * @param {Array} props.savedFilters - Saved filters
- * @param {Function} props.handleSaveFilter - Save current filter
- * @param {Function} props.handleApplyFilter - Apply a saved filter
- * @param {Function} props.handleDeleteFilter - Delete a saved filter
- * @param {string} props.filterNameInput - Filter name input value
- * @param {Function} props.setFilterNameInput - Filter name setter
- * @param {boolean} props.filterPopoverActive - Filter popover state
- * @param {Function} props.setFilterPopoverActive - Filter popover setter
+ * @param {Function} props.saveFilter - Save current filter with a name
+ * @param {Function} props.deleteSavedFilter - Delete a saved filter by ID
  * @param {Object} props.aiConfig - AI moderation configuration
  * @param {string|null} props.aiEvaluatingId - Currently evaluating item ID
  * @param {Object|null} props.aiEvaluationResult - AI evaluation result
  * @param {string|null} props.aiEvaluationError - AI evaluation error
  * @param {Function} props.onAiEvaluate - AI evaluate handler
+ * @param {string} props.moderatorId - Current moderator ID
+ * @param {string} props.moderatorName - Current moderator display name
  */
 export default function QueueTab({
   queueItems,
@@ -50,22 +47,25 @@ export default function QueueTab({
   contentTypeOptions,
   statusOptions,
   savedFilters,
-  handleSaveFilter,
-  handleApplyFilter,
-  handleDeleteFilter,
-  filterNameInput,
-  setFilterNameInput,
-  filterPopoverActive,
-  setFilterPopoverActive,
+  saveFilter,
+  deleteSavedFilter,
   aiConfig,
   aiEvaluatingId,
   aiEvaluationResult,
   aiEvaluationError,
   onAiEvaluate,
+  moderatorId,
+  moderatorName,
+  isLoading,
 }) {
   const [selectedDetailItem, setSelectedDetailItem] = useState(null)
   const [selectedIds, setSelectedIds] = useState([])
   const [evaluatedItemId, setEvaluatedItemId] = useState(null)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [page, setPage] = useState(1)
+  const perPage = 25
+  const [filterNameInput, setFilterNameInput] = useState('')
+  const [filterPopoverActive, setFilterPopoverActive] = useState(false)
 
   // Track which item was evaluated so we can re-evaluate
   const handleAiEval = (itemId) => {
@@ -90,14 +90,40 @@ export default function QueueTab({
       )
         return false
     }
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase()
+      const title = (item.title || '').toLowerCase()
+      const excerpt = (item.excerpt || item.contentSnippet || '').toLowerCase()
+      const author = (item.author_name || item.author || '').toLowerCase()
+      if (!title.includes(q) && !excerpt.includes(q) && !author.includes(q))
+        return false
+    }
     return true
   })
 
+  const hasActiveFilters =
+    Object.values(queueFilters).some((v) => v !== 'all' && v !== '') ||
+    searchQuery.trim() !== ''
   const items =
-    filteredItems.length > 0 ||
-    Object.values(queueFilters).some((v) => v !== 'all' && v !== '')
-      ? filteredItems
-      : queueItems
+    filteredItems.length > 0 || hasActiveFilters ? filteredItems : queueItems
+
+  // ── Pagination ────────────────────────────────────────
+  const totalItems = items.length
+  const totalPages = Math.ceil(totalItems / perPage)
+  const startIndex = (page - 1) * perPage
+  const endIndex = Math.min(startIndex + perPage, totalItems)
+  const paginatedItems = items.slice(startIndex, endIndex)
+
+  // Reset to page 1 when filters or search change
+  // Using a shared handler pattern instead of cascading setState in effect
+  const handleSearchChange = (v) => {
+    setSearchQuery(v)
+    setPage(1)
+  }
+  const handleFilterChange = (updater) => {
+    setQueueFilters(updater)
+    setPage(1)
+  }
 
   // ── Filter bar ──────────────────────────────────────
   const filterBar = (
@@ -108,7 +134,7 @@ export default function QueueTab({
             label="Status"
             value={queueFilters.status}
             onChange={(v) =>
-              setQueueFilters((prev) => ({ ...prev, status: v }))
+              handleFilterChange((prev) => ({ ...prev, status: v }))
             }
             options={statusOptions}
           />
@@ -118,7 +144,7 @@ export default function QueueTab({
             label="Content type"
             value={queueFilters.contentType}
             onChange={(v) =>
-              setQueueFilters((prev) => ({ ...prev, contentType: v }))
+              handleFilterChange((prev) => ({ ...prev, contentType: v }))
             }
             options={contentTypeOptions}
           />
@@ -132,9 +158,20 @@ export default function QueueTab({
             step={0.1}
             value={queueFilters.riskMin}
             onChange={(v) =>
-              setQueueFilters((prev) => ({ ...prev, riskMin: v }))
+              handleFilterChange((prev) => ({ ...prev, riskMin: v }))
             }
             autoComplete="off"
+          />
+        </div>
+        <div className="cmcc-filter-select">
+          <TextField
+            label="Search"
+            value={searchQuery}
+            onChange={handleSearchChange}
+            placeholder="Search by title, content, or author..."
+            autoComplete="off"
+            clearButton
+            onClearButtonClick={() => handleSearchChange('')}
           />
         </div>
         <div className="cmcc-filter-actions">
@@ -161,7 +198,15 @@ export default function QueueTab({
               <div className="cmcc-save-filter-actions">
                 <Button
                   primary
-                  onClick={handleSaveFilter}
+                  onClick={() => {
+                    saveFilter(filterNameInput.trim(), {
+                      status: queueFilters.status,
+                      contentType: queueFilters.contentType,
+                      riskMin: queueFilters.riskMin || '',
+                    })
+                    setFilterNameInput('')
+                    setFilterPopoverActive(false)
+                  }}
                   disabled={!filterNameInput.trim()}
                 >
                   Save
@@ -174,7 +219,7 @@ export default function QueueTab({
             queueFilters.riskMin !== '') && (
             <Button
               onClick={() => {
-                setQueueFilters({
+                handleFilterChange({
                   status: 'all',
                   contentType: 'all',
                   riskMin: '',
@@ -194,8 +239,8 @@ export default function QueueTab({
           {savedFilters.map((f) => (
             <Tag
               key={f.id}
-              onClick={() => handleApplyFilter(f)}
-              onRemove={() => handleDeleteFilter(f.id)}
+              onClick={() => setQueueFilters(f.filters)}
+              onRemove={() => deleteSavedFilter(f.id)}
             >
               {f.name}
             </Tag>
@@ -204,6 +249,18 @@ export default function QueueTab({
       )}
     </div>
   )
+
+  // ── Loading state ────────────────────────────────────────
+  if (isLoading) {
+    return (
+      <>
+        {filterBar}
+        <Card>
+          <SkeletonTable rows={5} columns={7} />
+        </Card>
+      </>
+    )
+  }
 
   if (items.length === 0) {
     return (
@@ -246,7 +303,7 @@ export default function QueueTab({
   }
 
   // ── Table rows ──────────────────────────────────────
-  const rows = items.map((item) => [
+  const rows = paginatedItems.map((item) => [
     <Checkbox
       key={`select-${item.id}`}
       label={item.id}
@@ -372,6 +429,29 @@ export default function QueueTab({
           ]}
           rows={rows}
         />
+
+        {/* ── Pagination ───────────────────────────────── */}
+        {totalItems > perPage && (
+          <div className="cmcc-pagination">
+            <span className="cmcc-pagination-info">
+              Showing {startIndex + 1}&ndash;{endIndex} of {totalItems} items
+            </span>
+            <div className="cmcc-pagination-buttons">
+              <Button
+                disabled={page <= 1}
+                onClick={() => setPage((p) => p - 1)}
+              >
+                Previous
+              </Button>
+              <Button
+                disabled={page >= totalPages}
+                onClick={() => setPage((p) => p + 1)}
+              >
+                Next
+              </Button>
+            </div>
+          </div>
+        )}
       </Card>
 
       {/* AI Evaluation Result */}
@@ -399,6 +479,8 @@ export default function QueueTab({
         <ItemDetailPanel
           item={selectedDetailItem}
           onClose={() => setSelectedDetailItem(null)}
+          moderatorId={moderatorId}
+          moderatorName={moderatorName}
         />
       )}
     </>

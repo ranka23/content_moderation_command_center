@@ -1,7 +1,6 @@
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-nocheck
+import type { Core } from '@strapi/strapi'
 
-export default ({ env }) => ({
+export default ({ env }: Core.Config.Shared.ConfigParams) => ({
   host: env('HOST', '0.0.0.0'),
   port: env.int('PORT', 1337),
   app: {

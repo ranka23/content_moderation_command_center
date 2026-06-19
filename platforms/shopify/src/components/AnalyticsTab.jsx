@@ -3,29 +3,68 @@
  * and content type breakdown table.
  */
 
-import React from 'react'
+import React, { useMemo } from 'react'
 import { Card, DataTable, Layout, EmptyState } from '@shopify/polaris'
+import {
+  calculateSpamRatio,
+  generateContentTypeBreakdown,
+  getEmptyAnalytics,
+} from '@cmcc/core'
+import { SkeletonTable } from '@cmcc/ui'
 
 /**
  * @param {Object} props
- * @param {Object} props.analytics - Analytics data
- * @param {number} props.analytics.totalModerated
- * @param {number} props.analytics.spamDetected
- * @param {number} props.analytics.approved
- * @param {number} props.analytics.pendingReview
- * @param {number} props.analytics.spamRatio
- * @param {Array} props.analytics.contentBreakdown
+ * @param {Object} props.processedAnalytics - Processed analytics from @cmcc/core
+ * @param {Array} props.rawEvents - Raw normalized events
+ * @param {Array} props.queueItems - Queue items normalized to core QueueItem shape
  */
-export default function AnalyticsTab({ analytics }) {
-  const spamPct = analytics.totalModerated
-    ? ((analytics.spamDetected / analytics.totalModerated) * 100).toFixed(1)
-    : '0.0'
+export default function AnalyticsTab({
+  processedAnalytics,
+  rawEvents,
+  queueItems,
+  isLoading,
+}) {
+  const analytics = processedAnalytics || getEmptyAnalytics()
 
-  const breakdownRows = (analytics.contentBreakdown || []).map((entry) => [
-    entry.type || entry.content_type,
+  const spamRatioData = useMemo(
+    () => calculateSpamRatio(rawEvents || []),
+    [rawEvents],
+  )
+
+  const breakdownData = useMemo(
+    () => generateContentTypeBreakdown(queueItems || []),
+    [queueItems],
+  )
+
+  const spamPct =
+    spamRatioData.percentage !== null && spamRatioData.percentage !== undefined
+      ? spamRatioData.percentage.toFixed(1)
+      : '0.0'
+
+  const breakdownRows = breakdownData.map((entry) => [
+    entry.contentType,
     entry.count,
-    entry.percentage !== null ? `${entry.percentage}%` : '-',
+    entry.percentage !== null && entry.percentage !== undefined
+      ? `${entry.percentage}%`
+      : '-',
   ])
+
+  if (isLoading) {
+    return (
+      <Layout>
+        <Layout.Section>
+          <Card sectioned>
+            <SkeletonTable rows={4} columns={2} />
+          </Card>
+        </Layout.Section>
+        <Layout.Section>
+          <Card sectioned>
+            <SkeletonTable rows={3} columns={3} />
+          </Card>
+        </Layout.Section>
+      </Layout>
+    )
+  }
 
   return (
     <Layout>
@@ -34,25 +73,29 @@ export default function AnalyticsTab({ analytics }) {
           <Card sectioned>
             <p className="cmcc-stat-label">Total Moderated</p>
             <p className="cmcc-stat-value">
-              {analytics.totalModerated?.toLocaleString() ?? 0}
+              {analytics.spamRatio?.totalCount?.toLocaleString() ?? 0}
             </p>
           </Card>
           <Card sectioned>
             <p className="cmcc-stat-label">Spam Detected</p>
             <p className="cmcc-stat-value">
-              {analytics.spamDetected?.toLocaleString() ?? 0}
+              {analytics.spamRatio?.spamCount?.toLocaleString() ?? 0}
             </p>
           </Card>
           <Card sectioned>
             <p className="cmcc-stat-label">Approved</p>
             <p className="cmcc-stat-value">
-              {analytics.approved?.toLocaleString() ?? 0}
+              {analytics.moderatorPerformance
+                ?.reduce((sum, m) => sum + (m.approvals || 0), 0)
+                ?.toLocaleString() ?? 0}
             </p>
           </Card>
           <Card sectioned>
             <p className="cmcc-stat-label">Pending Review</p>
             <p className="cmcc-stat-value">
-              {analytics.pendingReview?.toLocaleString() ?? 0}
+              {(queueItems || [])
+                .filter((i) => i.status === 'pending')
+                .length?.toLocaleString() ?? 0}
             </p>
           </Card>
         </div>

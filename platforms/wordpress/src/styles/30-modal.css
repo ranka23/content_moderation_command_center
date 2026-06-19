@@ -1,0 +1,114 @@
+/* ─── Modal ────────────────────────────────────────────────────────────── */
+
+#cmcc-app .cmcc-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.6);
+  padding: 20px;
+}
+
+#cmcc-app .cmcc-modal {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  max-width: 680px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+#cmcc-app .cmcc-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid #f0f0f1;
+}
+
+#cmcc-app .cmcc-modal-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+  padding-right: 20px;
+  color: #1d2327;
+  line-height: 1.4;
+}
+
+#cmcc-app .cmcc-modal-close {
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: #757575;
+  cursor: pointer;
+  padding: 4px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+#cmcc-app .cmcc-modal-close:hover {
+  color: #d63638;
+}
+
+#cmcc-app .cmcc-modal-body {
+  padding: 20px 24px;
+}
+
+#cmcc-app .cmcc-modal-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f0f0f1;
+}
+
+#cmcc-app .cmcc-modal-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  color: #fff;
+}
+
+#cmcc-app .cmcc-modal-type,
+#cmcc-app .cmcc-modal-author,
+#cmcc-app .cmcc-modal-date,
+#cmcc-app .cmcc-modal-score {
+  font-size: 12px;
+  color: #50575e;
+}
+
+#cmcc-app .cmcc-modal-content {
+  font-size: 14px;
+  line-height: 1.7;
+  color: #1d2327;
+}
+
+#cmcc-app .cmcc-modal-content p {
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+#cmcc-app .cmcc-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 16px 24px 20px;
+  border-top: 1px solid #f0f0f1;
+}
+
+#cmcc-app .cmcc-modal-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-evenly;
+  padding: 1rem 0;
+  border-top: 1px solid #ccc;
+}

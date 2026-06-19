@@ -330,4 +330,98 @@ module.exports = {
       },
     },
   },
+  'reputation-score': {
+    schema: {
+      collectionName: 'cmcc_reputation_scores',
+      info: {
+        singularName: 'reputation-score',
+        pluralName: 'reputation-scores',
+        displayName: 'Reputation Score',
+        description: 'CMCC user reputation scores',
+      },
+      options: {
+        draftAndPublish: false,
+      },
+      pluginOptions: {
+        'content-manager': {
+          visible: true,
+        },
+        'content-type-builder': {
+          visible: false,
+        },
+      },
+      attributes: {
+        userId: {
+          type: 'string',
+          required: true,
+        },
+        score: {
+          type: 'decimal',
+          default: 0,
+        },
+        lastUpdated: {
+          type: 'datetime',
+        },
+        totalApproved: {
+          type: 'integer',
+          default: 0,
+        },
+        totalRejected: {
+          type: 'integer',
+          default: 0,
+        },
+        timesDeactivated: {
+          type: 'integer',
+          default: 0,
+        },
+      },
+    },
+  },
+  'breach-record': {
+    schema: {
+      collectionName: 'cmcc_breach_records',
+      info: {
+        singularName: 'breach-record',
+        pluralName: 'breach-records',
+        displayName: 'Breach Record',
+        description: 'CMCC user breach records for reputation tracking',
+      },
+      options: {
+        draftAndPublish: false,
+      },
+      pluginOptions: {
+        'content-manager': {
+          visible: true,
+        },
+        'content-type-builder': {
+          visible: false,
+        },
+      },
+      attributes: {
+        userId: {
+          type: 'string',
+          required: true,
+        },
+        timestamp: {
+          type: 'datetime',
+          required: true,
+        },
+        reason: {
+          type: 'string',
+        },
+        severity: {
+          type: 'string',
+        },
+        moderatorId: {
+          type: 'string',
+        },
+        contentType: {
+          type: 'string',
+        },
+        contentId: {
+          type: 'string',
+        },
+      },
+    },
+  },
 }

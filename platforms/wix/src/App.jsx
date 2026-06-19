@@ -6,24 +6,38 @@ import React, {
   startTransition,
 } from 'react'
 import {
-  QueueTable,
-  HeatmapChart,
-  ActionButton,
   NotificationBadge,
   useKeyboardShortcuts,
   useSavedFilters,
-  QuickFilterBar,
-  AiEvaluationResult,
 } from '@cmcc/ui'
 import {
   processAnalytics,
-  filterActivityLog,
   getEmptyAnalytics,
+  getQueueBadgeCount,
 } from '@cmcc/core'
+import { OfflineBanner } from '@cmcc/ui'
+import { useToast } from './hooks/useToast'
+import {
+  BarChart3,
+  CheckCircle,
+  FileText,
+  Heart,
+  History,
+  Info,
+  Keyboard,
+  ListChecks,
+  Moon,
+  Settings,
+  Sun,
+  XCircle,
+} from 'lucide-react'
 import { OnboardingWizard } from './components/OnboardingWizard'
 import { ItemDetailPanel } from './components/ItemDetailPanel'
 import { ReportsTab } from './components/ReportsTab'
 import { SettingsTab } from './components/SettingsTab'
+import { QueueTab } from './components/QueueTab'
+import { AnalyticsTab } from './components/AnalyticsTab'
+import { ActivityTab } from './components/ActivityTab'
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -41,62 +55,14 @@ const KEYBOARD_SHORTCUTS = [
 ]
 
 const TABS = [
-  { id: 'queue', label: 'Queue', icon: '\u{1F4CB}' },
-  { id: 'analytics', label: 'Analytics', icon: '\u{1F4CA}' },
-  { id: 'activity', label: 'Activity Log', icon: '\u{1F4DD}' },
-  { id: 'reports', label: 'Reports', icon: '\u{1F4C4}' },
-  { id: 'settings', label: 'Settings', icon: '\u{2699}\u{FE0F}' },
+  { id: 'queue', label: 'Queue', icon: <ListChecks size={16} /> },
+  { id: 'analytics', label: 'Analytics', icon: <BarChart3 size={16} /> },
+  { id: 'activity', label: 'Activity Log', icon: <History size={16} /> },
+  { id: 'reports', label: 'Reports', icon: <FileText size={16} /> },
+  { id: 'settings', label: 'Settings', icon: <Settings size={16} /> },
 ]
 
 const POLL_INTERVAL_MS = 30000
-
-/** Quick filter presets for the queue tab. */
-const QUICK_PRESETS = [
-  {
-    id: 'last-hour',
-    label: 'Last Hour',
-    icon: '\u{1F550}',
-    filters: { dateRange: 'last-hour', status: 'all' },
-  },
-  {
-    id: 'today',
-    label: 'Today',
-    icon: '\u{1F4C5}',
-    filters: { dateRange: 'today', status: 'all' },
-  },
-  {
-    id: 'this-week',
-    label: 'This Week',
-    icon: '\u{1F4C6}',
-    filters: { dateRange: 'this-week', status: 'all' },
-  },
-  {
-    id: 'pending',
-    label: 'Pending',
-    icon: '\u{23F3}',
-    filters: { status: 'pending', dateRange: 'all' },
-  },
-  {
-    id: 'high-spam',
-    label: 'High Spam',
-    icon: '\u{1F4E5}',
-    filters: { status: 'spam', dateRange: 'all' },
-  },
-  {
-    id: 'flagged',
-    label: 'Flagged',
-    icon: '\u{26A0}\u{FE0F}',
-    filters: { status: 'flagged', dateRange: 'all' },
-  },
-]
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-function getQueueBadgeCount(items, status) {
-  return items.filter((i) => i.status === status).length
-}
 
 // ---------------------------------------------------------------------------
 // App Component
@@ -110,6 +76,15 @@ export function App({ wixContext, backendUrl }) {
   const [queueLoading, setQueueLoading] = useState(true)
   const [queueError, setQueueError] = useState(null)
   const [activeQuickPreset, setActiveQuickPreset] = useState(null)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [page, setPage] = useState(1)
+  const [perPage, setPerPage] = useState(25)
+  const [filters, setFilters] = useState({
+    contentType: 'all',
+    status: 'all',
+    dateRange: 'all',
+    search: '',
+  })
 
   // Analytics state
   const [analytics, setAnalytics] = useState(getEmptyAnalytics())
@@ -167,14 +142,7 @@ export function App({ wixContext, backendUrl }) {
   const [aiEvaluationResult, setAiEvaluationResult] = useState(null)
   const [aiEvaluationError, setAiEvaluationError] = useState(null)
   const [evaluatedItemId, setEvaluatedItemId] = useState(null)
-  const [toasts, setToasts] = useState([])
-  const addToast = useCallback((message, type = 'success') => {
-    const id = Date.now() + Math.random()
-    setToasts((prev) => [...prev, { id, message, type }])
-    setTimeout(() => {
-      setToasts((prev) => prev.filter((t) => t.id !== id))
-    }, 4000)
-  }, [])
+  const { toasts, setToasts, addToast } = useToast()
 
   // Item detail panel state
   const [detailItem, setDetailItem] = useState(null)
@@ -202,9 +170,53 @@ export function App({ wixContext, backendUrl }) {
   useKeyboardShortcuts(
     [
       {
-        key: '?',
-        description: 'Toggle keyboard shortcut help',
-        handler: () => setShowShortcuts((p) => !p),
+        key: 'a',
+        description: 'Approve selected item',
+        handler: () => {
+          if (queueItems.length > 0) {
+            const itemId = queueItems[0]._id || queueItems[0].id
+            handleQueueItemAction('approve', itemId)
+          }
+        },
+      },
+      {
+        key: 'r',
+        description: 'Reject selected item',
+        handler: () => {
+          if (queueItems.length > 0) {
+            const itemId = queueItems[0]._id || queueItems[0].id
+            handleQueueItemAction('reject', itemId)
+          }
+        },
+      },
+      {
+        key: 's',
+        description: 'Mark as Spam',
+        handler: () => {
+          if (queueItems.length > 0) {
+            const itemId = queueItems[0]._id || queueItems[0].id
+            handleQueueItemAction('spam', itemId)
+          }
+        },
+      },
+      {
+        key: 'd',
+        description: 'Defer selected item',
+        handler: () => {
+          if (queueItems.length > 0) {
+            const itemId = queueItems[0]._id || queueItems[0].id
+            handleQueueItemAction('defer', itemId)
+          }
+        },
+      },
+      {
+        key: 'v',
+        description: 'View item details',
+        handler: () => {
+          if (queueItems.length > 0) {
+            handleViewItem(queueItems[0])
+          }
+        },
       },
       {
         key: 'f',
@@ -213,6 +225,19 @@ export function App({ wixContext, backendUrl }) {
           const searchInput = document.querySelector('input[type="text"]')
           searchInput?.focus()
         },
+      },
+      {
+        key: 'Escape',
+        description: 'Close panel / Cancel',
+        handler: () => {
+          if (showShortcuts) setShowShortcuts(false)
+          if (detailOpen) setDetailOpen(false)
+        },
+      },
+      {
+        key: '?',
+        description: 'Toggle keyboard shortcut help',
+        handler: () => setShowShortcuts((p) => !p),
       },
     ].filter(Boolean),
   )
@@ -421,6 +446,7 @@ export function App({ wixContext, backendUrl }) {
         body: JSON.stringify({ action: actionType, ids: selectedIds }),
       })
       await fetchQueue()
+      setPage(1)
       addToast('Bulk action completed')
     } catch (err) {
       addToast(err.message, 'error')
@@ -435,6 +461,7 @@ export function App({ wixContext, backendUrl }) {
         body: JSON.stringify({ action: actionType }),
       })
       await fetchQueue()
+      setPage(1)
       addToast('Item moderated successfully')
     } catch (err) {
       addToast(err.message, 'error')
@@ -527,381 +554,6 @@ export function App({ wixContext, backendUrl }) {
   const spamCount = getQueueBadgeCount(queueItems, 'spam')
 
   // -----------------------------------------------------------------------
-  // Render helpers
-  // -----------------------------------------------------------------------
-
-  function renderLoading(message) {
-    return <div className="cmcc-loading">{message}</div>
-  }
-
-  function renderEmpty(icon, text, sub) {
-    return (
-      <div className="cmcc-empty">
-        <div className="cmcc-empty-icon">{icon}</div>
-        <p className="cmcc-empty-text">{text}</p>
-        {sub && <p className="cmcc-empty-sub">{sub}</p>}
-      </div>
-    )
-  }
-
-  function renderError(icon, text, detail) {
-    return (
-      <div className="cmcc-error">
-        <div className="cmcc-error-icon">{icon}</div>
-        <p className="cmcc-error-text">{text}</p>
-        {detail && <p className="cmcc-error-detail">{detail}</p>}
-        <ActionButton variant="secondary" size="sm" onClick={fetchQueue}>
-          Retry
-        </ActionButton>
-      </div>
-    )
-  }
-
-  // -----------------------------------------------------------------------
-  // Tab renders
-  // -----------------------------------------------------------------------
-
-  function renderQueueTab() {
-    if (queueLoading) return renderLoading('Loading queue...')
-    if (queueError)
-      return renderError('\u{26A0}\u{FE0F}', 'Failed to load queue', queueError)
-
-    if (!queueLoading && queueItems.length === 0) {
-      return renderEmpty(
-        '\u{2705}',
-        'All clear!',
-        'No items in the moderation queue.',
-      )
-    }
-
-    return (
-      <div>
-        {/* Quick Filters */}
-        <div style={{ marginBottom: 12 }}>
-          <QuickFilterBar
-            presets={QUICK_PRESETS}
-            activePreset={activeQuickPreset}
-            onSelectPreset={setActiveQuickPreset}
-          />
-        </div>
-
-        {/* Saved Filters Bar */}
-        <div className="cmcc-queue-toolbar">
-          <div className="cmcc-queue-toolbar-left">
-            {savedFilters.length > 0 && (
-              <select
-                className="cmcc-saved-filters-select"
-                onChange={(e) => {
-                  if (e.target.value) {
-                    const found = savedFilters.find(
-                      (f) => f.name === e.target.value,
-                    )
-                    if (found) {
-                      addToast('Filter applied: ' + found.name, 'success')
-                    }
-                  }
-                }}
-                defaultValue=""
-              >
-                <option value="">Saved Filters...</option>
-                {savedFilters.map((sf) => (
-                  <option key={sf.name} value={sf.name}>
-                    {sf.name}
-                  </option>
-                ))}
-              </select>
-            )}
-          </div>
-          <div className="cmcc-queue-toolbar-right">
-            <input
-              type="text"
-              className="cmcc-save-filter-input"
-              placeholder="Name this filter..."
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && e.target.value.trim()) {
-                  saveFilter(e.target.value.trim(), {
-                    contentType: 'all',
-                    status: 'all',
-                    dateRange: 'all',
-                    search: '',
-                  })
-                  addToast('Filter saved: ' + e.target.value.trim(), 'success')
-                  e.target.value = ''
-                }
-              }}
-            />
-            <button
-              className="cmcc-save-filter-btn"
-              onClick={() => {
-                const input = document.querySelector('.cmcc-save-filter-input')
-                if (input && input.value.trim()) {
-                  saveFilter(input.value.trim(), {
-                    contentType: 'all',
-                    status: 'all',
-                    dateRange: 'all',
-                    search: '',
-                  })
-                  addToast('Filter saved: ' + input.value.trim(), 'success')
-                  input.value = ''
-                }
-              }}
-            >
-              + Save Filter
-            </button>
-            <button
-              className="cmcc-save-filter-btn"
-              onClick={() =>
-                handleAiEvaluate(queueItems[0]?._id || queueItems[0]?.id)
-              }
-              disabled={
-                aiConfig.engine === 'none' ||
-                queueItems.length === 0 ||
-                !!aiEvaluatingId
-              }
-              title={
-                aiConfig.engine === 'none'
-                  ? 'Enable an AI engine in Settings first'
-                  : 'Evaluate with AI'
-              }
-            >
-              {'\u{1F916}'} AI Eval
-            </button>
-            <button
-              className="cmcc-shortcuts-btn"
-              onClick={() => setShowShortcuts((p) => !p)}
-              title="Keyboard shortcuts"
-            >
-              {'\u{2328}\u{FE0F}'}
-            </button>
-          </div>
-        </div>
-
-        <QueueTable
-          items={queueItems}
-          onBulkAction={handleQueueBulkAction}
-          onItemAction={handleQueueItemAction}
-          onViewItem={handleViewItem}
-          filters={{
-            contentType: 'all',
-            status: 'all',
-            dateRange: 'all',
-            search: '',
-          }}
-          onFilterChange={() => {}}
-          isLoading={queueLoading}
-          totalCount={queueItems.length}
-        />
-
-        {/* AI Evaluation Result */}
-        {(aiEvaluationResult || aiEvaluationError || aiEvaluatingId) && (
-          <div className="cmcc-card" style={{ marginTop: 16, padding: 16 }}>
-            <h3 className="cmcc-card-title">{'\u{1F916}'} AI Moderation</h3>
-            <AiEvaluationResult
-              result={aiEvaluationResult}
-              isLoading={
-                !!aiEvaluatingId && !aiEvaluationResult && !aiEvaluationError
-              }
-              error={aiEvaluationError}
-              onReEvaluate={
-                !evaluatedItemId || aiEvaluatingId
-                  ? undefined
-                  : () => handleAiEvaluate(evaluatedItemId)
-              }
-            />
-          </div>
-        )}
-      </div>
-    )
-  }
-
-  function renderAnalyticsTab() {
-    if (analyticsLoading) return renderLoading('Loading analytics...')
-    if (analyticsError)
-      return renderError(
-        '\u{26A0}\u{FE0F}',
-        'Failed to load analytics',
-        analyticsError,
-      )
-
-    const hasData =
-      analytics.heatmap.data.some((row) => row.some((v) => v > 0)) ||
-      analytics.contentTypeBreakdown.length > 0
-
-    if (!hasData) {
-      return renderEmpty(
-        '\u{1F4CA}',
-        'No analytics data yet',
-        'Data will appear once content is moderated.',
-      )
-    }
-
-    return (
-      <div>
-        <div className="cmcc-card">
-          <h3 className="cmcc-card-title">Moderation Activity Heatmap</h3>
-          <HeatmapChart data={analytics.heatmap} showTooltip />
-        </div>
-
-        <div className="cmcc-analytics-summary">
-          <div className="cmcc-stat-card">
-            <p className="cmcc-stat-label">Spam Ratio</p>
-            <p
-              className={
-                'cmcc-stat-value' +
-                (analytics.spamRatio.percentage > 50 ? ' danger' : '')
-              }
-            >
-              {analytics.spamRatio.percentage.toFixed(1)}%
-            </p>
-          </div>
-          <div className="cmcc-stat-card">
-            <p className="cmcc-stat-label">Total Items</p>
-            <p className="cmcc-stat-value">{analytics.spamRatio.totalCount}</p>
-          </div>
-          <div className="cmcc-stat-card">
-            <p className="cmcc-stat-label">Spam Items</p>
-            <p className="cmcc-stat-value">{analytics.spamRatio.spamCount}</p>
-          </div>
-        </div>
-
-        {analytics.contentTypeBreakdown.length > 0 && (
-          <div className="cmcc-card" style={{ marginTop: 16 }}>
-            <h3 className="cmcc-card-title">Content Type Breakdown</h3>
-            <ul className="cmcc-activity-list">
-              {analytics.contentTypeBreakdown.map((item) => (
-                <li key={item.type} className="cmcc-activity-item">
-                  <span className="cmcc-activity-icon">{'\u{1F4C4}'}</span>
-                  <div className="cmcc-activity-body">
-                    <p className="cmcc-activity-action">
-                      {item.type}: {item.count} items (
-                      {item.percentage.toFixed(1)}%)
-                    </p>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-      </div>
-    )
-  }
-
-  function renderActivityTab() {
-    const filtered = filterActivityLog(activityEntries, activityFilters)
-    const hasMore = filtered.length > 50
-    const visibleEntries = filtered.slice(0, 50)
-
-    return (
-      <div>
-        <div className="cmcc-activity-filters">
-          <select
-            value={activityFilters.action}
-            onChange={(e) =>
-              setActivityFilters((prev) => ({
-                ...prev,
-                action: e.target.value,
-              }))
-            }
-          >
-            <option value="">All actions</option>
-            <option value="approved">Approved</option>
-            <option value="rejected">Rejected</option>
-            <option value="spammed">Spammed</option>
-            <option value="flagged">Flagged</option>
-            <option value="deferred">Deferred</option>
-          </select>
-          <select
-            value={activityFilters.contentType}
-            onChange={(e) =>
-              setActivityFilters((prev) => ({
-                ...prev,
-                contentType: e.target.value,
-              }))
-            }
-          >
-            <option value="">All types</option>
-            <option value="comment">Comment</option>
-            <option value="post">Post</option>
-            <option value="user">User</option>
-          </select>
-          <input
-            type="text"
-            placeholder="Search entries..."
-            value={activityFilters.search}
-            onChange={(e) =>
-              setActivityFilters((prev) => ({
-                ...prev,
-                search: e.target.value,
-              }))
-            }
-          />
-        </div>
-
-        {activityLoading && renderLoading('Loading activity log...')}
-        {activityError &&
-          renderError(
-            '\u{26A0}\u{FE0F}',
-            'Failed to load activity log',
-            activityError,
-          )}
-
-        {!activityLoading &&
-          !activityError &&
-          visibleEntries.length === 0 &&
-          renderEmpty(
-            '\u{1F4DD}',
-            'No activity entries',
-            'Moderation actions will appear here.',
-          )}
-
-        {!activityLoading && visibleEntries.length > 0 && (
-          <ul className="cmcc-activity-list">
-            {visibleEntries.map((entry) => (
-              <li key={entry.id} className="cmcc-activity-item">
-                <span className="cmcc-activity-icon">
-                  {entry.action === 'approved' ? '\u{2705}' : ''}
-                  {entry.action === 'rejected' || entry.action === 'trashed'
-                    ? '\u{1F5D1}\u{FE0F}'
-                    : ''}
-                  {entry.action === 'spammed' ? '\u{1F4E5}' : ''}
-                  {entry.action === 'flagged' ? '\u{1F6A9}' : ''}
-                  {entry.action === 'deferred' ? '\u{23F3}' : ''}
-                </span>
-                <div className="cmcc-activity-body">
-                  <p className="cmcc-activity-action">
-                    <strong>
-                      {entry.moderatorName || `Mod #${entry.moderatorId}`}
-                    </strong>{' '}
-                    {entry.action}{' '}
-                    <em>
-                      {entry.itemTitle ||
-                        `${entry.contentType} #${entry.itemId}`}
-                    </em>
-                    {entry.previousStatus &&
-                      entry.newStatus &&
-                      ` (${entry.previousStatus} \u{2192} ${entry.newStatus})`}
-                  </p>
-                  <p className="cmcc-activity-time">
-                    {new Date(entry.timestamp).toLocaleString()}
-                  </p>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-
-        {hasMore && (
-          <div style={{ textAlign: 'center', padding: '12px 0' }}>
-            <span style={{ fontSize: 13, color: '#6b7280' }}>
-              Showing 50 of {filtered.length} entries
-            </span>
-          </div>
-        )}
-      </div>
-    )
-  }
-
-  // -----------------------------------------------------------------------
   // Main render
   // -----------------------------------------------------------------------
 
@@ -909,6 +561,8 @@ export function App({ wixContext, backendUrl }) {
     <div className={`cmcc-wix-app cmcc-theme-${theme}`}>
       {/* Onboarding Wizard */}
       <OnboardingWizard />
+
+      <OfflineBanner />
 
       <header className="cmcc-app-header">
         <h1 className="cmcc-app-title">CMCC Content Moderation</h1>
@@ -918,14 +572,14 @@ export function App({ wixContext, backendUrl }) {
             onClick={() => setShowShortcuts((p) => !p)}
             title="Keyboard shortcuts"
           >
-            {'\u{2328}\u{FE0F}'}
+            <Keyboard size={18} />
           </button>
           <button
             className="cmcc-theme-toggle"
             onClick={toggleTheme}
             title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
           >
-            {theme === 'light' ? '\u{1F319}' : '\u{2600}\u{FE0F}'}
+            {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
           </button>
           <NotificationBadge count={pendingCount} type="pending" size="sm" />
           <NotificationBadge count={spamCount} type="spam" size="sm" />
@@ -936,7 +590,7 @@ export function App({ wixContext, backendUrl }) {
             rel="noopener noreferrer"
             title="Support the creator — Donate $1"
           >
-            {'\u{2764}\u{FE0F}'} Donate $1
+            <Heart size={14} style={{ display: 'inline' }} /> Donate $1
           </a>
         </div>
       </header>
@@ -956,9 +610,58 @@ export function App({ wixContext, backendUrl }) {
       </nav>
 
       <main className="cmcc-tab-content">
-        {activeTab === 'queue' && renderQueueTab()}
-        {activeTab === 'analytics' && renderAnalyticsTab()}
-        {activeTab === 'activity' && renderActivityTab()}
+        {activeTab === 'queue' && (
+          <QueueTab
+            queueItems={queueItems}
+            queueLoading={queueLoading}
+            queueError={queueError}
+            onRetry={fetchQueue}
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            page={page}
+            setPage={setPage}
+            perPage={perPage}
+            activeQuickPreset={activeQuickPreset}
+            setActiveQuickPreset={setActiveQuickPreset}
+            savedFilters={savedFilters}
+            saveFilter={saveFilter}
+            onBulkAction={handleQueueBulkAction}
+            onItemAction={handleQueueItemAction}
+            onViewItem={handleViewItem}
+            onAiEvaluate={handleAiEvaluate}
+            aiConfig={aiConfig}
+            aiEvaluatingId={aiEvaluatingId}
+            aiEvaluationResult={aiEvaluationResult}
+            aiEvaluationError={aiEvaluationError}
+            evaluatedItemId={evaluatedItemId}
+            addToast={addToast}
+            filters={filters}
+            onFilterChange={(newFilters) =>
+              setFilters((prev) => ({ ...prev, ...newFilters }))
+            }
+            showShortcuts={showShortcuts}
+            setShowShortcuts={setShowShortcuts}
+            onPerPageChange={setPerPage}
+          />
+        )}
+        {activeTab === 'analytics' && (
+          <AnalyticsTab
+            analytics={analytics}
+            analyticsLoading={analyticsLoading}
+            analyticsError={analyticsError}
+            onRetry={fetchAnalytics}
+          />
+        )}
+        {activeTab === 'activity' && (
+          <ActivityTab
+            activityEntries={activityEntries}
+            activityLoading={activityLoading}
+            activityError={activityError}
+            activityFilters={activityFilters}
+            setActivityFilters={setActivityFilters}
+            onRetry={fetchActivity}
+          />
+        )}
         {activeTab === 'reports' && (
           <ReportsTab
             reputationUsers={reputationUsers}
@@ -998,11 +701,13 @@ export function App({ wixContext, backendUrl }) {
               }
             >
               <span className="cmcc-toast-icon">
-                {toast.type === 'success'
-                  ? '\u{2713}'
-                  : toast.type === 'error'
-                    ? '\u{2715}'
-                    : '\u{2139}'}
+                {toast.type === 'success' ? (
+                  <CheckCircle size={16} />
+                ) : toast.type === 'error' ? (
+                  <XCircle size={16} />
+                ) : (
+                  <Info size={16} />
+                )}
               </span>
               <span className="cmcc-toast-message">{toast.message}</span>
             </div>
@@ -1034,12 +739,14 @@ export function App({ wixContext, backendUrl }) {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="cmcc-shortcuts-header">
-              <h2>{'\u{2328}\u{FE0F}'} Keyboard Shortcuts</h2>
+              <h2>
+                <Keyboard size={20} /> Keyboard Shortcuts
+              </h2>
               <button
                 className="cmcc-modal-close"
                 onClick={() => setShowShortcuts(false)}
               >
-                {'\u{2715}'}
+                <XCircle size={18} />
               </button>
             </div>
             <div className="cmcc-shortcuts-body">

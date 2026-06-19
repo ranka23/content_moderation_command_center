@@ -470,77 +470,17 @@ export const KEYBOARD_SHORTCUTS = [
 
 // ── Platform Hub Cards ───────────────────────────────────────────────
 export const PLATFORM_CARDS = [
-  { name: 'Storyblok', icon: '🖼️', status: 'active', connected: true },
-  { name: 'WordPress', icon: '🌐', status: 'available', connected: false },
-  { name: 'Shopify', icon: '🛍️', status: 'available', connected: false },
-  { name: 'Strapi', icon: '🟣', status: 'available', connected: false },
-  { name: 'Wix', icon: '🎪', status: 'available', connected: false },
+  { name: 'Storyblok', icon: 'storyblok', status: 'active', connected: true },
+  {
+    name: 'WordPress',
+    icon: 'wordpress',
+    status: 'available',
+    connected: false,
+  },
+  { name: 'Shopify', icon: 'shopify', status: 'available', connected: false },
+  { name: 'Strapi', icon: 'strapi', status: 'available', connected: false },
+  { name: 'Wix', icon: 'wix', status: 'available', connected: false },
 ]
 
 // ── Bulk Actions That Need User Deactivation ─────────────────────────
 export const BULK_ACTIONS_THAT_NEED_USER_DEACTIVATION = ['deactivate-users']
-
-// ── Relative Time Helper ─────────────────────────────────────────────
-export function formatRelativeTime(timestamp) {
-  if (!timestamp) return ''
-  const diff = Date.now() - new Date(timestamp).getTime()
-  const sec = Math.floor(diff / 1000)
-  if (sec < 10) return 'just now'
-  if (sec < 60) return `${sec}s ago`
-  const min = Math.floor(sec / 60)
-  if (min < 60) return `${min}m ago`
-  const hr = Math.floor(min / 60)
-  if (hr < 24) return `${hr}h ago`
-  const d = Math.floor(hr / 24)
-  return `${d}d ago`
-}
-
-// ── Map API response items to QueueTable format ──────────────────────
-export function mapQueueItem(item) {
-  return {
-    id: item.id || item.item_id,
-    contentType: item.contentType || item.content_type || 'content',
-    originalId: item.id || item.item_id,
-    status: item.status || 'pending',
-    spamScore:
-      typeof item.spamScore === 'number'
-        ? item.spamScore
-        : parseFloat(item.spam_score) || 0,
-    authorId: item.authorId || item.author_id || '',
-    authorName:
-      item.authorName ||
-      item.author_name ||
-      deriveAuthorName(item.authorId || item.author_id || ''),
-    dateGmt: item.dateGmt || item.date_gmt || item.createdAt,
-    title: item.title || '',
-    excerpt: item.excerpt || '',
-    typeIcon: '',
-    statusLabel:
-      (item.status || 'pending').charAt(0).toUpperCase() +
-      (item.status || 'pending').slice(1),
-    statusColor: getStatusColor(item.status || 'pending'),
-  }
-}
-
-function deriveAuthorName(authorId) {
-  if (!authorId) return 'Unknown'
-  if (typeof authorId === 'string' && authorId.startsWith('spammer-'))
-    return `Spammer ${authorId.replace('spammer-', '')}`
-  if (typeof authorId === 'string' && authorId.startsWith('user-'))
-    return `User ${authorId.replace('user-', '')}`
-  if (authorId === 'admin') return 'Administrator'
-  return String(authorId)
-    .replace(/[-_]/g, ' ')
-    .replace(/\b\w/g, (c) => c.toUpperCase())
-}
-
-function getStatusColor(status) {
-  const map = {
-    pending: 'yellow',
-    approved: 'green',
-    rejected: 'red',
-    spam: 'orange',
-    flagged: 'amber',
-  }
-  return map[status] || 'gray'
-}

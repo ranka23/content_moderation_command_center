@@ -161,14 +161,22 @@ export function generateHeatmapData(
 
   // Process events
   for (const event of events) {
-    const eventTime = new Date(event.timestamp).getTime()
+    // Handle both camelCase and snake_case timestamp fields
+    // since some platforms pass raw (non-normalized) data
+    const rawEvent = event as unknown as Record<string, unknown>
+    const timestampStr: unknown =
+      rawEvent['timestamp'] || rawEvent['created_at'] || rawEvent['date']
+    if (!timestampStr) continue
+
+    const eventTime = new Date(timestampStr as string).getTime()
+    if (isNaN(eventTime)) continue
 
     // Skip events outside lookback window
     if (eventTime < cutoffTime) continue
 
     // Count ALL moderation actions for heatmap (not just 'created')
     // Moderation actions: approve, reject, spam, defer, flag, created, trashed, etc.
-    const eventDate = new Date(event.timestamp)
+    const eventDate = new Date(timestampStr as string)
     const dayOfWeek = eventDate.getDay() // 0-6 (Sun-Sat)
     const hour = eventDate.getHours() // 0-23
 
@@ -230,6 +238,25 @@ export function calculateSpamRatio(
     }
   }
 
+  // If no events found in the last hour, fall back to using ALL events
+  // so the dashboard doesn't show 0/0 when there is data available
+  if (totalCount === 0 && events.length > 0) {
+    for (const event of events) {
+      if (event.contentType === 'comment' || event.contentType === 'post') {
+        if (event.action === 'spammed') {
+          spamCount++
+        }
+        if (
+          event.action === 'approved' ||
+          event.action === 'spammed' ||
+          event.action === 'trashed'
+        ) {
+          totalCount++
+        }
+      }
+    }
+  }
+
   const ratio = totalCount > 0 ? spamCount / totalCount : 0
 
   return {
@@ -241,6 +268,20 @@ export function calculateSpamRatio(
 }
 
 /**
+ * Calculate spam ratio for a single user based on approved/rejected counts.
+ * This is a per-user utility, distinct from the global calculateSpamRatio()
+ * which operates on ModerationEvent[] over a time window.
+ */
+export function calculateUserSpamRatio(
+  approved: number,
+  rejected: number,
+): { ratio: number; percentage: string } {
+  const total = approved + rejected
+  const ratio = total > 0 ? (rejected / total) * 100 : 0
+  return { ratio, percentage: ratio.toFixed(1) }
+}
+
+/**
  * Generate content type breakdown from queue items
  */
 export function generateContentTypeBreakdown(
@@ -249,8 +290,15 @@ export function generateContentTypeBreakdown(
   const counts: Record<string, number> = {}
 
   // Count items by content type
+  // Handle both camelCase and snake_case field names since some
+  // platforms pass raw queue items without normalization
   for (const item of items) {
-    counts[item.contentType] = (counts[item.contentType] || 0) + 1
+    const rawItem = item as unknown as Record<string, unknown>
+    const type: string =
+      (rawItem['contentType'] as string) ||
+      (rawItem['content_type'] as string) ||
+      'unknown'
+    counts[type] = (counts[type] || 0) + 1
   }
 
   // Convert to array and calculate percentages

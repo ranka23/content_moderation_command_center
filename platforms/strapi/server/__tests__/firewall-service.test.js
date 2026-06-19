@@ -122,7 +122,7 @@ describe('CMCC Firewall Service', () => {
         reason: 'Blacklisted keyword matched',
         evaluatedAt: new Date().toISOString(),
         isSpam: true,
-        spamScore: 0.95,
+        spamScore: 0.9,
         triggeredRules: ['blacklisted_keywords'],
       })
       mockEntityService.update.mockResolvedValue({
@@ -137,7 +137,7 @@ describe('CMCC Firewall Service', () => {
         2,
         expect.objectContaining({
           data: expect.objectContaining({
-            spamScore: 0.95,
+            spamScore: 0.9,
           }),
         }),
       )

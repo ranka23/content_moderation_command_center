@@ -145,6 +145,33 @@ export const QuickFilterBar = (props) =>
     ...props,
   })
 
+// AI moderation components
+export const AiSettingsForm = (props) =>
+  React.createElement('div', {
+    'data-testid': 'cmcc-ai-settings-form',
+    ...props,
+  })
+export const AiEvaluationResult = (props) =>
+  React.createElement('div', {
+    'data-testid': 'cmcc-ai-evaluation-result',
+    ...props,
+  })
+
+// Icon component
+export const Icon = ({ name, size, className, ...props }) =>
+  React.createElement('svg', {
+    'data-testid': 'cmcc-icon',
+    'data-icon-name': name,
+    'data-size': size,
+    className,
+    ...props,
+  })
+
+// Offline detection
+export const OfflineBanner = (props) =>
+  React.createElement('div', { 'data-testid': 'cmcc-offline-banner', ...props })
+export const useOnlineStatus = () => true
+
 // Collaboration components
 export const ModerationNotes = (props) =>
   React.createElement('div', {
@@ -198,4 +225,9 @@ export default {
   StatusPieChart,
   ModerationLineChart,
   SpamBarChart,
+  AiSettingsForm,
+  AiEvaluationResult,
+  Icon,
+  OfflineBanner,
+  useOnlineStatus,
 }

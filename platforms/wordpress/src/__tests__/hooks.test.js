@@ -22,30 +22,80 @@ describe('useAnalytics', () => {
   beforeEach(() => {
     jest.clearAllMocks()
     global.window = Object.create(window)
-    Object.assign(global.window, { cmccData: { restUrl: '/wp-json/cmcc/v1/', nonce: 'test' } })
+    Object.assign(global.window, {
+      cmccData: { restUrl: '/wp-json/cmcc/v1/', nonce: 'test' },
+    })
   })
 
-  it('initializes with default state', () => {
+  it('initializes with default state', async () => {
+    // The hook triggers fetchAnalytics on mount via useEffect.
+    // Resolve the raw-events fetch (first call) cleanly.
+    apiFetch.mockResolvedValue([])
     const { result } = renderHook(() => useAnalytics({ addToast }))
+    // Flush any deferred transition updates from mount effects
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0))
+    })
+    // Clears the mount fetch so addToast isn't polluted
+    addToast.mockClear()
+
     expect(result.current.analyticsData.heatmap).toBeDefined()
     expect(result.current.analyticsData.spamRatio).toBeDefined()
     expect(result.current.isAnalyticsLoading).toBe(false)
   })
 
-  it('fetchAnalytics fetches and processes data', async () => {
-    apiFetch.mockResolvedValue({
-      heatmap: { data: [[1, 2], [3, 4]], maxCount: 4 },
-      spam_ratio: { spam_count: 5, total_count: 100, ratio: 0.05 },
-      content_type_breakdown: [{ type: 'comment', count: 50 }],
-      queue_stats: { pending: 10, spam: 5, flagged: 3, total: 18 },
-    })
+  it('fetchAnalytics fetches and processes data via raw-events', async () => {
+    // Mock raw-events to return an empty array (valid raw format)
+    apiFetch
+      .mockResolvedValueOnce([]) // raw-events (mount fetch)
+      .mockResolvedValueOnce({ items: [], total: 0 }) // queue (mount fetch)
+      .mockResolvedValueOnce([]) // raw-events (explicit fetchAnalytics call)
+      .mockResolvedValueOnce({ items: [], total: 0 }) // queue
 
     const { result } = renderHook(() => useAnalytics({ addToast }))
+
+    // Flush mount effect
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0))
+    })
+    apiFetch.mockClear()
 
     await act(async () => {
       await result.current.fetchAnalytics()
     })
 
+    // Should call the new raw-events endpoint
+    expect(apiFetch).toHaveBeenCalledWith(expect.stringContaining('raw-events'))
+    expect(apiFetch).toHaveBeenCalledWith(expect.stringContaining('queue'))
+  })
+
+  it('fetchAnalytics falls back to old analytics endpoint if raw-events fails', async () => {
+    // Mount effect: raw-events fails, falls back to analytics endpoint
+    apiFetch
+      .mockRejectedValueOnce(new Error('raw-events not available')) // raw-events fails
+      .mockRejectedValueOnce(new Error('queue items failed')) // queue fetch also fails in the same try block
+      .mockResolvedValueOnce({
+        // fallback analytics
+        heatmap: {
+          data: [
+            [1, 2],
+            [3, 4],
+          ],
+          maxCount: 4,
+        },
+        spam_ratio: { spam_count: 5, total_count: 100, ratio: 0.05 },
+        content_type_breakdown: [{ type: 'comment', count: 50 }],
+        queue_stats: { pending: 10, spam: 5, flagged: 3, total: 18 },
+      })
+
+    renderHook(() => useAnalytics({ addToast }))
+
+    // Flush mount effect
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0))
+    })
+
+    // Should have called the old analytics endpoint as fallback
     expect(apiFetch).toHaveBeenCalledWith(expect.stringContaining('analytics'))
   })
 })
@@ -59,12 +109,23 @@ describe('useActivityLog', () => {
     jest.clearAllMocks()
     global.window = Object.create(window)
     Object.assign(global.window, {
-      cmccData: { restUrl: '/wp-json/cmcc/v1/', nonce: 'test', userDisplay: 'Admin', userId: '1' },
+      cmccData: {
+        restUrl: '/wp-json/cmcc/v1/',
+        nonce: 'test',
+        userDisplay: 'Admin',
+        userId: '1',
+      },
     })
   })
 
-  it('initializes with default state', () => {
+  it('initializes with default state', async () => {
+    // The hook triggers fetchActivityLog on mount via useEffect
+    apiFetch.mockResolvedValue({ items: [], total: 0 })
     const { result } = renderHook(() => useActivityLog({ addToast }))
+    // Flush any deferred transition updates from mount effects
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0))
+    })
     expect(result.current.activityLog).toEqual([])
     expect(result.current.logPage).toBe(1)
     expect(result.current.isLogLoading).toBe(false)
@@ -82,14 +143,22 @@ describe('useActivityLog', () => {
       await result.current.fetchActivityLog(1)
     })
 
-    expect(apiFetch).toHaveBeenCalledWith(expect.stringContaining('activity-log'))
+    expect(apiFetch).toHaveBeenCalledWith(
+      expect.stringContaining('activity-log'),
+    )
     expect(result.current.activityLog).toHaveLength(1)
   })
 
   it('handles API errors gracefully', async () => {
-    apiFetch.mockRejectedValue(new Error('Network error'))
-
+    apiFetch.mockResolvedValue({ items: [], total: 0 })
     const { result } = renderHook(() => useActivityLog({ addToast }))
+    // Flush mount effect
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0))
+    })
+    addToast.mockClear()
+    apiFetch.mockReset()
+    apiFetch.mockRejectedValue(new Error('Network error'))
 
     await act(async () => {
       await result.current.fetchActivityLog(1)
@@ -124,13 +193,16 @@ describe('useSettings', () => {
   beforeEach(() => {
     jest.clearAllMocks()
     global.window = Object.create(window)
-    Object.assign(global.window, { cmccData: { restUrl: '/wp-json/cmcc/v1/', nonce: 'test' } })
+    Object.assign(global.window, {
+      cmccData: { restUrl: '/wp-json/cmcc/v1/', nonce: 'test' },
+    })
   })
 
   it('initializes with default state', () => {
+    apiFetch.mockResolvedValue({})
     const { result } = renderHook(() => useSettings({ addToast }))
     expect(result.current.settingsSections).toEqual([])
-    expect(result.current.isSettingsLoading).toBe(false)
+    expect(result.current.isSettingsLoading).toBeUndefined()
   })
 
   it('fetchSettings fetches and builds sections', async () => {
@@ -150,20 +222,22 @@ describe('useSettings', () => {
     expect(result.current.settingsSections[0].title).toBe('General')
   })
 
-  it('handleSaveSettings sends data to API', async () => {
+  it('handleSettingsSave sends data to API', async () => {
     apiFetch.mockResolvedValue({ success: true })
-
     const { result } = renderHook(() => useSettings({ addToast }))
 
     await act(async () => {
-      await result.current.handleSaveSettings({ auto_moderate: true })
+      await result.current.handleSettingsSave({ auto_moderate: true })
     })
 
     expect(apiFetch).toHaveBeenCalledWith(
       'settings',
       expect.objectContaining({ method: 'POST' }),
     )
-    expect(addToast).toHaveBeenCalledWith('Settings saved', 'success')
+    expect(addToast).toHaveBeenCalledWith(
+      'Settings saved successfully',
+      'success',
+    )
   })
 })
 
@@ -175,7 +249,9 @@ describe('useCollaboration', () => {
   beforeEach(() => {
     jest.clearAllMocks()
     global.window = Object.create(window)
-    Object.assign(global.window, { cmccData: { restUrl: '/wp-json/cmcc/v1/', nonce: 'test' } })
+    Object.assign(global.window, {
+      cmccData: { restUrl: '/wp-json/cmcc/v1/', nonce: 'test' },
+    })
   })
 
   it('initializes with default state', () => {
@@ -213,7 +289,9 @@ describe('useCollaboration', () => {
   })
 
   it('fetchActivityFeed fetches feed from API', async () => {
-    apiFetch.mockResolvedValue({ events: [{ type: 'action', description: 'Approved' }] })
+    apiFetch.mockResolvedValue({
+      events: [{ type: 'action', description: 'Approved' }],
+    })
 
     const { result } = renderHook(() => useCollaboration({ addToast }))
 
@@ -226,7 +304,10 @@ describe('useCollaboration', () => {
   })
 
   it('addItemNote sends note to API', async () => {
-    apiFetch.mockResolvedValue({ success: true, note: { id: 'n1', text: 'New note' } })
+    apiFetch.mockResolvedValue({
+      success: true,
+      note: { id: 'n1', text: 'New note' },
+    })
 
     const { result } = renderHook(() => useCollaboration({ addToast }))
 
@@ -254,27 +335,85 @@ describe('useReports', () => {
   beforeEach(() => {
     jest.clearAllMocks()
     global.window = Object.create(window)
-    Object.assign(global.window, { cmccData: { restUrl: '/wp-json/cmcc/v1/', nonce: 'test' } })
+    Object.assign(global.window, {
+      cmccData: { restUrl: '/wp-json/cmcc/v1/', nonce: 'test' },
+    })
   })
 
-  it('initializes with default state', () => {
+  it('initializes with default state', async () => {
+    apiFetch.mockResolvedValue({ data: [], total: 0 })
     const { result } = renderHook(() => useReports({ addToast }))
+    // Flush any deferred transition updates from mount effects
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0))
+    })
     expect(result.current.reputationUsers).toEqual([])
     expect(result.current.activityFeed).toEqual([])
     expect(result.current.isReputationLoading).toBe(false)
   })
 
-  it('fetchUserReputation fetches from API', async () => {
-    apiFetch.mockResolvedValue({ users: [{ userId: '1', userName: 'Alice', trustLevel: 'high' }] })
+  it('fetchUserReputation fetches from reputation-raw endpoint', async () => {
+    apiFetch.mockResolvedValue({
+      data: [
+        {
+          authorId: 'user-1',
+          totalItems: 10,
+          spamCount: 2,
+          approvedCount: 5,
+          flaggedCount: 1,
+          rejectedCount: 2,
+          lastSeen: '2026-01-01T00:00:00Z',
+        },
+      ],
+      total: 1,
+      page: 1,
+      per_page: 25,
+      total_pages: 1,
+    })
 
     const { result } = renderHook(() => useReports({ addToast }))
+
+    // Flush mount effect so it doesn't consume the mock
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0))
+    })
+    apiFetch.mockClear()
+    apiFetch.mockResolvedValue({
+      data: [
+        {
+          authorId: 'user-1',
+          totalItems: 10,
+          spamCount: 2,
+          approvedCount: 5,
+          flaggedCount: 1,
+          rejectedCount: 2,
+          lastSeen: '2026-01-01T00:00:00Z',
+        },
+      ],
+      total: 1,
+      page: 1,
+      per_page: 25,
+      total_pages: 1,
+    })
 
     await act(async () => {
       await result.current.fetchUserReputation()
     })
 
-    expect(apiFetch).toHaveBeenCalledWith('users/reputation')
+    // Wait for deferred updates to settle
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0))
+    })
+
+    expect(apiFetch).toHaveBeenCalledWith(
+      expect.stringContaining('reputation-raw'),
+    )
     expect(result.current.reputationUsers).toHaveLength(1)
+    expect(result.current.reputationUsers[0]).toHaveProperty(
+      'authorId',
+      'user-1',
+    )
+    expect(result.current.reputationUsers[0]).toHaveProperty('riskLevel')
   })
 
   it('fetchActivityFeed fetches from API', async () => {

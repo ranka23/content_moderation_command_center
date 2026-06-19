@@ -23,6 +23,10 @@ export type {
 
 export { cn } from './lib/cn'
 
+// Icon system — lucide-react wrapper
+export { Icon } from './lib/icons'
+export type { IconProps } from './lib/icons'
+
 // Hooks
 export { useKeyboardShortcuts } from './lib/useKeyboardShortcuts'
 export type { KeyboardShortcut } from './lib/useKeyboardShortcuts'
@@ -51,6 +55,9 @@ export type {
 // Legacy – still exported for backward compatibility
 export { NotificationBadge } from './components/common/NotificationBadge'
 export type { NotificationBadgeProps } from './components/common/NotificationBadge'
+
+// Error boundary
+export { ErrorBoundary } from './components/common/ErrorBoundary'
 
 // Common – skeleton / empty state / panel
 export { SkeletonTable } from './components/common/SkeletonTable'
@@ -114,6 +121,11 @@ export type {
   SpamBarChartData,
   SpamBarChartProps,
 } from './components/charts/SpamBarChart'
+
+// Offline detection
+export { useOnlineStatus } from './lib/useOnlineStatus'
+export { OfflineBanner } from './components/common/OfflineBanner'
+export type { OfflineBannerProps } from './components/common/OfflineBanner'
 
 // AI Moderation
 

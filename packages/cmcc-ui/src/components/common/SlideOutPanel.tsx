@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react'
+import { Icon } from '../../lib/icons'
 
 export interface SlideOutPanelProps {
   open: boolean
@@ -63,10 +64,10 @@ export function SlideOutPanel({
             <h2 className="tw-text-lg tw-font-semibold">{title}</h2>
             <button
               onClick={onClose}
-              className="tw-text-gray-400 hover:tw-text-gray-600 tw-text-xl tw-leading-none"
+              className="tw-text-gray-400 hover:tw-text-gray-600"
               aria-label="Close panel"
             >
-              ✕
+              <Icon name="close" size={20} />
             </button>
           </div>
         )}

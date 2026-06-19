@@ -42,11 +42,14 @@ describe('FirewallService', () => {
   })
 
   it('triggers on content with too many links', async () => {
-    const result = await service.evaluateContent({
+    // Create service with maxLinks=3 so 4 URLs trigger
+    const linkService = new FirewallService({ maxLinks: 3 }, mockStorage)
+    const result = await linkService.evaluateContent({
       content:
         'A: https://a.com B: https://b.com C: https://c.com D: https://d.com',
     })
     expect(result.triggered).toBe(true)
+    expect(result.reason).toContain('4 links')
   })
 
   it('updates config at runtime', () => {
@@ -64,6 +67,6 @@ describe('FirewallService', () => {
   it('resets stats', () => {
     service.resetStats()
     const stats = service.getStats()
-    expect(stats.maxLinks).toBe(0)
+    expect(stats['maxLinks']).toBe(0)
   })
 })

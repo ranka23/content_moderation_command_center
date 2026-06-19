@@ -3,7 +3,7 @@
  * user reputation, moderator performance, and multi-platform hub.
  */
 
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import {
   Card,
   DataTable,
@@ -12,16 +12,33 @@ import {
   EmptyState,
   Button,
 } from '@shopify/polaris'
+import {
+  classifyRiskLevel,
+  generateModeratorPerformance,
+  getDefaultRiskLevelThresholds,
+} from '@cmcc/core'
 
 const API_BASE = '/api/cmcc'
+const RISK_THRESHOLDS = getDefaultRiskLevelThresholds()
 
 /**
  * @param {Object} props
  * @param {Object} props.reports - Reports data with userReputation, moderatorPerformance, platformHubs
  * @param {Function} props.showToast - Toast display function
+ * @param {Array} props.rawEvents - Normalized events array
+ * @param {Object} props.moderatorNames - Map of moderator IDs to names
  */
-export default function ReportsTab({ reports, showToast }) {
-  const { userReputation, moderatorPerformance, platformHubs } = reports
+export default function ReportsTab({
+  reports,
+  showToast,
+  rawEvents,
+  moderatorNames,
+}) {
+  const {
+    userReputation,
+    moderatorPerformance: serverModPerformance,
+    platformHubs,
+  } = reports
   const [exporting, setExporting] = useState(false)
   const [auditData, setAuditData] = useState(null)
   const [auditLoading, setAuditLoading] = useState(false)
@@ -72,38 +89,64 @@ export default function ReportsTab({ reports, showToast }) {
     }
   }
 
+  // ── Map risk level to badge status ────────────────────
+  function riskToBadgeStatus(level) {
+    switch (level) {
+      case 'low':
+        return 'success'
+      case 'medium':
+        return 'warning'
+      case 'high':
+      case 'critical':
+        return 'critical'
+      default:
+        return 'info'
+    }
+  }
+
   // ── User Reputation Rows ──────────────────────────────
-  const reputationRows = (userReputation || []).map((user) => [
-    user.author_name || user.username || user.author_id,
-    <Badge
-      key={`trust-${user.author_id || user.username}`}
-      status={
-        (user.trustLevel || user.reputation_score) >= 80
-          ? 'success'
-          : (user.trustLevel || user.reputation_score) >= 50
-            ? 'warning'
-            : 'critical'
-      }
-    >
-      {user.trustLevel ||
-        (user.reputation_score !== null && user.reputation_score !== undefined
-          ? `${user.reputation_score}%`
-          : 'unknown')}
-    </Badge>,
-    user.total_items ?? user.totalPosts ?? '-',
-    user.spam_items ?? user.spamPosts ?? 0,
-    user.reputation_score !== null && user.reputation_score !== undefined
-      ? `${user.reputation_score}%`
-      : user.spamRatio !== null && user.spamRatio !== undefined
-        ? `${(user.spamRatio * 100).toFixed(1)}%`
-        : '-',
-    user.lastActive ? new Date(user.lastActive).toLocaleDateString() : '-',
-  ])
+  const reputationRows = (userReputation || []).map((user) => {
+    const rawScore =
+      user.trustLevel ??
+      (user.reputation_score !== null && user.reputation_score !== undefined
+        ? user.reputation_score
+        : 50)
+    const breachCount = user.spam_items ?? user.spamPosts ?? 0
+    const riskLevel = classifyRiskLevel(rawScore, breachCount, RISK_THRESHOLDS)
+
+    return [
+      user.author_name || user.username || user.author_id,
+      <Badge
+        key={`trust-${user.author_id || user.username}`}
+        status={riskToBadgeStatus(riskLevel)}
+      >
+        {riskLevel}
+      </Badge>,
+      user.total_items ?? user.totalPosts ?? '-',
+      user.spam_items ?? user.spamPosts ?? 0,
+      user.reputation_score !== null && user.reputation_score !== undefined
+        ? `${user.reputation_score}%`
+        : user.spamRatio !== null && user.spamRatio !== undefined
+          ? `${(user.spamRatio * 100).toFixed(1)}%`
+          : '-',
+      user.lastActive ? new Date(user.lastActive).toLocaleDateString() : '-',
+    ]
+  })
 
   // ── Moderator Performance Rows ─────────────────────────
-  const modRows = (moderatorPerformance || []).map((mod) => [
-    mod.moderator,
-    mod.actionsTaken ?? 0,
+  // Use core generateModeratorPerformance when raw events are available; fall back to server data
+  const modPerformanceData = useMemo(() => {
+    if (rawEvents && rawEvents.length > 0) {
+      return generateModeratorPerformance(rawEvents, moderatorNames)
+    }
+    return null
+  }, [rawEvents, moderatorNames])
+
+  const modPerformance = modPerformanceData || serverModPerformance || []
+
+  const modRows = modPerformance.map((mod) => [
+    mod.moderatorName || mod.moderator || mod.moderatorId,
+    mod.totalActions ?? mod.actionsTaken ?? 0,
     mod.accuracyRate !== null && mod.accuracyRate !== undefined
       ? `${(mod.accuracyRate * 100).toFixed(0)}%`
       : '-',
@@ -111,7 +154,7 @@ export default function ReportsTab({ reports, showToast }) {
       ? `${mod.avgResponseTime}h`
       : '-',
     <Badge
-      key={`mod-status-${mod.moderator}`}
+      key={`mod-status-${mod.moderator || mod.moderatorId}`}
       status={mod.active !== false ? 'success' : 'critical'}
     >
       {mod.active !== false ? 'Active' : 'Inactive'}

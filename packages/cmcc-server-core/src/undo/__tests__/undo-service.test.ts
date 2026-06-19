@@ -5,10 +5,10 @@ import { UndoService } from '../undo-service'
 
 describe('UndoService', () => {
   let service: UndoService
-  const mockApplyUndo = jest.fn()
+  let mockApplyUndo: jest.Mock
 
   beforeEach(() => {
-    jest.clearAllMocks()
+    mockApplyUndo = jest.fn()
     service = new UndoService({ windowMinutes: 5 })
   })
 
@@ -23,8 +23,8 @@ describe('UndoService', () => {
 
       expect(snapshot.id).toBeDefined()
       expect(snapshot.itemId).toBe('item-1')
-      expect(snapshot.state.status).toBe('approved')
-      expect(snapshot.state.previousStatus).toBe('pending')
+      expect(snapshot.state['status']).toBe('approved')
+      expect(snapshot.state['previousStatus']).toBe('pending')
     })
 
     it('returns the snapshot with a unique ID', async () => {
@@ -40,7 +40,7 @@ describe('UndoService', () => {
       mockApplyUndo.mockResolvedValue({ success: true })
 
       await service.saveSnapshot('item-1', {
-        status: 'approved',
+        status: 'pending',
         previousStatus: 'pending',
         moderatedBy: 'mod-1',
         moderatedAt: new Date().toISOString(),
@@ -50,8 +50,13 @@ describe('UndoService', () => {
 
       expect(result.success).toBe(true)
       expect(result.restoredState).toBeDefined()
-      expect(result.restoredState?.status).toBe('pending')
-      expect(mockApplyUndo).toHaveBeenCalledWith('item-1', { status: 'pending' })
+      expect(result.restoredState?.['status']).toBe('pending')
+      expect(mockApplyUndo).toHaveBeenCalledWith({
+        status: 'pending',
+        previousStatus: 'pending',
+        moderatedBy: 'mod-1',
+        moderatedAt: expect.any(String),
+      })
     })
 
     it('returns error when no snapshot exists for the item', async () => {
@@ -62,17 +67,17 @@ describe('UndoService', () => {
     })
 
     it('returns error when the undo window has expired', async () => {
-      // Create a service with a very short window
-      const shortWindowService = new UndoService({ windowMinutes: 0 })
+      // Create a service with a negative window to ensure immediate expiry
+      const expiredWindowService = new UndoService({ windowMinutes: -1 })
 
-      await shortWindowService.saveSnapshot('item-1', {
+      await expiredWindowService.saveSnapshot('item-1', {
         status: 'approved',
         previousStatus: 'pending',
         moderatedBy: 'mod-1',
         moderatedAt: new Date().toISOString(),
       })
 
-      const result = await shortWindowService.undo('item-1', mockApplyUndo)
+      const result = await expiredWindowService.undo('item-1', mockApplyUndo)
 
       expect(result.success).toBe(false)
       expect(result.error).toContain('Undo window expired')

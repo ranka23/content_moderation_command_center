@@ -1,5 +1,6 @@
 import React, { useEffect, startTransition } from 'react'
 import { Button, Table, SkeletonTable, EmptyState, Pagination } from '@cmcc/ui'
+import { RefreshCw } from 'lucide-react'
 
 const LOG_PER_PAGE_OPTIONS = [10, 25, 50, 100]
 
@@ -36,6 +37,13 @@ export default function ActivityLogPage({ activityLog }) {
     defer: 'Deferred',
     flag: 'Flagged',
     'deactivate-users': 'Deactivated User',
+    marked_as_spam: 'Marked as Spam',
+    trashed: 'Trashed',
+    deleted: 'Deleted',
+    unapprove: 'Unapproved',
+    untrash: 'Restored from trash',
+    'activate-user': 'User Activated',
+    'deactivate-user': 'User Deactivated',
   }
   const actionColors = {
     approve: 'tw-text-green-600 tw-bg-green-50',
@@ -44,6 +52,13 @@ export default function ActivityLogPage({ activityLog }) {
     defer: 'tw-text-cyan-600 tw-bg-cyan-50',
     flag: 'tw-text-orange-600 tw-bg-orange-50',
     'deactivate-users': 'tw-text-red-700 tw-bg-red-50',
+    marked_as_spam: 'tw-text-amber-600 tw-bg-amber-50',
+    trashed: 'tw-text-red-600 tw-bg-red-50',
+    deleted: 'tw-text-red-600 tw-bg-red-50',
+    unapprove: 'tw-text-gray-600 tw-bg-gray-100',
+    untrash: 'tw-text-green-600 tw-bg-green-50',
+    'activate-user': 'tw-text-green-600 tw-bg-green-50',
+    'deactivate-user': 'tw-text-red-700 tw-bg-red-50',
   }
 
   // ── Loading state (initial) ────────────────────────────────────────
@@ -78,7 +93,7 @@ export default function ActivityLogPage({ activityLog }) {
           size="sm"
           onClick={() => fetchActivityLog(logPage)}
         >
-          🔄 Refresh
+          <RefreshCw size={14} className="tw-inline tw-mr-1" /> Refresh
         </Button>
       </div>
 
@@ -111,9 +126,13 @@ export default function ActivityLogPage({ activityLog }) {
             sortable: true,
             align: 'center',
             cell: (row) => {
-              const display = actionLabels[row.action] || row.action
+              // UX2 fix: prefer pre-normalized action_display from the hook,
+              // fall back to local mapping or raw value
+              const actionKey = row.action
+              const display =
+                row.action_display || actionLabels[actionKey] || actionKey
               const color =
-                actionColors[row.action] || 'tw-text-gray-600 tw-bg-gray-100'
+                actionColors[actionKey] || 'tw-text-gray-600 tw-bg-gray-100'
               return (
                 <span
                   className={`tw-inline-flex tw-items-center tw-rounded-full tw-px-2.5 tw-py-0.5 tw-text-xs tw-font-medium ${color}`}

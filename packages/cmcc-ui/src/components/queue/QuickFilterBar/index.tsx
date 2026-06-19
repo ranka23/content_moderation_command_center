@@ -1,4 +1,6 @@
+import React from 'react'
 import { cn } from '../../../lib/cn'
+import { Icon } from '../../../lib/icons'
 
 // ─── Preset Filter Definitions ───────────────────────────────────────────
 
@@ -21,37 +23,37 @@ const DEFAULT_PRESETS: QuickPreset[] = [
   {
     id: 'last-hour',
     label: 'Last Hour',
-    icon: '🕐',
+    icon: 'last-hour',
     filters: { dateRange: 'last-hour', status: 'all' },
   },
   {
     id: 'today',
     label: 'Today',
-    icon: '📅',
+    icon: 'today',
     filters: { dateRange: 'today', status: 'all' },
   },
   {
     id: 'this-week',
     label: 'This Week',
-    icon: '📆',
+    icon: 'this-week',
     filters: { dateRange: 'this-week', status: 'all' },
   },
   {
     id: 'pending',
     label: 'Pending Only',
-    icon: '⏳',
+    icon: 'pending',
     filters: { status: 'pending', dateRange: 'all' },
   },
   {
     id: 'high-spam',
     label: 'High Spam Score',
-    icon: '🚫',
+    icon: 'high-spam',
     filters: { status: 'spam', dateRange: 'all' },
   },
   {
     id: 'flagged',
     label: 'Flagged',
-    icon: '⚠️',
+    icon: 'flagged',
     filters: { status: 'flagged', dateRange: 'all' },
   },
 ]
@@ -102,7 +104,7 @@ export function QuickFilterBar({
             )}
             aria-pressed={isActive}
           >
-            {preset.icon && <span>{preset.icon}</span>}
+            {preset.icon && <Icon name={preset.icon} size={14} />}
             <span>{preset.label}</span>
           </button>
         )

@@ -5,6 +5,7 @@ import {
   ModerationLineChart,
   SpamBarChart,
 } from '@cmcc/ui'
+import { BarChart3, Inbox } from 'lucide-react'
 
 export default function AnalyticsPage({ analytics }) {
   useEffect(() => {
@@ -16,7 +17,8 @@ export default function AnalyticsPage({ analytics }) {
   return (
     <div style={{ padding: '20px' }}>
       <h2 style={{ margin: '0 0 20px', fontSize: '1.25rem', fontWeight: 600 }}>
-        📊 Analytics Dashboard
+        <BarChart3 size={20} style={{ display: 'inline', marginRight: 8 }} />
+        Analytics Dashboard
       </h2>
 
       {analytics.loading && (
@@ -148,7 +150,7 @@ export default function AnalyticsPage({ analytics }) {
 
       {!analytics.loading && !data && (
         <div style={{ textAlign: 'center', padding: '40px', color: '#6b7280' }}>
-          <p style={{ fontSize: '2rem', marginBottom: '8px' }}>📭</p>
+          <Inbox size={32} />
           <p>No analytics data yet.</p>
         </div>
       )}

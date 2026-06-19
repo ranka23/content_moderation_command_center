@@ -13,8 +13,8 @@
     "build": "test -d src && webpack --mode production || echo 'No src directory yet, skipping build'",
     "start": "node server/index.js",
     "dev": "webpack --mode development --watch",
-    "test": "node --experimental-vm-modules node_modules/.bin/jest --passWithNoTests",
-    "test:server": "node --experimental-vm-modules node_modules/.bin/jest --config jest.server.config.js",
+    "test": "jest --passWithNoTests",
+    "test:server": "jest --config jest.server.config.js",
     "lint": "eslint src"
   },
   "devDependencies": {
@@ -24,6 +24,7 @@
     "babel-jest": "^29.7.0",
     "babel-loader": "^9.1.0",
     "css-loader": "^6.0.0",
+    "jest": "^29.7.0",
     "mini-css-extract-plugin": "^2.0.0",
     "supertest": "^6.3.0",
     "ts-jest": "^29.4.11",
@@ -44,6 +45,7 @@
     "react-dom": "^18.0.0",
     "sql.js": "^1.10.0",
     "uuid": "^9.0.0",
-    "ws": "^8.16.0"
+    "ws": "^8.16.0",
+    "lucide-react": "^0.468.0"
   }
 }

@@ -36,10 +36,12 @@ export function mapInitialTab(page) {
       return 'queue'
     case 'cmcc-analytics':
       return 'analytics'
-    case 'cmcc-settings':
-      return 'settings'
+    case 'cmcc-activity':
+      return 'activity-log'
     case 'cmcc-reports':
       return 'reports'
+    case 'cmcc-settings':
+      return 'settings'
     default:
       return 'queue'
   }

@@ -256,9 +256,10 @@ describe('EmptyState', () => {
   })
 
   it('uses default icon when no icon specified', () => {
-    render(<EmptyState title="Empty" />)
-    // The component renders the default icon 📭 when no icon prop is provided
-    const icon = screen.getByText('📭')
-    expect(icon).toBeInTheDocument()
+    const { container } = render(<EmptyState title="Empty" />)
+    // The component renders the default Inbox SVG icon when no icon prop is provided
+    const svg = container.querySelector('svg')
+    expect(svg).toBeInTheDocument()
+    expect(svg).toHaveClass('lucide-inbox')
   })
 })

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { BarChart3, ClipboardList, Globe, Keyboard, Hand } from 'lucide-react'
 
 /**
  * @typedef {Object} OnboardingStep
@@ -13,31 +14,31 @@ const STEPS = [
     title: 'Welcome to CMCC',
     description:
       'Content Moderation Command Center — your unified dashboard for managing moderation across all your platforms.',
-    icon: '\u{1F44B}',
+    icon: 'hand',
   },
   {
     title: 'Moderation Queue',
     description:
       'Review and moderate content from the Queue tab. Use the quick filters to find items from the last hour, today, or this week.',
-    icon: '\u{1F4CB}',
+    icon: 'clipboard',
   },
   {
     title: 'Analytics & Reports',
     description:
       'Track moderation activity with the Analytics heatmap and generate detailed reports including CSV exports and compliance audits.',
-    icon: '\u{1F4CA}',
+    icon: 'chart',
   },
   {
     title: 'Keyboard Shortcuts',
     description:
       'Press ? to view all keyboard shortcuts. Approve (A), Reject (R), Spam (S), Defer (D), and more — all from your keyboard.',
-    icon: '\u{2328}\u{FE0F}',
+    icon: 'keyboard',
   },
   {
     title: 'Multi-Platform Hub',
     description:
       'Connect WordPress, Shopify, Storyblok, Strapi, and Wix. Manage all your platforms from a single dashboard.',
-    icon: '\u{1F310}',
+    icon: 'globe',
   },
 ]
 
@@ -124,7 +125,13 @@ export function OnboardingWizard() {
         </div>
 
         <div style={{ padding: '28px 24px 20px', textAlign: 'center' }}>
-          <div style={{ fontSize: 48, marginBottom: 16 }}>{step.icon}</div>
+          <div style={{ marginBottom: 16 }}>
+            {step.icon === 'hand' && <Hand size={48} />}
+            {step.icon === 'clipboard' && <ClipboardList size={48} />}
+            {step.icon === 'chart' && <BarChart3 size={48} />}
+            {step.icon === 'keyboard' && <Keyboard size={48} />}
+            {step.icon === 'globe' && <Globe size={48} />}
+          </div>
           <h2
             style={{
               margin: '0 0 8px',
@@ -163,8 +170,7 @@ export function OnboardingWizard() {
                 width: 8,
                 height: 8,
                 borderRadius: '50%',
-                backgroundColor:
-                  i === currentStep ? '#3b82f6' : '#d1d5db',
+                backgroundColor: i === currentStep ? '#3b82f6' : '#d1d5db',
                 transition: 'background-color 0.2s',
               }}
             />

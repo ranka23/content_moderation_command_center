@@ -1,4 +1,5 @@
 import React from 'react'
+import { Icon } from '../../lib/icons'
 
 // Define types for our heatmap data
 export interface HeatmapData {
@@ -30,7 +31,9 @@ export const HeatmapChart: React.FC<HeatmapChartProps> = ({
   if (!data || !Array.isArray(data.data) || data.data.length === 0) {
     return (
       <div className="cmcc-heatmap-chart cmcc-heatmap-empty">
-        <span className="cmcc-heatmap-empty-icon">📊</span>
+        <span className="cmcc-heatmap-empty-icon">
+          <Icon name="analytics" size={32} />
+        </span>
         <p className="cmcc-heatmap-empty-text">No activity data yet</p>
         <p className="cmcc-heatmap-empty-hint">
           Moderation activity will appear here as actions are taken.
@@ -46,7 +49,9 @@ export const HeatmapChart: React.FC<HeatmapChartProps> = ({
   if (allZero) {
     return (
       <div className="cmcc-heatmap-chart cmcc-heatmap-empty">
-        <span className="cmcc-heatmap-empty-icon">📊</span>
+        <span className="cmcc-heatmap-empty-icon">
+          <Icon name="analytics" size={32} />
+        </span>
         <p className="cmcc-heatmap-empty-text">No activity data yet</p>
         <p className="cmcc-heatmap-empty-hint">
           Moderation activity will appear here as actions are taken.

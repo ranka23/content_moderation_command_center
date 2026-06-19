@@ -1,7 +1,7 @@
 /**
  * WebSocket Service — Unit Tests
  */
-import type { ActivityEvent } from '../websocket-service';
+import type { ActivityEvent } from '../websocket-service'
 import { WebSocketEventBus } from '../websocket-service'
 
 describe('WebSocketEventBus', () => {
@@ -28,7 +28,16 @@ describe('WebSocketEventBus', () => {
 
       eventBus.publish(event)
 
-      expect(handler).toHaveBeenCalledWith(event)
+      expect(handler).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'action',
+          actorId: 'mod-1',
+          actorName: 'Admin',
+          description: 'Approved item "Test Comment"',
+          itemId: 'item-1',
+          itemTitle: 'Test Comment',
+        }),
+      )
     })
 
     it('supports multiple subscribers', () => {
@@ -72,7 +81,13 @@ describe('WebSocketEventBus', () => {
       const handler = jest.fn()
       eventBus.subscribe(handler)
 
-      eventBus.publishAction('mod-1', 'Admin', 'Approved item "Spam comment"', 'item-1', 'Spam comment')
+      eventBus.publishAction(
+        'mod-1',
+        'Admin',
+        'Approved item "Spam comment"',
+        'item-1',
+        'Spam comment',
+      )
       expect(handler).toHaveBeenCalledWith(
         expect.objectContaining({ type: 'action', actorId: 'mod-1' }),
       )
@@ -92,7 +107,12 @@ describe('WebSocketEventBus', () => {
       const handler = jest.fn()
       eventBus.subscribe(handler)
 
-      eventBus.publishAssignment('mod-1', 'Admin', 'Assigned item to mod-2', 'item-3')
+      eventBus.publishAssignment(
+        'mod-1',
+        'Admin',
+        'Assigned item to mod-2',
+        'item-3',
+      )
       expect(handler).toHaveBeenCalledWith(
         expect.objectContaining({ type: 'assignment', itemId: 'item-3' }),
       )
@@ -102,7 +122,12 @@ describe('WebSocketEventBus', () => {
       const handler = jest.fn()
       eventBus.subscribe(handler)
 
-      eventBus.publishEscalation('system', 'System', 'Item escalated: spam score > 80', 'item-4')
+      eventBus.publishEscalation(
+        'system',
+        'System',
+        'Item escalated: spam score > 80',
+        'item-4',
+      )
       expect(handler).toHaveBeenCalledWith(
         expect.objectContaining({ type: 'escalation', itemId: 'item-4' }),
       )

@@ -2,21 +2,37 @@
  * ActivityLogTab - Activity log tab with table of actions and embedded activity feed.
  */
 
-import React from 'react'
+import React, { useMemo } from 'react'
 import { Card, DataTable, Layout, EmptyState } from '@shopify/polaris'
 import ActivityFeed from './ActivityFeed'
+import { filterActivityLog } from '@cmcc/core'
+import { normalizeLogEntryForCore } from '../lib/normalizers'
 
 /**
  * @param {Object} props
  * @param {Array} props.activityLog - Activity log entries array
+ * @param {string} props.moderatorId - Current moderator ID for filtering
  */
-export default function ActivityLogTab({ activityLog }) {
-  const rows = (activityLog || []).map((entry) => [
-    new Date(entry.created_at || entry.timestamp).toLocaleString(),
+export default function ActivityLogTab({
+  activityLog,
+  moderatorId: _moderatorId,
+}) {
+  const normalizedLogEntries = useMemo(
+    () => (activityLog || []).map(normalizeLogEntryForCore),
+    [activityLog],
+  )
+
+  const filteredEntries = useMemo(
+    () => filterActivityLog(normalizedLogEntries),
+    [normalizedLogEntries],
+  )
+
+  const rows = filteredEntries.map((entry) => [
+    new Date(entry.timestamp).toLocaleString(),
     entry.action,
-    entry.content_type || entry.contentType,
-    entry.item_id || entry.contentId,
-    entry.moderator_id || entry.performedBy || '-',
+    entry.contentType,
+    entry.itemId,
+    entry.moderatorName || entry.moderatorId || '-',
   ])
 
   return (

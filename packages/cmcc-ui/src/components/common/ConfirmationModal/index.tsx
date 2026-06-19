@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react'
 import { cn } from '../../../lib/cn'
+import { Icon } from '../../../lib/icons'
 
 export interface ConfirmationModalProps {
   /** Whether the modal is visible */
@@ -115,7 +116,11 @@ export function ConfirmationModal({
               destructive ? 'tw-text-red-700' : 'tw-text-gray-900',
             )}
           >
-            {destructive && <span className="tw-mr-2">⚠️</span>}
+            {destructive && (
+              <span className="tw-mr-2">
+                <Icon name="warning" size={18} />
+              </span>
+            )}
             {title}
           </h2>
           <button
@@ -124,7 +129,7 @@ export function ConfirmationModal({
             className="tw-p-1 tw-rounded-md tw-text-gray-400 hover:tw-text-gray-600 hover:tw-bg-gray-100 tw-transition-colors"
             aria-label="Close"
           >
-            ✕
+            <Icon name="close" size={16} />
           </button>
         </div>
 

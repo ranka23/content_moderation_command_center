@@ -151,6 +151,31 @@ docker-down:
 	@echo "=== Stopping all Docker services ==="
 	docker compose down
 
+# ── Strapi Plugin Sync ─────────────────────────────────────────────────────
+
+.PHONY: sync-strapi-plugin
+
+sync-strapi-plugin:
+	@echo "=== Syncing CMCC Strapi plugin to cmcc-strapi-app ==="
+	@rsync -av --delete \
+		--exclude='node_modules' \
+		--exclude='.turbo' \
+		--exclude='dist' \
+		--exclude='__tests__' \
+		platforms/strapi/server/ \
+		cmcc-strapi-app/src/plugins/cmcc/server/
+	@rsync -av --delete \
+		--exclude='node_modules' \
+		--exclude='.turbo' \
+		--exclude='__tests__' \
+		platforms/strapi/admin/src/ \
+		cmcc-strapi-app/src/plugins/cmcc/admin/src/
+	@echo "Done. cmcc-strapi-app plugin is now in sync with platforms/strapi."
+	@echo ""
+	@echo "Note: If rsync is not available, run:"
+	@echo "  cp -r platforms/strapi/server/* cmcc-strapi-app/src/plugins/cmcc/server/"
+	@echo "  cp -r platforms/strapi/admin/src/* cmcc-strapi-app/src/plugins/cmcc/admin/src/"
+
 # ── Cleanup ───────────────────────────────────────────────────────────────
 
 .PHONY: tunnel tunnel-all clean

@@ -6,23 +6,58 @@
 /* Inter Font */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
+/* ── CMCC Design Tokens ──────────────────────────── */
+:root {
+  --cmcc-primary: #2563eb;
+  --cmcc-primary-hover: #1d4ed8;
+  --cmcc-danger: #dc2626;
+  --cmcc-success: #16a34a;
+  --cmcc-warning: #f59e0b;
+  --cmcc-text: #111827;
+  --cmcc-text-secondary: #6b7280;
+  --cmcc-bg: #f9fafb;
+  --cmcc-bg-card: #ffffff;
+  --cmcc-border: #e5e7eb;
+
+  /* Type scale */
+  --cmcc-h1: 1.5rem;
+  --cmcc-h2: 1.25rem;
+  --cmcc-h3: 1.125rem;
+  --cmcc-body: 0.875rem;
+  --cmcc-small: 0.75rem;
+
+  /* Spacing */
+  --cmcc-space-1: 4px;
+  --cmcc-space-2: 8px;
+  --cmcc-space-3: 12px;
+  --cmcc-space-4: 16px;
+  --cmcc-space-5: 20px;
+  --cmcc-space-6: 24px;
+  --cmcc-space-8: 32px;
+
+  /* Elevation */
+  --cmcc-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --cmcc-shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --cmcc-shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+  --cmcc-radius: 6px;
+  --cmcc-radius-lg: 12px;
+}
+
+.dark {
+  --cmcc-text: #f3f4f6;
+  --cmcc-text-secondary: #9ca3af;
+  --cmcc-bg: #1f2937;
+  --cmcc-bg-card: #111827;
+  --cmcc-border: #374151;
+}
+
 /* ---------- Root Container ---------- */
 .cmcc-storyblok-app {
-  font-family:
-    'Inter',
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    Roboto,
-    Oxygen,
-    Ubuntu,
-    Cantarell,
-    'Helvetica Neue',
-    sans-serif;
+  font-family: 'system-ui', sans-serif;
   font-size: 14px;
   line-height: 1.5;
-  color: #1a1a2e;
-  background-color: #ffffff;
+  color: #111827;
+  background-color: #f9fafb;
   min-height: 100vh;
   box-sizing: border-box;
   -webkit-font-smoothing: antialiased;
@@ -146,7 +181,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 20px;
+  padding: var(--cmcc-space-4, 16px) 20px;
   border-bottom: 1px solid #f0f0f1;
   background-color: #ffffff;
 }
@@ -288,7 +323,7 @@
 .cmcc-analytics-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  gap: var(--cmcc-space-4, 16px);
 }
 
 @media (max-width: 768px) {
@@ -520,7 +555,7 @@
 
 .cmcc-storyblok-app .cmcc-queue-filters {
   display: flex;
-  gap: 16px;
+  gap: var(--cmcc-space-4, 16px);
   font-size: 12px;
   color: #6b7280;
 }
@@ -593,6 +628,109 @@
 }
 
 /* Toast notifications moved to enhanced section at the bottom */
+
+/* ---- Queue Page specific ---- */
+
+.cmcc-queue-page {
+  padding: var(--cmcc-space-5, 20px);
+}
+
+.cmcc-queue-page .cmcc-queue-header-area {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.cmcc-queue-page .cmcc-queue-header-area h2 {
+  margin: 0;
+  font-size: var(--cmcc-h1, 1.25rem);
+  font-weight: 600;
+}
+
+.cmcc-queue-header-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.cmcc-queue-header-btn {
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+  cursor: pointer;
+  background: #fff;
+  font-size: var(--cmcc-body);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.cmcc-queue-item-count {
+  padding: 6px 12px;
+  background: #f3f4f6;
+  border-radius: 6px;
+  font-size: var(--cmcc-body);
+  color: #6b7280;
+  display: inline-flex;
+  align-items: center;
+}
+
+.cmcc-queue-search-wrap {
+  margin-bottom: 16px;
+  position: relative;
+}
+
+.cmcc-queue-search-input {
+  width: 100%;
+  padding: 8px 12px 8px 36px;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+  font-size: var(--cmcc-body);
+  outline: none;
+  box-sizing: border-box;
+}
+
+.cmcc-queue-error-banner {
+  padding: 16px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  color: #dc2626;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.cmcc-queue-page .cmcc-queue-pagination-wrap {
+  display: flex;
+  justify-content: center;
+  margin-top: 16px;
+}
+
+/* Dark mode overrides */
+.dark .cmcc-queue-header-btn {
+  background: #374151;
+  border-color: #4b5563;
+  color: #e5e7eb;
+}
+
+.dark .cmcc-queue-item-count {
+  background: #374151;
+  color: #9ca3af;
+}
+
+.dark .cmcc-queue-search-input {
+  background: #374151;
+  border-color: #4b5563;
+  color: #e5e7eb;
+}
+
+.dark .cmcc-queue-error-banner {
+  background: #451a1a;
+  border-color: #7f1d1d;
+  color: #fca5a5;
+}
 
 /* ---- Heatmap Grid ---- */
 
@@ -768,8 +906,8 @@
    Dark Mode – html.dark selector
    ============================================================ */
 .dark .cmcc-storyblok-app {
-  color: #e0e0e0;
-  background-color: #0f172a;
+  color: #f3f4f6;
+  background-color: #1f2937;
 }
 
 .dark .cmcc-storyblok-app .cmcc-header {
@@ -1368,27 +1506,27 @@
 }
 
 .cmcc-status-badge--pending {
-  background: #f59e0b;
+  background: #b45309;
 }
 
 .cmcc-status-badge--approved {
-  background: #22c55e;
+  background: #15803d;
 }
 
 .cmcc-status-badge--rejected {
-  background: #ef4444;
+  background: #b91c1c;
 }
 
 .cmcc-status-badge--spam {
-  background: #f97316;
+  background: #c2410c;
 }
 
 .cmcc-status-badge--flagged {
-  background: #f59e0b;
+  background: #7c3aed;
 }
 
 .cmcc-status-badge--deferred {
-  background: #06b6d4;
+  background: #4f46e5;
 }
 
 .cmcc-slideout-type {
@@ -1696,7 +1834,7 @@
 .cmcc-reports-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  gap: var(--cmcc-space-4, 16px);
 }
 
 @media (max-width: 900px) {
@@ -2195,6 +2333,10 @@
   background: linear-gradient(135deg, #ef4444, #dc2626);
 }
 
+.cmcc-toast-info {
+  background: linear-gradient(135deg, #6b7280, #374151);
+}
+
 .cmcc-toast-icon {
   font-size: 16px;
   font-weight: 700;
@@ -2415,8 +2557,6 @@
   color: #e2e8f0;
 }
 
-.cmcc-notes-section {
-}
 .cmcc-notes-list {
   max-height: 180px;
   overflow-y: auto;
@@ -2467,8 +2607,6 @@
 }
 
 /* ── Assign Section (Slide-Out) ───────────────────────────────── */
-.cmcc-assign-section {
-}
 .cmcc-assignment-current {
   padding: 8px 10px;
   background: #f0fff4;
@@ -2553,4 +2691,409 @@
   outline: none;
   border-color: #3b82f6;
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+/* ── Responsive: Mobile ──────────────────────────────── */
+@media (max-width: 640px) {
+  .cmcc-storyblok-app .cmcc-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .cmcc-storyblok-app .cmcc-tabs {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    gap: 0;
+  }
+  .cmcc-storyblok-app .cmcc-tab {
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .cmcc-storyblok-app .cmcc-main {
+    padding: 8px;
+  }
+  .cmcc-storyblok-app .cmcc-activity-table-wrapper {
+    overflow-x: auto;
+  }
+  .cmcc-storyblok-app .cmcc-section-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+}
+
+/* ── Responsive: Tablet ─────────────────────────────── */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .cmcc-storyblok-app .cmcc-analytics-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* ── QueueTable → card layout on mobile ────────────── */
+@media (max-width: 640px) {
+  .cmcc-storyblok-app .cmcc-queue-table thead {
+    display: none;
+  }
+  .cmcc-storyblok-app .cmcc-queue-table tbody tr {
+    display: block;
+    border: 1px solid var(--cmcc-border, #e5e7eb);
+    border-radius: var(--cmcc-radius, 6px);
+    padding: var(--cmcc-space-3, 12px);
+    margin-bottom: var(--cmcc-space-3, 12px);
+    background: var(--cmcc-bg-card, #fff);
+  }
+  .cmcc-storyblok-app .cmcc-queue-table tbody td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--cmcc-space-1, 4px) 0;
+    border: none;
+    font-size: var(--cmcc-small, 0.75rem);
+  }
+  .cmcc-storyblok-app .cmcc-queue-table tbody td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: var(--cmcc-text-secondary, #6b7280);
+    margin-right: var(--cmcc-space-2, 8px);
+  }
+  .cmcc-storyblok-app .cmcc-queue-table .cmcc-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--cmcc-space-1, 4px);
+    margin-top: var(--cmcc-space-2, 8px);
+  }
+
+  /* ── Tab nav → horizontal scroll (strengthen) ──────── */
+  .cmcc-storyblok-app .cmcc-tab-bar,
+  .cmcc-storyblok-app .cmcc-tabnav {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    flex-wrap: nowrap;
+    scrollbar-width: none;
+  }
+  .cmcc-storyblok-app .cmcc-tab-bar::-webkit-scrollbar,
+  .cmcc-storyblok-app .cmcc-tabnav::-webkit-scrollbar {
+    display: none;
+  }
+  .cmcc-storyblok-app .cmcc-tab-btn {
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  /* ── Filters → collapsible ─────────────────────────── */
+  .cmcc-storyblok-app .cmcc-queue-filters,
+  .cmcc-storyblok-app .cmcc-queue-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .cmcc-storyblok-app .cmcc-queue-filters-row,
+  .cmcc-storyblok-app .cmcc-queue-toolbar-right {
+    flex-wrap: wrap;
+  }
+  .cmcc-storyblok-app .cmcc-filter-select {
+    width: 100%;
+  }
+
+  /* ── Action buttons → icon-only ────────────────────── */
+  .cmcc-storyblok-app .cmcc-actions button,
+  .cmcc-storyblok-app .cmcc-actions .cmcc-btn {
+    padding: 6px 8px;
+    font-size: 0;
+    min-width: 32px;
+    min-height: 32px;
+  }
+  .cmcc-storyblok-app .cmcc-actions button::after {
+    font-size: 0.75rem;
+  }
+}
+
+/* ── Onboarding Wizard (Storyblok) ──────────────────────── */
+.cmcc-onboarding-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.5);
+}
+.cmcc-onboarding-content {
+  background: #fff;
+  color: #111827;
+  border-radius: 12px;
+  padding: 32px;
+  max-width: 480px;
+  width: 90%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+.cmcc-onboarding-content h2 {
+  margin: 0 0 24px;
+  font-size: var(--cmcc-h2);
+  font-weight: 700;
+}
+.cmcc-onboarding-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.cmcc-onboarding-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 8px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+}
+.cmcc-onboarding-step-num {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #2563eb;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: var(--cmcc-body);
+  flex-shrink: 0;
+}
+.cmcc-onboarding-step-title {
+  font-weight: 600;
+  font-size: 0.9375rem;
+  margin-bottom: 2px;
+}
+.cmcc-onboarding-step-desc {
+  color: #6b7280;
+  font-size: 0.8125rem;
+}
+.cmcc-onboarding-btn {
+  width: 100%;
+  padding: 10px;
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* ── Top Bar ────────────────────────────────────────────── */
+.cmcc-topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 20px;
+  background: #fff;
+  border-bottom: 1px solid #e5e7eb;
+}
+.dark .cmcc-topbar {
+  background: #111827;
+}
+.cmcc-topbar-title {
+  margin: 0;
+  font-size: var(--cmcc-h3);
+  font-weight: 600;
+}
+.cmcc-topbar-subtitle {
+  font-weight: 400;
+  color: #6b7280;
+  font-size: var(--cmcc-body);
+}
+.cmcc-topbar-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.cmcc-topbar-btn {
+  background: none;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 6px 10px;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+/* ── Tab Navigation ─────────────────────────────────────── */
+.cmcc-tabnav {
+  display: flex;
+  gap: 4px;
+  padding: 8px 20px;
+  background: #fff;
+  border-bottom: 1px solid #e5e7eb;
+}
+.dark .cmcc-tabnav {
+  background: #1f2937;
+}
+.cmcc-tab-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 400;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--cmcc-body);
+  background: transparent;
+  color: #6b7280;
+}
+.dark .cmcc-tab-btn {
+  color: #d1d5db;
+}
+.cmcc-tab-btn--active {
+  font-weight: 600;
+  background: #eff6ff;
+  color: #2563eb;
+}
+.dark .cmcc-tab-btn--active {
+  background: #374151;
+  color: #2563eb;
+}
+
+/* ── Toast Notifications (Storyblok) ────────────────────── */
+.cmcc-toasts-container {
+  position: fixed;
+  bottom: 16px;
+  right: 16px;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* ── Shortcuts Modal ────────────────────────────────────── */
+.cmcc-shortcuts-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.4);
+}
+.cmcc-shortcuts-content {
+  background: #fff;
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+.cmcc-shortcuts-content h2 {
+  margin: 0 0 16px;
+  font-size: var(--cmcc-h3);
+  font-weight: 600;
+}
+.cmcc-shortcuts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.cmcc-shortcuts-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.cmcc-shortcuts-desc {
+  color: #6b7280;
+  font-size: var(--cmcc-body);
+}
+
+/* ── Main Content Area ──────────────────────────────────── */
+.cmcc-main-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  animation: cmcc-fade-in 0.15s ease-in-out;
+}
+
+@keyframes cmcc-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ─── D5 Fix: Card elevation ────────────────────────────────────────────── */
+.cmcc-stat-card {
+  box-shadow: var(--cmcc-shadow-sm, 0 1px 2px rgba(0, 0, 0, 0.05));
+}
+.cmcc-card {
+  box-shadow: var(--cmcc-shadow-sm, 0 1px 2px rgba(0, 0, 0, 0.05));
+}
+
+/* ─── D7 Fix: Table row zebra-striping ──────────────────────────────────── */
+.cmcc-queue-table tbody tr:nth-child(even) td,
+.cmcc-activity-table tbody tr:nth-child(even) td {
+  background-color: rgba(0, 0, 0, 0.02);
+}
+.dark .cmcc-queue-table tbody tr:nth-child(even) td,
+.dark .cmcc-activity-table tbody tr:nth-child(even) td {
+  background-color: rgba(255, 255, 255, 0.03);
+}
+
+/* ─── Storyblok QueuePage: Inline style cleanup ─────────────────────────── */
+.cmcc-queue-header-icon {
+  display: inline;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+.cmcc-queue-search-icon-wrap {
+  position: relative;
+}
+.cmcc-queue-search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9ca3af;
+  pointer-events: none;
+}
+
+/* ── Status badge colors ────────────────────────────── */
+.cmcc-status-pending {
+  color: #b45309;
+  background: #fef3c7;
+}
+.cmcc-status-approved {
+  color: #15803d;
+  background: #dcfce7;
+}
+.cmcc-status-rejected {
+  color: #b91c1c;
+  background: #fee2e2;
+}
+.cmcc-status-spam {
+  color: #c2410c;
+  background: #ffedd5;
+}
+.cmcc-status-flagged {
+  color: #7c3aed;
+  background: #f3e8ff;
+}
+.cmcc-status-deferred {
+  color: #4f46e5;
+  background: #eef2ff;
+}
+
+/* ── Card elevation ──────────────────────────────────── */
+.cmcc-analytics-card {
+  box-shadow: var(--cmcc-shadow-sm, 0 1px 2px rgba(0, 0, 0, 0.05));
+}
+.cmcc-storyblok-app .cmcc-queue-table {
+  box-shadow: var(--cmcc-shadow-sm, 0 1px 2px rgba(0, 0, 0, 0.05));
+}
+
+/* ── Table zebra-striping ────────────────────────────── */
+.cmcc-activity-table tbody tr:nth-child(even) {
+  background: var(--cmcc-bg-table-stripe, #f6f7f7);
+}
+.cmcc-activity-table tbody tr:hover {
+  background: var(--cmcc-bg-table-hover, #e5e7eb);
 }

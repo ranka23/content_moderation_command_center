@@ -1,0 +1,244 @@
+/* ===========================================================
+   SECTION: Activity Log
+   =========================================================== */
+
+/* ─── Activity Log Table ───────────────────────────────── */
+
+#cmcc-app .cmcc-activity-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+#cmcc-app .cmcc-activity-table th {
+  text-align: left;
+  padding: 8px 10px;
+  border-bottom: 1px solid #c3c4c7;
+  font-weight: 600;
+  color: #2c3338;
+  background: #f6f7f7;
+}
+
+#cmcc-app .cmcc-activity-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid #f0f0f1;
+}
+
+#cmcc-app .cmcc-activity-table tr:hover td {
+  background: #f6f7f7;
+}
+
+#cmcc-app .cmcc-action-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+#cmcc-app .cmcc-action-approve {
+  background: #e2f0d9;
+  color: #237739;
+}
+
+#cmcc-app .cmcc-action-reject,
+#cmcc-app .cmcc-action-trash {
+  background: #fbe9e9;
+  color: #b32d2e;
+}
+
+#cmcc-app .cmcc-action-spam {
+  background: #fde8d7;
+  color: #c35b1a;
+}
+
+#cmcc-app .cmcc-action-defer {
+  background: #e5f5fa;
+  color: var(--cmcc-primary);
+}
+
+#cmcc-app .cmcc-action-flag {
+  background: #fef8ee;
+  color: #b2620f;
+}
+
+#cmcc-app .cmcc-action-mark-as-spam {
+  background: #fde8d7;
+  color: #c35b1a;
+}
+
+#cmcc-app .cmcc-action-approve-all {
+  background: #e2f0d9;
+  color: #237739;
+}
+
+/* ─── Pagination (simple) ──────────────────────────────────────────────── */
+
+#cmcc-app .cmcc-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 0 8px;
+  color: #757575;
+  font-size: 13px;
+}
+
+#cmcc-app .cmcc-pagination-info {
+  font-size: 13px;
+  color: #50575e;
+}
+
+/* ===========================================================
+   SECTION: Settings
+   =========================================================== */
+
+/* ─── Settings Form ────────────────────────────────────── */
+
+#cmcc-app .cmcc-settings-form {
+  max-width: 700px;
+}
+
+#cmcc-app .cmcc-settings-form input[type='text'],
+#cmcc-app .cmcc-settings-form input[type='number'],
+#cmcc-app .cmcc-settings-form textarea,
+#cmcc-app .cmcc-settings-form select {
+  width: 100%;
+  padding: 6px 10px;
+  border: 1px solid #c3c4c7;
+  border-radius: 3px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+#cmcc-app .cmcc-settings-form input[type='checkbox'] {
+  margin: 0;
+}
+
+/* ─── Settings: Validation Error States (UX5 Fix) ──────────────────────── */
+
+#cmcc-app .cmcc-settings-form input.cmcc-field-error,
+#cmcc-app .cmcc-settings-form textarea.cmcc-field-error,
+#cmcc-app .cmcc-settings-form select.cmcc-field-error {
+  border-color: #d63638;
+  box-shadow: 0 0 0 1px #d63638;
+  background-color: #fff8f8;
+}
+
+#cmcc-app .cmcc-field-error-message {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+  font-size: 12px;
+  color: #d63638;
+  font-weight: 500;
+  animation: cmcc-shake-in 0.3s ease;
+}
+
+/* Focus-visible ring for accessibility */
+#cmcc-app .cmcc-settings-form input:focus-visible,
+#cmcc-app .cmcc-settings-form textarea:focus-visible,
+#cmcc-app .cmcc-settings-form select:focus-visible,
+#cmcc-app button:focus-visible,
+#cmcc-app .cmcc-btn:focus-visible,
+#cmcc-app .cmcc-tab:focus-visible {
+  outline: 2px solid #2271b1;
+  outline-offset: 1px;
+}
+
+@keyframes cmcc-shake-in {
+  0% {
+    transform: translateX(-4px);
+    opacity: 0;
+  }
+  50% {
+    transform: translateX(4px);
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* ─── Skeleton Loader Styles ───────────────────────────────────────────── */
+
+#cmcc-app .cmcc-skeleton {
+  background: linear-gradient(90deg, #f0f0f1 25%, #e2e4e7 50%, #f0f0f1 75%);
+  background-size: 200% 100%;
+  animation: cmcc-shimmer 1.5s infinite;
+  border-radius: var(--cmcc-radius-sm);
+  display: inline-block;
+  line-height: 1;
+}
+
+#cmcc-app .cmcc-skeleton-text {
+  height: 13px;
+  margin-bottom: 8px;
+  width: 100%;
+}
+
+#cmcc-app .cmcc-skeleton-text:last-child {
+  width: 60%;
+}
+
+#cmcc-app .cmcc-skeleton-heading {
+  height: 20px;
+  width: 40%;
+  margin-bottom: 12px;
+}
+
+#cmcc-app .cmcc-skeleton-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--cmcc-radius-full);
+  flex-shrink: 0;
+}
+
+#cmcc-app .cmcc-skeleton-button {
+  height: 32px;
+  width: 80px;
+  border-radius: var(--cmcc-radius-sm);
+}
+
+#cmcc-app .cmcc-skeleton-badge {
+  height: 20px;
+  width: 60px;
+  border-radius: var(--cmcc-radius-full);
+}
+
+#cmcc-app .cmcc-skeleton-card {
+  height: 120px;
+  width: 100%;
+  border-radius: var(--cmcc-radius-lg);
+  margin-bottom: 16px;
+}
+
+#cmcc-app .cmcc-skeleton-table-row {
+  height: 44px;
+  width: 100%;
+  margin-bottom: 4px;
+}
+
+/* Skeleton container with explicit dimensions to prevent layout shift */
+#cmcc-app .cmcc-skeleton-container {
+  position: relative;
+  overflow: hidden;
+  min-height: 120px;
+}
+
+@keyframes cmcc-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* ─── Dark Mode Skeleton ────────────────────────────────────────────── */
+.dark #cmcc-app .cmcc-skeleton {
+  background: linear-gradient(90deg, #2a2a4a 25%, #3a3a5a 50%, #2a2a4a 75%);
+  background-size: 200% 100%;
+}

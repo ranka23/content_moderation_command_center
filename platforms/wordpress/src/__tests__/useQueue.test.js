@@ -26,8 +26,17 @@ describe('useQueue', () => {
     })
   })
 
-  it('initializes with default state', () => {
+  it('initializes with default state', async () => {
+    // The hook triggers fetchQueue on mount via useEffect.
+    // We resolve the fetch so loading goes back to false.
+    apiFetch.mockResolvedValue({ items: [], total: 0 })
     const { result } = renderHook(() => useQueue({ addToast }))
+
+    // Flush the mount effect (the deferred fetchQueue call)
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0))
+    })
+
     expect(result.current.queueItems).toEqual([])
     expect(result.current.queueTotal).toBe(0)
     expect(result.current.isQueueLoading).toBe(false)
@@ -41,8 +50,18 @@ describe('useQueue', () => {
   })
 
   it('fetchQueue fetches items from API', async () => {
-    const mockItems = [{ id: '1', title: 'Test', status: 'pending' }]
-    apiFetch.mockResolvedValue({ items: mockItems, total: 1 })
+    // Mock data should match the shape the hook normalizer expects
+    const mockItem = {
+      item_id: '1',
+      content_type: 'comment',
+      status: 'pending',
+      spam_score: '0.1',
+      author_id: '5',
+      date_gmt: '2023-06-15T10:30:00Z',
+      title: 'Test',
+      excerpt: 'A test comment',
+    }
+    apiFetch.mockResolvedValue({ items: [mockItem], total: 1 })
 
     const { result } = renderHook(() => useQueue({ addToast }))
 
@@ -50,28 +69,52 @@ describe('useQueue', () => {
       await result.current.fetchQueue()
     })
 
-    expect(result.current.queueItems).toEqual(mockItems)
+    // Verify the hook normalizes the API response correctly
+    expect(result.current.queueItems).toHaveLength(1)
+    expect(result.current.queueItems[0]).toMatchObject({
+      id: '1',
+      contentType: 'comment',
+      status: 'pending',
+      title: 'Test',
+    })
     expect(result.current.queueTotal).toBe(1)
   })
 
   it('fetchQueue handles API errors', async () => {
-    apiFetch.mockRejectedValue(new Error('API error'))
-
+    // Resolve mount effect fetch first
+    apiFetch.mockResolvedValue({ items: [], total: 0 })
     const { result } = renderHook(() => useQueue({ addToast }))
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0))
+    })
+
+    // Now test the error case
+    addToast.mockClear()
+    apiFetch.mockReset()
+    apiFetch.mockRejectedValue(new Error('API error'))
 
     await act(async () => {
       await result.current.fetchQueue()
     })
 
     expect(result.current.isQueueLoading).toBe(false)
-    expect(addToast).toHaveBeenCalledWith('Failed to fetch queue', 'error')
+    // The hook calls addToast with 'Failed to fetch queue items', not 'Failed to fetch queue'
+    expect(addToast).toHaveBeenCalledWith(
+      'Failed to fetch queue items',
+      'error',
+    )
   })
 
-  it('updateFilters changes filter values', () => {
+  it('handleFilterChange changes filter values', () => {
+    apiFetch.mockResolvedValue({ items: [], total: 0 })
     const { result } = renderHook(() => useQueue({ addToast }))
 
+    // The hook exposes handleFilterChange, not updateFilters
     act(() => {
-      result.current.updateFilters({ status: 'spam', contentType: 'comment' })
+      result.current.handleFilterChange({
+        status: 'spam',
+        contentType: 'comment',
+      })
     })
 
     expect(result.current.filters.status).toBe('spam')
@@ -81,6 +124,7 @@ describe('useQueue', () => {
   })
 
   it('setQueuePage changes page', () => {
+    apiFetch.mockResolvedValue({ items: [], total: 0 })
     const { result } = renderHook(() => useQueue({ addToast }))
 
     act(() => {
@@ -91,16 +135,25 @@ describe('useQueue', () => {
   })
 
   it('handleItemAction sends request and refreshes queue', async () => {
-    apiFetch.mockResolvedValue({ success: true })
+    apiFetch
+      .mockResolvedValueOnce({ items: [], total: 0 }) // mount fetch
+      .mockResolvedValueOnce({ success: true }) // action request
+      .mockResolvedValueOnce({ items: [], total: 0 }) // refresh fetch
 
     const { result } = renderHook(() => useQueue({ addToast }))
+
+    // Flush mount effect
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0))
+    })
+    apiFetch.mockClear()
 
     await act(async () => {
       await result.current.handleItemAction('approve', 'item-1')
     })
 
     expect(apiFetch).toHaveBeenCalledWith(
-      'queue/item-1/moderate',
+      'queue/item-1/action',
       expect.objectContaining({
         method: 'POST',
         body: expect.stringContaining('approve'),
@@ -109,16 +162,24 @@ describe('useQueue', () => {
   })
 
   it('handleBulkAction sends request for multiple items', async () => {
-    apiFetch.mockResolvedValue({ success: true })
+    apiFetch
+      .mockResolvedValueOnce({ items: [], total: 0 }) // mount fetch
+      .mockResolvedValueOnce({ success: true }) // bulk action
 
     const { result } = renderHook(() => useQueue({ addToast }))
+
+    // Flush mount effect
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0))
+    })
+    apiFetch.mockClear()
 
     await act(async () => {
       await result.current.handleBulkAction('spam', ['1', '2', '3'])
     })
 
     expect(apiFetch).toHaveBeenCalledWith(
-      'queue/bulk',
+      'queue/bulk-action',
       expect.objectContaining({
         method: 'POST',
         body: expect.stringContaining('"1","2","3"'),

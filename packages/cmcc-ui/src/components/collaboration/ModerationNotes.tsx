@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { cn } from '../../lib/cn'
+import { Icon } from '../../lib/icons'
 
 // ─── Types ───────────────────────────────────────────────────────────────
 
@@ -69,8 +70,9 @@ export function ModerationNotes({
 
   return (
     <div className={cn('tw-space-y-4', className)}>
-      <h4 className="tw-text-sm tw-font-semibold tw-text-gray-700">
-        📝 Moderation Notes
+      <h4 className="tw-text-sm tw-font-semibold tw-text-gray-700 tw-flex tw-items-center tw-gap-1.5">
+        <Icon name="note" size={16} />
+        Moderation Notes
       </h4>
 
       {/* Notes list */}

@@ -12,8 +12,9 @@
     "resolveJsonModule": true,
     "noEmitOnError": true,
     "noImplicitThis": true,
+    "checkJs": false,
     "outDir": "dist",
-    "rootDir": "."
+    "rootDir": ".",
   },
   "include": [
     // Include root files
@@ -23,7 +24,7 @@
     // Include all js files
     "./**/*.js",
     // Force the JSON files in the src folder to be included
-    "src/**/*.json"
+    "src/**/*.json",
   ],
 
   "exclude": [
@@ -39,6 +40,6 @@
     // Do not include test files
     "**/*.test.*",
     // Do not include plugins in the server compilation
-    "src/plugins/**"
-  ]
+    "src/plugins/**",
+  ],
 }

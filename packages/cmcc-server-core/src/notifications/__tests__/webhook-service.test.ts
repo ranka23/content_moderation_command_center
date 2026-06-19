@@ -72,9 +72,9 @@ describe('WebhookService', () => {
       status: 'pending',
     })
 
-    expect(payload.event).toBe('item.created')
-    expect(payload.data).toEqual({ id: '123', status: 'pending' })
-    expect(payload.version).toBe('1.0')
-    expect(payload.timestamp).toBeDefined()
+    expect(payload['event']).toBe('item.created')
+    expect(payload['data']).toEqual({ id: '123', status: 'pending' })
+    expect(payload['version']).toBe('1.0')
+    expect(payload['timestamp']).toBeDefined()
   })
 })

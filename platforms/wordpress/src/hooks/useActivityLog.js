@@ -1,33 +1,8 @@
 import { useState, useCallback, useEffect } from 'react'
 import { startTransition } from 'react'
+import { filterActivityLog } from '@cmcc/core'
 import { apiFetch } from '../lib/api'
-
-/**
- * Normalize activity log action strings from API to human-readable labels.
- */
-const ACTION_LABELS = {
-  approve: 'approved',
-  unapprove: 'unapproved',
-  spam: 'marked as spam',
-  unspam: 'unmarked as spam',
-  delete: 'deleted',
-  trash: 'moved to trash',
-  untrash: 'restored from trash',
-  reject: 'rejected',
-  defer: 'deferred',
-  flag: 'flagged',
-  'deactivate-user': 'user deactivated',
-  'reactivate-user': 'user reactivated',
-}
-
-/**
- * Normalize an action string to a human-readable label.
- */
-function normalizeAction(action) {
-  if (!action) return 'Unknown action'
-  const lower = action.toLowerCase().trim()
-  return ACTION_LABELS[lower] || lower
-}
+import { normalizeAction } from '../constants/actionLabels'
 
 /**
  * Activity log hook.
@@ -73,7 +48,10 @@ export function useActivityLog({ addToast }) {
             normalizeAction(entry.action) ||
             'Unknown action',
         }))
-        setActivityLog(mappedItems)
+
+        // Apply client-side filtering/truncation using @cmcc/core filterActivityLog
+        const filtered = filterActivityLog(mappedItems, {})
+        setActivityLog(filtered)
         setLogTotal(data.total || 0)
       } catch (err) {
         // eslint-disable-next-line no-console

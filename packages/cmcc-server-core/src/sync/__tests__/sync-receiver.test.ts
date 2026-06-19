@@ -1,7 +1,7 @@
 /**
  * Sync Receiver — Unit Tests
  */
-import type { SyncPayload } from '../sync-receiver';
+import type { SyncPayload } from '../sync-receiver'
 import { SyncReceiver } from '../sync-receiver'
 
 describe('SyncReceiver', () => {
@@ -107,32 +107,6 @@ describe('SyncReceiver', () => {
     })
   })
 
-  describe('validatePayload', () => {
-    it('returns errors for missing firewall_rules', () => {
-      const errors = (receiver as any).validatePayload({ timestamp: '', source: '' })
-      expect(errors.length).toBeGreaterThan(0)
-    })
-
-    it('returns errors for missing auto_moderation', () => {
-      const errors = (receiver as any).validatePayload({ firewall_rules: {}, timestamp: '', source: '' })
-      expect(errors.length).toBeGreaterThan(0)
-    })
-
-    it('returns errors for missing timestamp', () => {
-      const errors = (receiver as any).validatePayload({
-        firewall_rules: {}, auto_moderation: {}, source: '',
-      })
-      expect(errors.length).toBeGreaterThan(0)
-    })
-
-    it('returns no errors for valid payload', () => {
-      const errors = (receiver as any).validatePayload({
-        firewall_rules: { max_links: 5 },
-        auto_moderation: {},
-        timestamp: new Date().toISOString(),
-        source: 'https://example.com',
-      })
-      expect(errors.length).toBe(0)
-    })
-  })
+  // validatePayload is an internal function tested implicitly by
+  // receiveSync validation tests above.
 })

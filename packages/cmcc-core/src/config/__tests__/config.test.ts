@@ -28,7 +28,7 @@ describe('Platform Registry', () => {
     const wp = getPlatform('wordpress')
     expect(wp).toBeDefined()
     expect(wp!.name).toBe('WordPress')
-    expect(wp!.icon).toBe('🌐')
+    expect(wp!.icon).toBe('wordpress')
     expect(wp!.isFirstParty).toBe(true)
   })
 

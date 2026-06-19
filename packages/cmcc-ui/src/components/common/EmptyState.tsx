@@ -1,4 +1,5 @@
 import React from 'react'
+import { Icon } from '../../lib/icons'
 
 export interface EmptyStateProps {
   icon?: string
@@ -9,7 +10,7 @@ export interface EmptyStateProps {
 }
 
 export function EmptyState({
-  icon = '📭',
+  icon = 'empty',
   title,
   description,
   action,
@@ -21,7 +22,18 @@ export function EmptyState({
     >
       {icon && (
         <div className="tw-text-4xl tw-mb-4" aria-hidden="true">
-          {icon === 'queue' ? '📋' : icon === 'activity' ? '📜' : icon}
+          <Icon
+            name={
+              icon === 'queue'
+                ? 'queue'
+                : icon === 'activity'
+                  ? 'activity-log'
+                  : icon === 'users'
+                    ? 'user'
+                    : icon
+            }
+            size={32}
+          />
         </div>
       )}
       <h3 className="tw-text-lg tw-font-semibold tw-text-gray-900 tw-mb-1">

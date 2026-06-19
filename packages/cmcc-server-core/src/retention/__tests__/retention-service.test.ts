@@ -1,12 +1,12 @@
 /**
  * Retention Service — Unit Tests
  */
-import type { RetentionConfig } from '../retention-service';
+import type { RetentionConfig } from '../retention-service'
 import { RetentionService } from '../retention-service'
 
 describe('RetentionService', () => {
   let service: RetentionService
-  const mockDeleteFn = jest.fn()
+  let mockDeleteFn: jest.Mock
 
   const config: RetentionConfig = {
     activityLogRetentionDays: 90,
@@ -16,7 +16,7 @@ describe('RetentionService', () => {
   }
 
   beforeEach(() => {
-    jest.clearAllMocks()
+    mockDeleteFn = jest.fn()
     service = new RetentionService(config)
   })
 
@@ -71,8 +71,8 @@ describe('RetentionService', () => {
 
     it('handles partial failures', async () => {
       mockDeleteFn
-        .mockResolvedValueOnce(50)  // activity log succeeds
-        .mockRejectedValueOnce(new Error('Archive error'))  // archive fails
+        .mockResolvedValueOnce(50) // activity log succeeds
+        .mockRejectedValueOnce(new Error('Archive error')) // archive fails
 
       const result = await service.runScheduledPurge(mockDeleteFn, mockDeleteFn)
 

@@ -9,10 +9,20 @@ import {
   ModerationNotes,
   QueueTable,
   AiEvaluationResult,
+  ConfirmationModal,
 } from '@cmcc/ui'
-import { useQueue } from '../hooks/useQueue'
 import { apiFetch } from '../lib/api'
-import { KEYBOARD_SHORTCUTS } from '../lib/constants'
+import {
+  RefreshCw,
+  Keyboard,
+  CheckCircle,
+  XCircle,
+  Flag,
+  Cpu,
+  ClipboardList,
+  History,
+} from 'lucide-react'
+import ConfirmActionDialog from '../components/ConfirmActionDialog'
 
 const sb = (s) =>
   ({
@@ -29,13 +39,42 @@ const hb = (a) =>
     spam: 'tw-bg-amber-100 tw-text-amber-800',
   })[a] || 'tw-bg-gray-100 tw-text-gray-700'
 
-export default function QueuePage({ addToast, theme = 'light' }) {
-  const h = useQueue({ addToast })
+export default function QueuePage({
+  queue: h,
+  collaboration: _collab,
+  queueStats: _qs,
+  addToast,
+  theme = 'light',
+}) {
   const [cba, scba] = useState(null)
   const [aiEvalResult, setAiEvalResult] = useState(null)
   const [aiEvalLoading, setAiEvalLoading] = useState(false)
   const [aiEvalError, setAiEvalError] = useState(null)
+
+  // ── Confirmation dialog for single item actions ───────────────────
+  const [confirmAction, setConfirmAction] = useState(null) // { action, item }
+  const [confirmLoading, setConfirmLoading] = useState(false)
+
   const hbawc = useCallback((a, ids) => scba({ action: a, ids }), [])
+
+  const handleConfirmAction = useCallback(async () => {
+    if (!confirmAction) return
+    const { action, item } = confirmAction
+    setConfirmLoading(true)
+    try {
+      const id = item.id || item.originalId
+      await h.handleItemAction(action, id)
+      h.setDetailItem(null)
+    } finally {
+      setConfirmLoading(false)
+      setConfirmAction(null)
+    }
+  }, [confirmAction, h])
+
+  const requestConfirmAction = useCallback((action, item) => {
+    setConfirmAction({ action, item })
+  }, [])
+
   const onRead = useCallback(
     (item) => {
       const id = item.id || item.originalId
@@ -123,7 +162,9 @@ export default function QueuePage({ addToast, theme = 'light' }) {
             size="sm"
             onClick={() => h.fetchQueue(h.queuePage)}
           >
-            🔄 Refresh
+            <>
+              <RefreshCw size={14} className="tw-inline tw-mr-1" /> Refresh
+            </>
           </Button>
           <span className="tw-text-xs tw-text-gray-400 tw-hidden sm:tw-inline">
             {h.isQueueLoading ? 'Loading...' : `${h.queueTotal} items`}
@@ -156,7 +197,7 @@ export default function QueuePage({ addToast, theme = 'light' }) {
             onClick={() => scba({ action: '__shortcuts' })}
             title="Keyboard shortcuts"
           >
-            ⌨️
+            <Keyboard size={16} />
           </button>
         </div>
       </div>
@@ -197,7 +238,9 @@ export default function QueuePage({ addToast, theme = 'light' }) {
           description="Items will appear here when content needs moderation."
           action={
             <Button variant="outline" size="sm" onClick={() => h.fetchQueue(1)}>
-              🔄 Refresh
+              <>
+                <RefreshCw size={14} className="tw-inline tw-mr-1" /> Refresh
+              </>
             </Button>
           }
         />
@@ -270,41 +313,36 @@ export default function QueuePage({ addToast, theme = 'light' }) {
             <div className="tw-flex tw-gap-2 tw-pt-2 tw-border-t tw-border-gray-100">
               {d.status !== 'approved' && (
                 <button
-                  onClick={() => {
-                    h.handleItemAction('approve', d.id || d.originalId)
-                    h.setDetailItem(null)
-                  }}
-                  className="tw-flex-1 tw-rounded tw-bg-green-600 tw-text-white tw-px-3 tw-py-1.5 tw-text-sm hover:tw-bg-green-700"
+                  onClick={() => requestConfirmAction('approve', d)}
+                  className="tw-flex-1 tw-rounded tw-bg-green-600 tw-text-white tw-px-3 tw-py-1.5 tw-text-sm hover:tw-bg-green-700 tw-transition-colors tw-cursor-pointer"
                 >
-                  ✅ Approve
+                  <CheckCircle size={16} className="tw-inline tw-mr-1" />
+                  Approve
                 </button>
               )}
               {d.status !== 'rejected' && (
                 <button
-                  onClick={() => {
-                    h.handleItemAction('reject', d.id || d.originalId)
-                    h.setDetailItem(null)
-                  }}
-                  className="tw-flex-1 tw-rounded tw-bg-red-600 tw-text-white tw-px-3 tw-py-1.5 tw-text-sm hover:tw-bg-red-700"
+                  onClick={() => requestConfirmAction('reject', d)}
+                  className="tw-flex-1 tw-rounded tw-bg-red-600 tw-text-white tw-px-3 tw-py-1.5 tw-text-sm hover:tw-bg-red-700 tw-transition-colors tw-cursor-pointer"
                 >
-                  ❌ Reject
+                  <XCircle size={16} className="tw-inline tw-mr-1" /> Reject
                 </button>
               )}
               <button
-                onClick={() => {
-                  h.handleItemAction('spam', d.id || d.originalId)
-                  h.setDetailItem(null)
-                }}
-                className="tw-flex-1 tw-rounded tw-bg-amber-600 tw-text-white tw-px-3 tw-py-1.5 tw-text-sm hover:tw-bg-amber-700"
+                onClick={() => requestConfirmAction('spam', d)}
+                className="tw-flex-1 tw-rounded tw-bg-amber-600 tw-text-white tw-px-3 tw-py-1.5 tw-text-sm hover:tw-bg-amber-700 tw-transition-colors tw-cursor-pointer"
               >
-                🚫 Spam
+                <Flag size={16} className="tw-inline tw-mr-1" /> Spam
               </button>
               <button
                 onClick={() => handleAiEvaluate(d)}
                 className="tw-flex-1 tw-rounded tw-bg-purple-600 tw-text-white tw-px-3 tw-py-1.5 tw-text-sm hover:tw-bg-purple-700"
                 disabled={aiEvalLoading}
               >
-                🤖 {aiEvalLoading ? 'Evaluating...' : 'AI Evaluate'}
+                <>
+                  <Cpu size={16} className="tw-inline tw-mr-1" />{' '}
+                  {aiEvalLoading ? 'Evaluating...' : 'AI Evaluate'}
+                </>
               </button>
             </div>
             {(aiEvalResult || aiEvalLoading || aiEvalError) && (
@@ -319,7 +357,10 @@ export default function QueuePage({ addToast, theme = 'light' }) {
             )}
             <div className="tw-pt-4 tw-border-t tw-border-gray-100">
               <h4 className="tw-text-sm tw-font-semibold tw-mb-2">
-                📋 Assignment
+                <>
+                  <ClipboardList size={16} className="tw-inline tw-mr-1" />{' '}
+                  Assignment
+                </>
               </h4>
               <div className="tw-flex tw-flex-col tw-gap-2">
                 <input
@@ -364,7 +405,10 @@ export default function QueuePage({ addToast, theme = 'light' }) {
             </div>
             <div className="tw-pt-4 tw-border-t tw-border-gray-100">
               <h4 className="tw-text-sm tw-font-semibold tw-mb-2">
-                📜 History Timeline
+                <>
+                  <History size={16} className="tw-inline tw-mr-1" /> History
+                  Timeline
+                </>
               </h4>
               {historyJsx}
             </div>
@@ -380,70 +424,32 @@ export default function QueuePage({ addToast, theme = 'light' }) {
           </div>
         )}
       </SlideOutPanel>
-      {cba && cba.action === '__shortcuts' ? (
-        <div className="cmcc-modal-overlay" onClick={() => scba(null)}>
-          <div className="cmcc-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="cmcc-modal-header">
-              <h3 className="cmcc-modal-title">⌨️ Keyboard Shortcuts</h3>
-              <button className="cmcc-modal-close" onClick={() => scba(null)}>
-                ✕
-              </button>
-            </div>
-            <div className="cmcc-modal-body">
-              <div className="tw-space-y-2">
-                {KEYBOARD_SHORTCUTS.map((sk) => (
-                  <div
-                    key={sk.key}
-                    className="tw-flex tw-justify-between tw-items-center tw-py-1"
-                  >
-                    <span className="tw-text-sm tw-text-gray-600">
-                      {sk.description}
-                    </span>
-                    <kbd className="tw-px-2 tw-py-1 tw-text-xs tw-font-mono tw-bg-gray-100 tw-border tw-border-gray-300 tw-rounded">
-                      {sk.key.length === 1 ? sk.key.toUpperCase() : sk.key}
-                    </kbd>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      ) : (
-        cba && (
-          <div className="cmcc-modal-overlay" onClick={() => scba(null)}>
-            <div className="cmcc-modal" onClick={(e) => e.stopPropagation()}>
-              <div className="cmcc-modal-header">
-                <h3 className="cmcc-modal-title">Confirm Bulk Action</h3>
-                <button className="cmcc-modal-close" onClick={() => scba(null)}>
-                  ✕
-                </button>
-              </div>
-              <div className="cmcc-modal-body">
-                <p className="tw-text-sm tw-text-gray-600">
-                  Are you sure you want to apply &quot;{cba.action}&quot; to{' '}
-                  {cba.ids.length} selected items? This action cannot be undone.
-                </p>
-                <div className="cmcc-modal-actions">
-                  <button
-                    onClick={() => scba(null)}
-                    className="cmcc-btn cmcc-btn-secondary"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={() => {
-                      h.handleBulkAction(cba.action, cba.ids)
-                      scba(null)
-                    }}
-                    className="cmcc-btn cmcc-btn-primary"
-                  >
-                    Confirm
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )
+      {/* ── Confirmation dialog for single item actions ──────────────── */}
+      <ConfirmActionDialog
+        action={confirmAction?.action}
+        item={confirmAction?.item}
+        open={!!confirmAction}
+        loading={confirmLoading}
+        onConfirm={handleConfirmAction}
+        onCancel={() => setConfirmAction(null)}
+      />
+
+      {/* ── Confirmation dialog for bulk actions ─────────────────────── */}
+      {cba && cba.action !== '__shortcuts' && (
+        <ConfirmationModal
+          open={true}
+          title="Confirm Bulk Action"
+          message={`Are you sure you want to apply "${cba.action}" to ${cba.ids.length} selected items? This action cannot be undone.`}
+          confirmLabel="Confirm"
+          cancelLabel="Cancel"
+          confirmVariant="danger"
+          destructive={true}
+          onConfirm={() => {
+            h.handleBulkAction(cba.action, cba.ids)
+            scba(null)
+          }}
+          onCancel={() => scba(null)}
+        />
       )}
     </div>
   )

@@ -1,5 +1,16 @@
 import React, { useState } from 'react'
+import { calculateUserSpamRatio } from '@cmcc/core'
 import { Table, SkeletonTable, EmptyState, ActivityFeed } from '@cmcc/ui'
+import {
+  Download,
+  Search,
+  Users,
+  BarChart3,
+  Globe,
+  CheckCircle,
+  XCircle,
+  RefreshCw,
+} from 'lucide-react'
 
 /**
  * ReportsTab — Full reporting functionality including user reputation,
@@ -46,36 +57,11 @@ export function ReportsTab({
 
   // Platform status cards for Multi-Platform Hub
   const platforms = [
-    {
-      name: 'WordPress',
-      icon: '\u{1F535}',
-      status: 'available',
-      connected: false,
-    },
-    {
-      name: 'Shopify',
-      icon: '\u{1F7E2}',
-      status: 'available',
-      connected: false,
-    },
-    {
-      name: 'Storyblok',
-      icon: '\u{1F534}',
-      status: 'available',
-      connected: false,
-    },
-    {
-      name: 'Strapi',
-      icon: '\u{1F7E3}',
-      status: 'available',
-      connected: false,
-    },
-    {
-      name: 'Wix',
-      icon: '\u{26AB}',
-      status: 'active',
-      connected: true,
-    },
+    { name: 'WordPress', status: 'available', connected: false },
+    { name: 'Shopify', status: 'available', connected: false },
+    { name: 'Storyblok', status: 'available', connected: false },
+    { name: 'Strapi', status: 'available', connected: false },
+    { name: 'Wix', status: 'active', connected: true },
   ]
 
   /**
@@ -141,7 +127,10 @@ export function ReportsTab({
     <div className="cmcc-reports-tab">
       {/* Export & Audit Buttons */}
       <div className="cmcc-card cmcc-mb" style={{ padding: '16px' }}>
-        <h3 className="cmcc-card-title">{'\u{1F4E5}'} Export & Compliance</h3>
+        <h3 className="cmcc-card-title">
+          <Download size={16} style={{ display: 'inline' }} /> Export &
+          Compliance
+        </h3>
         <div
           style={{
             display: 'flex',
@@ -156,7 +145,14 @@ export function ReportsTab({
             disabled={exporting}
             style={{ fontSize: 13, padding: '8px 18px' }}
           >
-            {exporting ? 'Exporting...' : '\u{1F4C4} Export Moderation CSV'}
+            {exporting ? (
+              'Exporting...'
+            ) : (
+              <>
+                <Download size={14} style={{ display: 'inline' }} /> Export
+                Moderation CSV
+              </>
+            )}
           </button>
           <button
             className="cmcc-btn-secondary"
@@ -164,7 +160,14 @@ export function ReportsTab({
             disabled={auditRunning}
             style={{ fontSize: 13, padding: '8px 18px' }}
           >
-            {auditRunning ? 'Running...' : '\u{1F50D} Run Compliance Audit'}
+            {auditRunning ? (
+              'Running...'
+            ) : (
+              <>
+                <Search size={14} style={{ display: 'inline' }} /> Run
+                Compliance Audit
+              </>
+            )}
           </button>
         </div>
       </div>
@@ -172,7 +175,10 @@ export function ReportsTab({
       {/* User Reputation Dashboard */}
       <div className="cmcc-card cmcc-mb">
         <h3 className="cmcc-card-title">
-          {'\u{1F464}'} User Reputation Dashboard
+          <>
+            <Users size={16} style={{ display: 'inline' }} /> User Reputation
+            Dashboard
+          </>
         </h3>
         <div className="cmcc-card-body">
           {reputationLoading ? (
@@ -241,14 +247,15 @@ export function ReportsTab({
                   sortable: true,
                   align: 'center',
                   cell: (row) => {
-                    const total = (row.approved || 0) + (row.rejected || 0)
-                    const ratio =
-                      total > 0 ? ((row.rejected || 0) / total) * 100 : 0
+                    const { ratio, percentage } = calculateUserSpamRatio(
+                      row.approved || 0,
+                      row.rejected || 0,
+                    )
                     return (
                       <span
                         className={ratio > 50 ? 'cmcc-stat-value danger' : ''}
                       >
-                        {ratio.toFixed(1)}%
+                        {percentage}%
                       </span>
                     )
                   },
@@ -263,7 +270,10 @@ export function ReportsTab({
       {/* Activity Feed */}
       <div className="cmcc-card cmcc-mb">
         <h3 className="cmcc-card-title">
-          {'\u{1F504}'} Real-Time Activity Feed
+          <>
+            <RefreshCw size={16} style={{ display: 'inline' }} /> Real-Time
+            Activity Feed
+          </>
         </h3>
         <div className="cmcc-card-body">
           <ActivityFeed
@@ -278,7 +288,10 @@ export function ReportsTab({
 
       {/* Moderator Performance with Pagination */}
       <div className="cmcc-card cmcc-mb">
-        <h3 className="cmcc-card-title">{'\u{1F3AF}'} Moderator Performance</h3>
+        <h3 className="cmcc-card-title">
+          <BarChart3 size={16} style={{ display: 'inline' }} /> Moderator
+          Performance
+        </h3>
         <div className="cmcc-card-body">
           {moderatorPerformance.length === 0 ? (
             <EmptyState
@@ -362,7 +375,7 @@ export function ReportsTab({
                       padding: '4px 12px',
                     }}
                   >
-                    {'\u{25C0}'} Prev
+                    ← Prev
                   </button>
                   <span
                     style={{
@@ -383,7 +396,7 @@ export function ReportsTab({
                       padding: '4px 12px',
                     }}
                   >
-                    Next {'\u{25B6}'}
+                    Next →
                   </button>
                 </div>
               )}
@@ -394,7 +407,9 @@ export function ReportsTab({
 
       {/* Multi-Platform Hub */}
       <div className="cmcc-card cmcc-mb">
-        <h3 className="cmcc-card-title">{'\u{1F310}'} Multi-Platform Hub</h3>
+        <h3 className="cmcc-card-title">
+          <Globe size={16} style={{ display: 'inline' }} /> Multi-Platform Hub
+        </h3>
         <div className="cmcc-card-body">
           <p className="cmcc-mb-text">
             Connect and manage moderation across all your platforms from a
@@ -411,15 +426,22 @@ export function ReportsTab({
                   }
                 }}
               >
-                <div className="cmcc-platform-icon">{platform.icon}</div>
+                <div
+                  className="cmcc-platform-icon"
+                  style={{ color: platform.connected ? '#16a34a' : '#9ca3af' }}
+                >
+                  ●
+                </div>
                 <div className="cmcc-platform-name">{platform.name}</div>
                 {platform.connected ? (
                   <span className="cmcc-platform-status connected">
-                    {'\u{25CF}'} Connected
+                    <CheckCircle size={12} style={{ display: 'inline' }} />{' '}
+                    Connected
                   </span>
                 ) : (
                   <span className="cmcc-platform-status">
-                    {'\u{25CB}'} Not connected
+                    <XCircle size={12} style={{ display: 'inline' }} /> Not
+                    connected
                   </span>
                 )}
               </button>

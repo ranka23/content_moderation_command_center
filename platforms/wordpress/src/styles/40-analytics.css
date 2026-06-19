@@ -1,0 +1,387 @@
+/* ===========================================================
+   SECTION: Analytics Dashboard
+   =========================================================== */
+
+/* ─── Analytics ────────────────────────────────────────── */
+
+#cmcc-app .cmcc-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+#cmcc-app .cmcc-stat-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 20px;
+  background: #f6f7f7;
+  border: 1px solid #e2e4e7;
+  border-radius: 6px;
+  text-align: center;
+}
+
+#cmcc-app .cmcc-stat-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #757575;
+}
+
+#cmcc-app .cmcc-stat-value {
+  font-size: 30px;
+  font-weight: 700;
+  color: #1d2327;
+}
+
+#cmcc-app .cmcc-stat-pending {
+  color: #f0ad4e;
+}
+#cmcc-app .cmcc-stat-spam {
+  color: #d9534f;
+}
+#cmcc-app .cmcc-stat-flagged {
+  color: #f56e28;
+}
+
+#cmcc-app .cmcc-analytics-section {
+  margin-bottom: 24px;
+}
+
+#cmcc-app .cmcc-analytics-section h3 {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #f0f0f1;
+  color: #1d2327;
+}
+
+#cmcc-app .cmcc-spam-ratio {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+#cmcc-app .cmcc-spam-ratio-bar {
+  flex: 1;
+  min-width: 200px;
+  height: 24px;
+  background: #f0f0f1;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+#cmcc-app .cmcc-spam-ratio-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #f0ad4e, #d9534f);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+  min-width: 2px;
+}
+
+#cmcc-app .cmcc-spam-ratio-text {
+  font-size: 13px;
+  color: #50575e;
+  white-space: nowrap;
+}
+
+#cmcc-app .cmcc-breakdown-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+#cmcc-app .cmcc-breakdown-table th {
+  text-align: left;
+  padding: 8px 10px;
+  border-bottom: 1px solid #c3c4c7;
+  font-weight: 600;
+  color: #2c3338;
+  background: #f6f7f7;
+}
+
+#cmcc-app .cmcc-breakdown-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid #f0f0f1;
+}
+
+/* ─── Heatmap ──────────────────────────────────────────────────────────── */
+
+#cmcc-app .cmcc-heatmap-chart {
+  padding: 12px 0;
+}
+
+#cmcc-app .cmcc-heatmap-hour-labels {
+  display: flex;
+  padding-left: 40px;
+  margin-bottom: 4px;
+}
+
+#cmcc-app .cmcc-heatmap-hour-label {
+  flex: 1;
+  font-size: 9px;
+  color: #757575;
+  text-align: center;
+  /* Hide empty labels (every hour not divisible by 4) */
+  visibility: visible;
+}
+
+#cmcc-app .cmcc-heatmap-hour-label:empty {
+  visibility: hidden;
+}
+
+#cmcc-app .cmcc-heatmap-grid {
+  display: flex;
+  gap: 0;
+}
+
+#cmcc-app .cmcc-heatmap-day-labels {
+  display: flex;
+  flex-direction: column;
+  width: 40px;
+  gap: 2px;
+}
+
+#cmcc-app .cmcc-heatmap-day-label {
+  height: 18px;
+  font-size: 10px;
+  color: #757575;
+  line-height: 18px;
+  text-align: right;
+  padding-right: 6px;
+}
+
+#cmcc-app .cmcc-heatmap-cells {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+#cmcc-app .cmcc-heatmap-row {
+  display: flex;
+  gap: 2px;
+}
+
+#cmcc-app .cmcc-heatmap-cell {
+  flex: 1;
+  height: 18px;
+  font-size: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 2px;
+  color: #fff;
+  font-weight: 600;
+  /* Subtle border for empty cells to distinguish them */
+  border: 1px solid transparent;
+  background-clip: padding-box;
+  transition: transform 0.1s ease;
+}
+
+#cmcc-app .cmcc-heatmap-cell:hover {
+  transform: scale(1.15);
+  z-index: 1;
+  border-color: #50575e;
+}
+
+#cmcc-app .cmcc-heatmap-legend {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding-left: 40px;
+}
+
+#cmcc-app .cmcc-heatmap-legend-label {
+  font-size: 11px;
+  color: #757575;
+  white-space: nowrap;
+}
+
+#cmcc-app .cmcc-heatmap-legend-bar {
+  width: 120px;
+  height: 12px;
+  border-radius: 3px;
+  overflow: hidden;
+  background: #f0f0f1;
+}
+
+#cmcc-app .cmcc-heatmap-legend-gradient {
+  height: 100%;
+  width: 100%;
+  background: linear-gradient(
+    to right,
+    #e3f0fa 0%,
+    #abd0e6 25%,
+    #6fa8d1 50%,
+    #3b7cb8 75%,
+    #1a4d8f 100%
+  );
+}
+
+#cmcc-app .cmcc-heatmap-legend-labels {
+  display: flex;
+  justify-content: space-between;
+  flex: 1;
+  min-width: 40px;
+  font-size: 10px;
+  color: #757575;
+}
+
+/* ─── Heatmap Empty State ──────────────────────────────────────────── */
+
+#cmcc-app .cmcc-heatmap-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  text-align: center;
+}
+
+#cmcc-app .cmcc-heatmap-empty-icon {
+  font-size: 36px;
+  margin-bottom: 8px;
+}
+
+#cmcc-app .cmcc-heatmap-empty-text {
+  font-size: 14px;
+  font-weight: 500;
+  color: #50575e;
+  margin: 0 0 4px;
+}
+
+#cmcc-app .cmcc-heatmap-empty-hint {
+  font-size: 12px;
+  color: #8c8f94;
+  margin: 0;
+}
+
+/* ─── Charts ────────────────────────────────────────────────────────────── */
+
+#cmcc-app .cmcc-charts-row {
+  display: flex;
+  gap: var(--cmcc-space-4, 16px);
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+#cmcc-app .cmcc-chart-card {
+  flex: 1;
+  min-width: 280px;
+  background: #fff;
+  border: 1px solid #e2e4e7;
+  border-radius: 6px;
+  padding: 16px;
+}
+
+#cmcc-app .cmcc-chart-card-half {
+  flex: 0 0 calc(50% - 8px);
+  min-width: 240px;
+}
+
+@media screen and (max-width: 782px) {
+  #cmcc-app .cmcc-chart-card-half {
+    flex: 1 1 100%;
+  }
+}
+
+#cmcc-app .cmcc-chart-container {
+  width: 100%;
+}
+
+#cmcc-app .cmcc-chart-title {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0 0 12px;
+  color: #1d2327;
+}
+
+#cmcc-app .cmcc-chart-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+#cmcc-app .cmcc-chart-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  color: #8c8f94;
+  font-size: 13px;
+  text-align: center;
+}
+
+/* ─── Enhanced Content Breakdown Table ───────────────────────────────── */
+
+#cmcc-app .cmcc-breakdown-wrapper {
+  overflow-x: auto;
+  border: 1px solid #e2e4e7;
+  border-radius: 4px;
+}
+
+#cmcc-app .cmcc-breakdown-table-enhanced {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+#cmcc-app .cmcc-breakdown-table-enhanced th {
+  text-align: left;
+  padding: 8px 6px;
+  border-bottom: 1px solid #c3c4c7;
+  font-weight: 600;
+  color: #2c3338;
+  background: #f6f7f7;
+  white-space: nowrap;
+  font-size: 11px;
+}
+
+#cmcc-app .cmcc-breakdown-table-enhanced td {
+  padding: 6px;
+  border-bottom: 1px solid #f0f0f1;
+  vertical-align: middle;
+}
+
+#cmcc-app .cmcc-breakdown-table-enhanced tbody tr:hover td {
+  background: #f6f7f7;
+}
+
+#cmcc-app .cmcc-bd-type {
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+#cmcc-app .cmcc-bd-num {
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+#cmcc-app .cmcc-bd-pct {
+  color: #8c8f94;
+  font-size: 10px;
+}
+
+#cmcc-app .cmcc-bd-approved {
+  color: #16a34a;
+}
+#cmcc-app .cmcc-bd-pending {
+  color: #ca8a04;
+}
+#cmcc-app .cmcc-bd-spam {
+  color: #dc2626;
+}
+#cmcc-app .cmcc-bd-flagged {
+  color: #ea580c;
+}
+#cmcc-app .cmcc-bd-rejected {
+  color: #6b7280;
+}
+#cmcc-app .cmcc-bd-deferred {
+  color: #0891b2;
+}
