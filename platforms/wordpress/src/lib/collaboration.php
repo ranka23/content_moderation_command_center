@@ -232,7 +232,7 @@ function cmcc_rest_get_activity_feed( WP_REST_Request $request ): WP_REST_Respon
     global $wpdb;
 
     $limit     = min( 50, max( 1, (int) $request->get_param( 'limit' ) ) );
-    $log_table = $wpdb->prefix . CMCC_ACTIVITY_LOG_TABLE;
+    $log_table = CMCC_ACTIVITY_LOG_TABLE;
 
     $rows = $wpdb->get_results( $wpdb->prepare(
         "SELECT l.*, u.display_name as moderator_name
@@ -282,7 +282,7 @@ function cmcc_rest_get_item_history( WP_REST_Request $request ): WP_REST_Respons
     global $wpdb;
 
     $item_id   = $request->get_param( 'id' );
-    $log_table = $wpdb->prefix . CMCC_ACTIVITY_LOG_TABLE;
+    $log_table = CMCC_ACTIVITY_LOG_TABLE;
 
     $history = $wpdb->get_results( $wpdb->prepare(
         "SELECT l.*, u.display_name as moderator_name

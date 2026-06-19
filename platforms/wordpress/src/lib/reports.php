@@ -40,7 +40,7 @@ function cmcc_rest_reports_moderation_activity( WP_REST_Request $request ): WP_R
         ? gmdate( 'Y-m-d H:i:s', strtotime( $end_date_raw ) )
         : gmdate( 'Y-m-d H:i:s' );
 
-    $log_table = $wpdb->prefix . CMCC_ACTIVITY_LOG_TABLE;
+    $log_table = CMCC_ACTIVITY_LOG_TABLE;
 
     $results = $wpdb->get_results( $wpdb->prepare(
         "SELECT l.*, u.display_name as moderator_name
@@ -104,7 +104,7 @@ function cmcc_rest_reports_compliance_audit( WP_REST_Request $request ): WP_REST
         ? gmdate( 'Y-m-d H:i:s', strtotime( $end_date_raw ) )
         : gmdate( 'Y-m-d H:i:s' );
 
-    $log_table = $wpdb->prefix . CMCC_ACTIVITY_LOG_TABLE;
+    $log_table = CMCC_ACTIVITY_LOG_TABLE;
 
     $results = $wpdb->get_results( $wpdb->prepare(
         "SELECT l.*, u.display_name as moderator_name, u.user_email as moderator_email
@@ -175,7 +175,7 @@ function cmcc_rest_reports_moderator_performance( WP_REST_Request $request ): WP
         ? gmdate( 'Y-m-d H:i:s', strtotime( $end_date_raw ) )
         : gmdate( 'Y-m-d H:i:s' );
 
-    $log_table = $wpdb->prefix . CMCC_ACTIVITY_LOG_TABLE;
+    $log_table = CMCC_ACTIVITY_LOG_TABLE;
 
     $results = $wpdb->get_results( $wpdb->prepare(
         "SELECT

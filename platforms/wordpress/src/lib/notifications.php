@@ -165,8 +165,8 @@ function cmcc_send_webhook( string $type, array $data ): void {
 function cmcc_send_digest( array $data = array() ): void {
     if ( empty( $data ) ) {
         global $wpdb;
-        $table = $wpdb->prefix . CMCC_QUEUE_TABLE;
-        $log_table = $wpdb->prefix . CMCC_ACTIVITY_LOG_TABLE;
+        $table = CMCC_QUEUE_TABLE;
+        $log_table = CMCC_ACTIVITY_LOG_TABLE;
 
         $data = array(
             'pending_count'  => (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$table} WHERE status = 'pending'" ),

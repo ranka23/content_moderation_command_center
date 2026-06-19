@@ -129,6 +129,9 @@ register_deactivation_hook( __FILE__, 'cmcc_deactivate' );
  * Initialize the plugin by loading required files and setting up hooks.
  */
 function cmcc_init(): void {
+    // Load text domain for internationalization
+    load_plugin_textdomain( 'cmcc', false, dirname( plugin_basename( __FILE__ ) ) . '/languages' );
+
     // Load PHP libs
     $lib_dir = CMCC_PLUGIN_DIR . 'src/lib/';
     foreach ( array( 'reports', 'user-reputation', 'content-hooks', 'firewall-engine', 'notifications', 'collaboration', 'multi-platform' ) as $lib ) {
@@ -949,85 +952,9 @@ function cmcc_rest_update_settings( WP_REST_Request $request ): WP_REST_Response
 
 } // End function_exists guard
 
-if ( ! function_exists( 'cmcc_rest_get_item_history' ) ) {
 
-/**
- * GET /cmcc/v1/queue/:id/history – Get item activity history.
- *
- * @param WP_REST_Request $request The request object.
- * @return WP_REST_Response
- */
-function cmcc_rest_get_item_history( WP_REST_Request $request ): WP_REST_Response {
-    global $wpdb;
 
-    $item_id   = $request->get_param( 'id' );
-    $log_table = CMCC_ACTIVITY_LOG_TABLE;
 
-    $items = $wpdb->get_results( $wpdb->prepare(
-        "SELECT l.*, u.display_name as moderator_name FROM {$log_table} l LEFT JOIN {$wpdb->users} u ON l.moderator_id = u.ID WHERE l.item_id = %s ORDER BY l.timestamp DESC LIMIT 50", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-        $item_id
-    ) );
-
-    return new WP_REST_Response( array( 'items' => $items ), 200 );
-}
-
-} // End function_exists guard
-
-if ( ! function_exists( 'cmcc_rest_get_user_reputation' ) ) {
-
-/**
- * GET /cmcc/v1/users/reputation – get user reputation data.
- *
- * @return WP_REST_Response
- */
-function cmcc_rest_get_user_reputation(): WP_REST_Response {
-    global $wpdb;
-
-    $queue_table = CMCC_QUEUE_TABLE;
-
-    $users = $wpdb->get_results(
-        "SELECT author_id, COUNT(*) as total_items,
-        SUM(CASE WHEN status = 'spam' THEN 1 ELSE 0 END) as spam_count,
-        SUM(CASE WHEN status = 'approved' THEN 1 ELSE 0 END) as approved_count,
-        MAX(spam_score) as max_spam_score,
-        AVG(spam_score) as avg_spam_score
-        FROM {$queue_table}
-        WHERE author_id != ''
-        GROUP BY author_id
-        ORDER BY total_items DESC
-        LIMIT 100" // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-    );
-
-    $result = array();
-    foreach ( $users as $user ) {
-        $spam_ratio = $user->total_items > 0 ? round( $user->spam_count / $user->total_items, 2 ) : 0;
-
-        if ( $spam_ratio > 0.5 ) {
-            $trust_level = 'Blocked';
-        } elseif ( $spam_ratio > 0.2 ) {
-            $trust_level = 'Suspicious';
-        } elseif ( $spam_ratio > 0.05 ) {
-            $trust_level = 'New';
-        } else {
-            $trust_level = 'Trusted';
-        }
-
-        $result[] = array(
-            'author_id'      => $user->author_id,
-            'total_items'    => (int) $user->total_items,
-            'spam_count'     => (int) $user->spam_count,
-            'approved_count' => (int) $user->approved_count,
-            'max_spam_score' => round( (float) $user->max_spam_score, 2 ),
-            'avg_spam_score' => round( (float) $user->avg_spam_score, 2 ),
-            'spam_ratio'     => $spam_ratio,
-            'trust_level'    => $trust_level,
-        );
-    }
-
-    return new WP_REST_Response( array( 'users' => $result ), 200 );
-}
-
-} // End function_exists guard for cmcc_rest_get_user_reputation
 
 if ( ! function_exists( 'cmcc_rest_get_reputation_raw' ) ) {
 
@@ -1261,61 +1188,7 @@ function cmcc_get_default_settings(): array {
 
 // ─── Additional REST Callbacks ─────────────────────────────────────────────
 
-if ( ! function_exists( 'cmcc_rest_add_note' ) ) {
 
-/**
- * POST /cmcc/v1/queue/:id/note – Add a note to a queue item.
- *
- * @param WP_REST_Request $request The request object.
- * @return WP_REST_Response
- */
-function cmcc_rest_add_note( WP_REST_Request $request ): WP_REST_Response {
-    $item_id = $request->get_param( 'id' );
-    $body    = json_decode( $request->get_body(), true );
-
-    // In a real plugin, you would store notes in a dedicated table.
-    // For this demo, return a success response.
-    return new WP_REST_Response( array(
-        'success' => true,
-        'note'    => array(
-            'id'        => uniqid( 'note_', true ),
-            'content'   => sanitize_textarea_field( $body['content'] ?? '' ),
-            'is_internal' => ! empty( $body['is_internal'] ),
-            'author'    => wp_get_current_user()->display_name,
-            'timestamp' => current_time( 'mysql' ),
-        ),
-    ), 200 );
-}
-
-} // End function_exists guard
-
-if ( ! function_exists( 'cmcc_rest_get_notes' ) ) {
-
-/**
- * GET /cmcc/v1/queue/:id/notes – Get notes for a queue item.
- *
- * @param WP_REST_Request $request The request object.
- * @return WP_REST_Response
- */
-function cmcc_rest_get_notes( WP_REST_Request $request ): WP_REST_Response {
-    return new WP_REST_Response( array( 'notes' => array() ), 200 );
-}
-
-} // End function_exists guard
-
-if ( ! function_exists( 'cmcc_rest_assign_item' ) ) {
-
-/**
- * POST /cmcc/v1/queue/:id/assign – Assign a queue item to a moderator.
- *
- * @param WP_REST_Request $request The request object.
- * @return WP_REST_Response
- */
-function cmcc_rest_assign_item( WP_REST_Request $request ): WP_REST_Response {
-    return new WP_REST_Response( array( 'success' => true ), 200 );
-}
-
-} // End function_exists guard
 
 if ( ! function_exists( 'cmcc_rest_get_activity_feed' ) ) {
 
@@ -1389,57 +1262,6 @@ function cmcc_rest_get_raw_events( WP_REST_Request $request ): WP_REST_Response 
         : $wpdb->get_results( $sql );
 
     return new WP_REST_Response( $events, 200 );
-}
-
-} // End function_exists guard
-
-if ( ! function_exists( 'cmcc_rest_reports_moderation_activity' ) ) {
-
-/**
- * POST /cmcc/v1/reports/moderation-activity – Generate moderation activity report.
- *
- * @param WP_REST_Request $request The request object.
- * @return WP_REST_Response
- */
-function cmcc_rest_reports_moderation_activity( WP_REST_Request $request ): WP_REST_Response {
-    // This is a stub – return a basic report.
-    $data = array( array( 'Date', 'Action', 'Moderator', 'Item' ) );
-    return new WP_REST_Response( array(
-        'success' => true,
-        'data'    => $data,
-    ), 200 );
-}
-
-} // End function_exists guard
-
-if ( ! function_exists( 'cmcc_rest_reports_compliance_audit' ) ) {
-
-/**
- * POST /cmcc/v1/reports/compliance-audit – Export compliance audit log.
- *
- * @param WP_REST_Request $request The request object.
- * @return WP_REST_Response
- */
-function cmcc_rest_reports_compliance_audit( WP_REST_Request $request ): WP_REST_Response {
-    $data = array( array( 'Date', 'Action', 'Moderator', 'Item', 'Notes' ) );
-    return new WP_REST_Response( array(
-        'success' => true,
-        'data'    => $data,
-    ), 200 );
-}
-
-} // End function_exists guard
-
-if ( ! function_exists( 'cmcc_rest_reports_scheduled' ) ) {
-
-/**
- * POST /cmcc/v1/reports/scheduled – Schedule a report.
- *
- * @param WP_REST_Request $request The request object.
- * @return WP_REST_Response
- */
-function cmcc_rest_reports_scheduled( WP_REST_Request $request ): WP_REST_Response {
-    return new WP_REST_Response( array( 'success' => true ), 200 );
 }
 
 } // End function_exists guard

@@ -319,7 +319,7 @@ function cmcc_add_to_queue(
 ) {
     global $wpdb;
 
-    $table = $wpdb->prefix . CMCC_QUEUE_TABLE;
+    $table = CMCC_QUEUE_TABLE;
 
     // Run through PHP firewall engine for auto-classification
     $settings  = get_option( CMCC_SETTINGS_OPTION, array() );
@@ -432,7 +432,7 @@ function cmcc_add_to_queue(
 function cmcc_get_author_reputation( string $author_name, string $author_email, string $author_ip ): int {
     global $wpdb;
 
-    $table  = $wpdb->prefix . CMCC_QUEUE_TABLE;
+    $table  = CMCC_QUEUE_TABLE;
     $score  = 0;
 
     // Count spam content from this author

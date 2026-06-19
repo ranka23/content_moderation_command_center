@@ -27,7 +27,7 @@ defined( 'ABSPATH' ) || exit;
 function cmcc_get_user_reputation_data( string $author_id ): array {
     global $wpdb;
 
-    $queue_table = $wpdb->prefix . CMCC_QUEUE_TABLE;
+    $queue_table = CMCC_QUEUE_TABLE;
 
     $data = $wpdb->get_row( $wpdb->prepare(
         "SELECT
@@ -113,7 +113,7 @@ if ( ! function_exists( 'cmcc_rest_get_user_reputation' ) ) :
 function cmcc_rest_get_user_reputation( WP_REST_Request $request ): WP_REST_Response {
     global $wpdb;
 
-    $queue_table = $wpdb->prefix . CMCC_QUEUE_TABLE;
+    $queue_table = CMCC_QUEUE_TABLE;
     $page        = max( 1, (int) $request->get_param( 'page' ) ?: 1 );
     $per_page    = min( 100, max( 1, (int) $request->get_param( 'per_page' ) ?: 25 ) );
     $offset      = ( $page - 1 ) * $per_page;
@@ -213,7 +213,7 @@ function cmcc_rest_get_user_reputation_detail( WP_REST_Request $request ): WP_RE
     $reputation = cmcc_get_user_reputation_data( $author_id );
 
     // Get recent queue items from this author.
-    $queue_table = $wpdb->prefix . CMCC_QUEUE_TABLE;
+    $queue_table = CMCC_QUEUE_TABLE;
     $recent_items = $wpdb->get_results( $wpdb->prepare(
         "SELECT id, item_id, content_type, status, spam_score, title, excerpt, date_gmt, created_at
         FROM {$queue_table}
@@ -224,7 +224,7 @@ function cmcc_rest_get_user_reputation_detail( WP_REST_Request $request ): WP_RE
     ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
     // Get recent activity log entries for this user.
-    $log_table = $wpdb->prefix . CMCC_ACTIVITY_LOG_TABLE;
+    $log_table = CMCC_ACTIVITY_LOG_TABLE;
     $activity = $wpdb->get_results( $wpdb->prepare(
         "SELECT l.*, u.display_name as moderator_name
         FROM {$log_table} l

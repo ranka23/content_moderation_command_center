@@ -221,7 +221,7 @@ function cmcc_rest_get_unified_queue( WP_REST_Request $request ): WP_REST_Respon
     $offset   = ( $page - 1 ) * $per_page;
     $status   = sanitize_text_field( $request->get_param( 'status' ) ?? '' );
 
-    $table = $wpdb->prefix . CMCC_QUEUE_TABLE;
+    $table = CMCC_QUEUE_TABLE;
 
     $where  = array( '1=1' );
     $values = array();
