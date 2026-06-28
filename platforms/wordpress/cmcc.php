@@ -26,7 +26,7 @@ if ( ! defined( 'WPINC' ) ) {
 
 // ─── Constants ─────────────────────────────────────────────────────────────
 
-define( 'CMCC_VERSION', '1.0.1' );
+define( 'CMCC_VERSION', '1.0.2' );
 define( 'CMCC_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'CMCC_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'CMCC_MINIMUM_WP_VERSION', '5.8' );
@@ -442,15 +442,44 @@ function cmcc_register_rest_routes(): void {
         'permission_callback' => 'cmcc_rest_permission_check',
     ) );
 
-    // GET /cmcc/v1/settings/export – Export settings
-    register_rest_route( 'cmcc/v1', '/settings/export', array(
-        'methods'             => 'POST',
-        'callback'            => 'cmcc_rest_export_settings',
+    // POST /cmcc/v1/queue/:id/ai-evaluate-ex – Extended AI evaluation with OpenRouter
+    register_rest_route( 'cmcc/v1', '/queue/(?P<id>[a-zA-Z0-9_-]+)/ai-evaluate-ex', array(
+        'methods'             => array( 'GET', 'POST' ),
+        'callback'            => 'cmcc_rest_ai_evaluate_ex',
         'permission_callback' => 'cmcc_rest_permission_check',
     ) );
+
+    // POST /cmcc/v1/queue/:id/ai-auto-moderate – AI evaluate + auto-moderate
+    register_rest_route( 'cmcc/v1', '/queue/(?P<id>[a-zA-Z0-9_-]+)/ai-auto-moderate', array(
+        'methods'             => 'POST',
+        'callback'            => 'cmcc_rest_ai_auto_moderate',
+        'permission_callback' => 'cmcc_rest_permission_check',
+    ) );
+
 }
 
 add_action( 'rest_api_init', 'cmcc_register_rest_routes' );
+
+// ─── Admin Body Class for Dark Mode ──────────────────────────────────────────
+
+/**
+ * Add CMCC body classes for WordPress admin.
+ *
+ * WordPress's admin_body_class filter passes a space-separated string,
+ * not an array. We append our classes as a string.
+ *
+ * @param string $classes Space-separated list of body classes.
+ * @return string
+ */
+function cmcc_admin_body_class( string $classes ): string {
+    $screen = get_current_screen();
+    if ( $screen && strpos( $screen->id, 'cmcc' ) !== false ) {
+        $classes .= ' cmcc-admin-page';
+    }
+    return $classes;
+}
+
+add_filter( 'admin_body_class', 'cmcc_admin_body_class' );
 
 // ─── Permission Check ─────────────────────────────────────────────────────
 
@@ -1068,12 +1097,15 @@ function cmcc_log_activity( array $data ): void {
  * @param array $ids The item IDs to export.
  * @return WP_REST_Response
  */
-function cmcc_handle_export_csv( array $ids ): void {
+function cmcc_handle_export_csv( array $ids ): WP_REST_Response {
     global $wpdb;
     $queue_table = CMCC_QUEUE_TABLE;
 
     if ( empty( $ids ) ) {
-        wp_die( 'No items to export.' );
+        return new WP_REST_Response( array(
+            'success' => false,
+            'message' => 'No items to export.',
+        ), 400 );
     }
 
     // Build placeholders for IDs
@@ -1085,22 +1117,12 @@ function cmcc_handle_export_csv( array $ids ): void {
         )
     );
 
-    // Set CSV headers
-    header( 'Content-Type: text/csv; charset=utf-8' );
-    header( 'Content-Disposition: attachment; filename="cmcc-export-' . gmdate( 'Y-m-d' ) . '.csv"' );
-    header( 'Pragma: no-cache' );
-    header( 'Expires: 0' );
-
-    $output = fopen( 'php://output', 'w' );
-
-    // UTF-8 BOM for Excel compatibility
-    fwrite( $output, "\xEF\xBB\xBF" );
-
+    $csv_data = array();
     // Header row
-    fputcsv( $output, array( 'Item ID', 'Content Type', 'Author ID', 'Title', 'Status', 'Spam Score', 'Date' ) );
+    $csv_data[] = array( 'Item ID', 'Content Type', 'Author ID', 'Title', 'Status', 'Spam Score', 'Date' );
 
     foreach ( $items as $item ) {
-        fputcsv( $output, array(
+        $csv_data[] = array(
             $item->item_id,
             $item->content_type,
             $item->author_id,
@@ -1108,11 +1130,14 @@ function cmcc_handle_export_csv( array $ids ): void {
             $item->status,
             $item->spam_score,
             $item->date_gmt,
-        ) );
+        );
     }
 
-    fclose( $output );
-    exit;
+    return new WP_REST_Response( array(
+        'success'  => true,
+        'data'     => $csv_data,
+        'filename' => 'cmcc-export-' . gmdate( 'Y-m-d' ) . '.csv',
+    ), 200 );
 }
 
 /**
@@ -1161,15 +1186,35 @@ function cmcc_rest_import_settings( WP_REST_Request $request ): WP_REST_Response
 function cmcc_get_default_settings(): array {
     return array(
         'general' => array(
-            'queue_page_size'  => 25,
-            'default_language' => 'en',
-            'date_format'      => 'relative',
-            'notify_on_spam'   => true,
+            'auto_moderate'        => false,
+            'moderation_behavior'  => 'flag',
+            'queue_page_size'      => 25,
+            'default_language'     => 'en',
+            'date_format'          => 'relative',
+            'notify_on_spam'       => true,
         ),
         'moderation' => array(
             'auto_approve_trusted' => true,
             'hold_for_review'      => true,
             'max_links'            => 5,
+        ),
+        'spam_firewall' => array(
+            'max_links'                  => 5,
+            'blacklisted_keywords'       => '',
+            'blacklisted_email_domains'  => '',
+            'min_submit_time'            => 3,
+            'enable_duplicate_detection' => true,
+            'duplicate_lookback_days'    => 7,
+            'global_action'              => 'flag',
+        ),
+        'integrations' => array(
+            'auto_import_comments'     => true,
+            'auto_import_posts'        => true,
+            'auto_import_woocommerce'  => false,
+            'auto_import_bbpress'      => false,
+            'auto_import_buddypress'   => false,
+            'auto_import_gravityforms' => false,
+            'webhook_url'              => '',
         ),
         'ai_moderation' => array(
             'engine'              => 'none',
@@ -1181,7 +1226,76 @@ function cmcc_get_default_settings(): array {
             'enable_sentiment_analysis' => false,
         ),
         'notifications' => array(
-            'email_alerts' => false,
+            'email_alerts'       => false,
+            'email_on_approve'   => true,
+            'email_on_spam'      => true,
+            'email_on_assign'    => true,
+            'daily_digest'       => false,
+            'alert_threshold'    => 5,
+            'notify_moderators'  => true,
+        ),
+        'appearance' => array(
+            'theme'          => 'light',
+            'queue_view'     => 'table',
+            'items_per_page' => 25,
+            'date_format'    => 'relative',
+            'timezone'       => 'UTC',
+        ),
+        'auto_moderation' => array(
+            'ai_detection_engine'            => 'none',
+            'ai_api_endpoint'                => '',
+            'ai_api_key'                     => '',
+            'spam_score_flag_threshold'      => 30,
+            'spam_score_spam_threshold'      => 60,
+            'spam_score_discard_threshold'   => 90,
+            'content_hash_sensitivity'       => 3,
+            'max_links_allowed'              => 5,
+            'block_all_links'                => false,
+            'allowlist_domains'              => '',
+            'block_shortened_urls'           => true,
+            'check_link_reputation'          => false,
+            'google_safe_browsing_api_key'   => '',
+            'whitelisted_keywords'           => '',
+            'regex_patterns'                 => '',
+            'all_caps_detection'             => false,
+            'repeated_char_detection'        => true,
+            'language_filter'                => 'all',
+            'min_account_age_hours'          => 24,
+            'block_disposable_emails'        => true,
+            'max_posts_per_hour'             => 10,
+            'banned_ip_ranges'               => '',
+            'banned_country_codes'           => '',
+            'vpn_proxy_detection'            => false,
+            'cooldown_between_posts'         => 30,
+            'duplicate_detection_window_days' => 7,
+            'duplicate_similarity_threshold' => 85,
+            'weekend_off_hours_sensitivity'  => false,
+            'default_action'                 => 'flag',
+            'auto_approve_threshold'         => 10,
+            'notify_on_auto_discard'         => true,
+            'auto_ban_after_n_violations'    => 0,
+            'ban_duration'                   => 'temporary_24h',
+            'learning_mode'                  => false,
+        ),
+        'moderator_management' => array(
+            'secondary_approval_required'  => false,
+            'action_confirmation_required' => true,
+        ),
+        'data_retention' => array(
+            'activity_log_retention_days'  => 90,
+            'archived_item_retention_days' => 30,
+            'auto_purge_schedule'          => 'weekly',
+            'export_before_purge'          => true,
+        ),
+        'api_webhooks' => array(
+            'webhook_new_items'  => '',
+            'webhook_approvals'  => '',
+            'webhook_spam'       => '',
+            'api_rate_limiting'  => 60,
+            'custom_api_secret'  => '',
+        ),
+        'backup_restore' => array(
+            'scheduled_backups' => 'none',
         ),
     );
 }
@@ -1262,7 +1376,7 @@ function cmcc_rest_get_raw_events( WP_REST_Request $request ): WP_REST_Response 
         : $wpdb->get_results( $sql );
 
     return new WP_REST_Response( $events, 200 );
-}
+	}
 
 } // End function_exists guard
 
@@ -1391,6 +1505,416 @@ function cmcc_rest_ai_evaluate( WP_REST_Request $request ): WP_REST_Response {
         'sentiment'  => $sentiment,
         'categories' => $found_keywords,
     ), 200 );
+}
+
+} // End function_exists guard
+
+
+// ─── NEW: OpenRouter AI Moderation Integration ──────────────────────────────
+
+
+if ( ! function_exists( 'cmcc_ai_evaluate_openrouter' ) ) {
+
+/**
+ * Evaluate content using OpenRouter AI API.
+ *
+ * Calls the configured AI model via OpenRouter to classify content
+ * for spam, toxicity, and other content moderation categories.
+ * The system prompt is designed to accurately classify content as
+ * spam, hate speech, phishing, or benign.
+ *
+ * @param string $content    The content text to evaluate.
+ * @param string $api_key    OpenRouter API key.
+ * @param string $model      Model identifier (e.g. 'openai/gpt-4o-mini').
+ * @return array {
+ *     AI evaluation result.
+ *
+ *     @type float  $spam_score   Spam score from 0.0 to 1.0.
+ *     @type string $language     Detected language code.
+ *     @type string $sentiment    Sentiment (positive, negative, neutral).
+ *     @type array  $categories   List of detected spam categories.
+ *     @type string $label        Overall classification label.
+ *     @type string $explanation  Brief explanation from AI.
+ * }
+ */
+function cmcc_ai_evaluate_openrouter( string $content, string $api_key, string $model = 'openai/gpt-4o-mini' ): array {
+    if ( empty( $content ) || empty( $api_key ) ) {
+        return array(
+            'spam_score'  => 0.0,
+            'language'    => 'unknown',
+            'sentiment'   => 'neutral',
+            'categories'  => array(),
+            'label'       => 'unknown',
+            'explanation' => 'Missing content or API key.',
+        );
+    }
+
+    $system_prompt = <<<PROMPT
+You are a content moderation AI. Analyze the following content and return a JSON object with these fields:
+- spamScore: float (0.0 to 1.0, where >0.5 is likely spam)
+- language: string (ISO 639-1 code, e.g. "en", "ru", "de", "fr", "es")
+- sentiment: string ("positive", "negative", or "neutral")
+- categories: array of strings (detected categories: "spam", "hate_speech", "phishing", "toxicity", "clickbait", "harassment", "misinformation", or empty array if benign)
+- label: string (overall classification: "safe", "spam", "toxic", "phishing", "hate_speech", "suspicious")
+- explanation: string (brief reason for the classification, 1 sentence max)
+
+Respond with ONLY valid JSON, no markdown formatting.
+PROMPT;
+
+    $body = json_encode( array(
+        'model'    => $model,
+        'messages' => array(
+            array( 'role' => 'system', 'content' => trim( $system_prompt ) ),
+            array( 'role' => 'user',   'content' => mb_substr( $content, 0, 4000 ) ),
+        ),
+        'temperature' => 0.1,
+        'max_tokens'  => 300,
+    ) );
+
+    $response = wp_remote_post( 'https://openrouter.ai/api/v1/chat/completions', array(
+        'headers' => array(
+            'Content-Type'  => 'application/json',
+            'Authorization' => 'Bearer ' . $api_key,
+            'HTTP-Referer'  => site_url(),
+            'X-Title'       => 'CMCC Content Moderation',
+        ),
+        'body'    => $body,
+        'timeout' => 15,
+    ) );
+
+    if ( is_wp_error( $response ) ) {
+        return array(
+            'spam_score'  => 0.0,
+            'language'    => 'unknown',
+            'sentiment'   => 'neutral',
+            'categories'  => array(),
+            'label'       => 'error',
+            'explanation' => 'API request failed: ' . $response->get_error_message(),
+        );
+    }
+
+    $status_code = wp_remote_retrieve_response_code( $response );
+    $response_body = wp_remote_retrieve_body( $response );
+    $data = json_decode( $response_body, true );
+
+    if ( 200 !== $status_code || ! isset( $data['choices'][0]['message']['content'] ) ) {
+        $error_msg = isset( $data['error']['message'] ) ? $data['error']['message'] : 'Unknown API error';
+        return array(
+            'spam_score'  => 0.0,
+            'language'    => 'unknown',
+            'sentiment'   => 'neutral',
+            'categories'  => array(),
+            'label'       => 'error',
+            'explanation' => 'AI API error: ' . $error_msg,
+        );
+    }
+
+    $ai_content = trim( $data['choices'][0]['message']['content'] );
+    // Remove any markdown code block fences if present
+    $ai_content = preg_replace( '/^```(?:json)?\s*|\s*```$/i', '', $ai_content );
+    $ai_result  = json_decode( $ai_content, true );
+
+    if ( ! is_array( $ai_result ) ) {
+        // Fallback: try to extract JSON from the response
+        preg_match( '/\{[^}]+\}/', $ai_content, $matches );
+        if ( ! empty( $matches[0] ) ) {
+            $ai_result = json_decode( $matches[0], true );
+        }
+    }
+
+    if ( ! is_array( $ai_result ) ) {
+        return array(
+            'spam_score'  => 0.0,
+            'language'    => 'en',
+            'sentiment'   => 'neutral',
+            'categories'  => array(),
+            'label'       => 'unknown',
+            'explanation' => 'Failed to parse AI response.',
+        );
+    }
+
+    return array(
+        'spam_score'  => isset( $ai_result['spamScore'] ) ? min( (float) $ai_result['spamScore'], 1.0 ) : 0.0,
+        'language'    => isset( $ai_result['language'] ) ? sanitize_text_field( $ai_result['language'] ) : 'en',
+        'sentiment'   => isset( $ai_result['sentiment'] ) ? sanitize_text_field( $ai_result['sentiment'] ) : 'neutral',
+        'categories'  => isset( $ai_result['categories'] ) && is_array( $ai_result['categories'] ) ? array_map( 'sanitize_text_field', $ai_result['categories'] ) : array(),
+        'label'       => isset( $ai_result['label'] ) ? sanitize_text_field( $ai_result['label'] ) : 'unknown',
+        'explanation' => isset( $ai_result['explanation'] ) ? sanitize_text_field( $ai_result['explanation'] ) : '',
+    );
+}
+
+} // End function_exists guard
+
+
+if ( ! function_exists( 'cmcc_rest_ai_evaluate_ex' ) ) {
+
+/**
+ * POST /cmcc/v1/queue/{id}/ai-evaluate-ex – Extended AI evaluation.
+ *
+ * Enhanced version that calls OpenRouter when the AI moderation engine
+ * is configured with an API key, falling back to local keyword analysis.
+ *
+ * @param WP_REST_Request $request The request object.
+ * @return WP_REST_Response
+ */
+function cmcc_rest_ai_evaluate_ex( WP_REST_Request $request ): WP_REST_Response {
+    global $wpdb;
+    $queue_table = CMCC_QUEUE_TABLE;
+    $item_id = $request->get_param( 'id' );
+
+    if ( empty( $item_id ) ) {
+        return new WP_REST_Response( array(
+            'success' => false,
+            'message' => 'Missing item ID.',
+        ), 400 );
+    }
+
+    $item = $wpdb->get_row( $wpdb->prepare(
+        "SELECT * FROM {$queue_table} WHERE item_id = %s",
+        $item_id
+    ) );
+
+    if ( ! $item ) {
+        return new WP_REST_Response( array(
+            'success' => false,
+            'message' => 'Item not found.',
+        ), 404 );
+    }
+
+    $text = $item->title . ' ' . ( $item->excerpt ?? '' );
+    $settings = get_option( CMCC_SETTINGS_OPTION, array() );
+    $ai_mod   = isset( $settings['ai_moderation'] ) ? $settings['ai_moderation'] : array();
+    $engine   = isset( $ai_mod['engine'] ) ? $ai_mod['engine'] : 'none';
+    $result   = null;
+
+    // Try OpenRouter AI if configured
+    if ( 'openai' === $engine && ! empty( $ai_mod['api_key'] ) ) {
+        $model = ! empty( $ai_mod['model'] ) ? $ai_mod['model'] : 'openai/gpt-4o-mini';
+        $result = cmcc_ai_evaluate_openrouter( $text, $ai_mod['api_key'], $model );
+    } elseif ( 'local' === $engine ) {
+        // Use the built-in local analysis (already computed in queue item)
+        $result = array(
+            'spam_score'  => isset( $item->spam_score ) ? (float) $item->spam_score : 0.0,
+            'language'    => 'en',
+            'sentiment'   => 'neutral',
+            'categories'  => array(),
+            'label'       => ( isset( $item->spam_score ) && (float) $item->spam_score > 0.5 ) ? 'spam' : 'safe',
+            'explanation' => 'Local keyword analysis.',
+        );
+    }
+
+    // Fallback: always do keyword analysis as baseline
+    $spam_keywords = array(
+        'viagra', 'casino', 'lottery', 'free money', 'click here',
+        'buy now', 'act now', 'limited time', 'congratulations',
+        'you won', 'prize', 'urgent', 'call now', 'subscribe',
+        'earn money', 'work from home', 'make money fast',
+    );
+    $lower_text = strtolower( $text );
+    $keyword_score = 0.0;
+    $found_keywords = array();
+    foreach ( $spam_keywords as $keyword ) {
+        if ( strpos( $lower_text, $keyword ) !== false ) {
+            $found_keywords[] = $keyword;
+            $keyword_score += 0.15;
+        }
+    }
+    $keyword_score = min( $keyword_score, 1.0 );
+
+    // Combine AI score with keyword score
+    $combined_score = $result ? max( $result['spam_score'], $keyword_score ) : $keyword_score;
+
+    // Language detection (heuristic)
+    $lang = 'en';
+    if ( preg_match( '/[а-яА-Я]/u', $text ) ) $lang = 'ru';
+    elseif ( preg_match( '/[äöüß]/i', $text ) ) $lang = 'de';
+    elseif ( preg_match( '/[éèêëàâùûç]/i', $text ) ) $lang = 'fr';
+    elseif ( preg_match( '/[ñíóúé]/i', $text ) ) $lang = 'es';
+    // Use AI language if available
+    if ( $result && isset( $result['language'] ) && 'unknown' !== $result['language'] ) {
+        $lang = $result['language'];
+    }
+
+    // Sentiment
+    $positive_words = array( 'good', 'great', 'excellent', 'amazing', 'love', 'fantastic', 'nice', 'helpful' );
+    $negative_words = array( 'bad', 'terrible', 'awful', 'hate', 'worst', 'horrible', 'ugly', 'disgusting' );
+    $positive_count = 0;
+    $negative_count = 0;
+    foreach ( $positive_words as $w ) { if ( strpos( $lower_text, $w ) !== false ) $positive_count++; }
+    foreach ( $negative_words as $w ) { if ( strpos( $lower_text, $w ) !== false ) $negative_count++; }
+    $sentiment = 'neutral';
+    if ( $positive_count > $negative_count ) $sentiment = 'positive';
+    elseif ( $negative_count > $positive_count ) $sentiment = 'negative';
+    // Use AI sentiment if available
+    if ( $result && isset( $result['sentiment'] ) && 'neutral' !== $result['sentiment'] ) {
+        $sentiment = $result['sentiment'];
+    }
+
+    $all_categories = $result ? $result['categories'] : array();
+    if ( ! empty( $found_keywords ) ) {
+        $all_categories = array_unique( array_merge( $all_categories, $found_keywords ) );
+    }
+
+    return new WP_REST_Response( array(
+        'success'        => true,
+        'spamScore'      => $combined_score,
+        'language'       => $lang,
+        'sentiment'      => $sentiment,
+        'categories'     => $all_categories,
+        'label'          => $result ? $result['label'] : ( $combined_score > 0.5 ? 'spam' : 'safe' ),
+        'explanation'    => $result ? $result['explanation'] : '',
+        'ai_engine'      => $engine,
+        'ai_model'       => isset( $ai_mod['model'] ) ? $ai_mod['model'] : '',
+        'keyword_score'  => $keyword_score,
+    ), 200 );
+}
+
+} // End function_exists guard
+
+
+if ( ! function_exists( 'cmcc_ai_evaluate_and_update_queue' ) ) {
+
+/**
+ * Evaluate a queue item using AI and update its spam score and status.
+ *
+ * @param string $item_id The queue item ID.
+ * @return array The evaluation result.
+ */
+function cmcc_ai_evaluate_and_update_queue( string $item_id ): array {
+    global $wpdb;
+    $queue_table = CMCC_QUEUE_TABLE;
+
+    $item = $wpdb->get_row( $wpdb->prepare(
+        "SELECT * FROM {$queue_table} WHERE item_id = %s",
+        $item_id
+    ) );
+
+    if ( ! $item ) {
+        return array( 'success' => false, 'message' => 'Item not found.' );
+    }
+
+    $settings = get_option( CMCC_SETTINGS_OPTION, array() );
+    $ai_mod   = isset( $settings['ai_moderation'] ) ? $settings['ai_moderation'] : array();
+    $engine   = isset( $ai_mod['engine'] ) ? $ai_mod['engine'] : 'none';
+    $auto_moderate_enabled = ! empty( $settings['general']['auto_moderate'] );
+    $ai_auto_moderate      = ! empty( $ai_mod['auto_moderate'] );
+
+    $text = $item->title . ' ' . ( $item->excerpt ?? '' );
+    $result = null;
+
+    if ( 'openai' === $engine && ! empty( $ai_mod['api_key'] ) ) {
+        $model  = ! empty( $ai_mod['model'] ) ? $ai_mod['model'] : 'openai/gpt-4o-mini';
+        $result = cmcc_ai_evaluate_openrouter( $text, $ai_mod['api_key'], $model );
+    }
+
+    if ( ! $result ) {
+        // Run local keyword analysis as fallback
+        $spam_keywords = array(
+            'viagra', 'casino', 'lottery', 'free money', 'click here',
+            'buy now', 'act now', 'limited time', 'congratulations',
+            'you won', 'prize', 'urgent', 'call now', 'subscribe',
+            'earn money', 'work from home', 'make money fast',
+        );
+        $lower_text = strtolower( $text );
+        $score = 0.0;
+        $found = array();
+        foreach ( $spam_keywords as $kw ) {
+            if ( strpos( $lower_text, $kw ) !== false ) {
+                $found[] = $kw;
+                $score += 0.15;
+            }
+        }
+        $result = array(
+            'spam_score' => min( $score, 1.0 ),
+            'label'      => $score > 0.5 ? 'spam' : 'safe',
+            'categories' => $found,
+        );
+    }
+
+    $spam_score = $result['spam_score'];
+    $threshold  = isset( $ai_mod['spam_threshold'] ) ? (int) $ai_mod['spam_threshold'] : 70;
+    $threshold_normalized = $threshold / 100.0;
+
+    // Determine new status based on score and auto-moderation settings
+    $new_status = $item->status;
+    if ( $auto_moderate_enabled && $ai_auto_moderate ) {
+        if ( $spam_score >= 0.9 ) {
+            $new_status = 'spam';
+        } elseif ( $spam_score >= $threshold_normalized ) {
+            $new_status = 'flagged';
+        } elseif ( $spam_score < $threshold_normalized * 0.5 && 'pending' === $item->status ) {
+            $new_status = 'approved';
+        }
+    }
+
+    // Update the queue item
+    $wpdb->update(
+        $queue_table,
+        array(
+            'spam_score' => $spam_score,
+            'status'     => $new_status,
+        ),
+        array( 'item_id' => $item_id ),
+        array( '%f', '%s' ),
+        array( '%s' )
+    );
+
+    // Log the AI evaluation
+    cmcc_log_activity( array(
+        'action'       => 'ai_evaluate',
+        'content_type' => $item->content_type,
+        'item_id'      => $item_id,
+        'item_title'   => $item->title,
+        'notes'        => sprintf(
+            'AI evaluation: spam_score=%.2f, label=%s, engine=%s',
+            $spam_score,
+            $result['label'],
+            $engine
+        ),
+    ) );
+
+    return array(
+        'success'    => true,
+        'item_id'    => $item_id,
+        'spam_score' => $spam_score,
+        'status'     => $new_status,
+        'label'      => $result['label'],
+        'categories' => $result['categories'],
+        'engine'     => $engine,
+    );
+}
+
+} // End function_exists guard
+
+
+if ( ! function_exists( 'cmcc_rest_ai_auto_moderate' ) ) {
+
+/**
+ * POST /cmcc/v1/queue/{id}/ai-auto-moderate – AI evaluate + auto-moderate.
+ *
+ * Evaluates a queue item using the configured AI engine and updates
+ * its spam score and moderation status.
+ *
+ * @param WP_REST_Request $request The request object.
+ * @return WP_REST_Response
+ */
+function cmcc_rest_ai_auto_moderate( WP_REST_Request $request ): WP_REST_Response {
+    $item_id = $request->get_param( 'id' );
+
+    if ( empty( $item_id ) ) {
+        return new WP_REST_Response( array(
+            'success' => false,
+            'message' => 'Missing item ID.',
+        ), 400 );
+    }
+
+    $result = cmcc_ai_evaluate_and_update_queue( $item_id );
+
+    if ( ! $result['success'] ) {
+        return new WP_REST_Response( $result, 404 );
+    }
+
+    return new WP_REST_Response( $result, 200 );
 }
 
 } // End function_exists guard

@@ -1,4 +1,9 @@
-/* ─── Empty State Enhancements ────────────────────────────────────────── */
+/* =========================================================================
+   CMCC 2026 — Premium Component Overrides & Fixes
+   Overrides for @cmcc/ui Tailwind-based components to use design tokens
+   ========================================================================= */
+
+/* ─── Empty State ────────────────────────────────────────── */
 
 #cmcc-app .cmcc-empty-state {
   display: flex;
@@ -14,6 +19,7 @@
   margin: 0 auto var(--cmcc-space-4);
   max-width: 160px;
   height: auto;
+  animation: cmcc-empty-float 3s ease-in-out infinite;
 }
 
 @keyframes cmcc-empty-float {
@@ -26,51 +32,24 @@
   }
 }
 
-#cmcc-app .cmcc-empty-state svg {
-  animation: cmcc-empty-float 3s ease-in-out infinite;
-}
+/* ─── Progress Bar ────────────────────────────────────────── */
 
-/* ─── Progress Bar (Dark Mode Friendly) ────────────────────────────────── */
 #cmcc-app .cmcc-progress-bar {
   height: 8px;
-  background: #f0f0f1;
+  background: var(--cmcc-bg-tertiary);
   border-radius: var(--cmcc-radius-full);
   overflow: hidden;
 }
 
 #cmcc-app .cmcc-progress-bar-fill {
   height: 100%;
-  background: var(--cmcc-primary);
+  background: var(--cmcc-gradient-primary);
   border-radius: var(--cmcc-radius-full);
-  transition: width 0.3s ease;
+  transition: width var(--cmcc-transition-slow);
 }
 
-.dark #cmcc-app .cmcc-progress-bar {
-  background: #2a2a4a;
-}
+/* ─── Toast Animations ────────────────────────────────────── */
 
-.dark #cmcc-app .cmcc-progress-bar-fill {
-  background: #60a5fa;
-}
-
-/* ─── Toast: Dark Mode Variations (info/warning) ────────────────────────── */
-#cmcc-app .cmcc-toast-info {
-  background: var(--cmcc-primary);
-}
-
-#cmcc-app .cmcc-toast-warning {
-  background: #f56e28;
-}
-
-.dark #cmcc-app .cmcc-toast-info {
-  background: #2563eb;
-}
-
-.dark #cmcc-app .cmcc-toast-warning {
-  background: #ea580c;
-}
-
-/* ─── Toast slide-in animation ────────────────────────────────────── */
 @keyframes cmcc-toast-slide-in {
   from {
     opacity: 0;
@@ -101,10 +80,11 @@
   animation: cmcc-toast-fade-out 0.2s ease-in forwards;
 }
 
-/* ─── Row action flash feedback ────────────────────────────────────── */
+/* ─── Row Action Flash Feedback ────────────────────────── */
+
 @keyframes cmcc-row-flash-green {
   0% {
-    background-color: rgba(34, 197, 94, 0.15);
+    background-color: rgba(16, 185, 129, 0.12);
   }
   100% {
     background-color: transparent;
@@ -113,7 +93,7 @@
 
 @keyframes cmcc-row-flash-red {
   0% {
-    background-color: rgba(239, 68, 68, 0.15);
+    background-color: rgba(239, 68, 68, 0.12);
   }
   100% {
     background-color: transparent;
@@ -122,7 +102,7 @@
 
 @keyframes cmcc-row-flash-amber {
   0% {
-    background-color: rgba(245, 158, 11, 0.15);
+    background-color: rgba(245, 158, 11, 0.12);
   }
   100% {
     background-color: transparent;
@@ -142,44 +122,238 @@
   animation: cmcc-row-flash-amber 1.5s ease-out;
 }
 
-/* ─── Focus-visible global accessibility ───────────────────────────────── */
+/* ─── Focus-Visible Global ────────────────────────────────── */
+
+/* ─── Focus-visible ring for keyboard navigation ──────────── */
 #cmcc-app *:focus-visible {
-  outline: 2px solid var(--cmcc-wp-blue);
-  outline-offset: 1px;
+  outline: 2px solid var(--cmcc-primary);
+  outline-offset: 2px;
 }
 
+/* Form element focus overrides */
 #cmcc-app select:focus-visible,
 #cmcc-app input:focus-visible,
 #cmcc-app textarea:focus-visible {
-  outline: 2px solid var(--cmcc-wp-blue);
-  outline-offset: 0px;
-  border-color: var(--cmcc-wp-blue);
+  outline: 2px solid var(--cmcc-primary);
+  outline-offset: -2px;
 }
 
-/* ─── Button press feedback ────────────────────────────────────────── */
+/* =========================================================================
+   SECTION: Stronger Slide Panel Positioning — Ensures it renders
+   as a right sidebar and NOT at the bottom of the page.
+   ========================================================================= */
+
+/* ═══════════════════════════════════════════════════════════════════
+   Slide-Out Panel — Keyframe Animated Right Sidebar Drawer
+   Uses CSS keyframe animations instead of Tailwind translateX
+   classes to avoid conflicts with !important CSS rules.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ─── Panel base — position right, fixed ──────────────────── */
+.cmcc-slide-panel {
+  position: fixed !important;
+  top: 0 !important;
+  bottom: auto !important;
+  left: auto !important;
+  height: 100% !important;
+  min-height: 100vh !important;
+  max-height: 100vh !important;
+  width: 440px !important;
+  max-width: 100vw !important;
+  z-index: 100001 !important;
+  background: var(--cmcc-bg-card, #ffffff) !important;
+  box-shadow: var(--cmcc-shadow-xl) !important;
+  will-change: transform;
+  overflow: hidden !important;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Right side panel */
+.cmcc-slide-panel.cmcc-panel-right {
+  right: 0 !important;
+  left: auto !important;
+  border-left: 1px solid var(--cmcc-border-card) !important;
+  border-right: none !important;
+}
+
+/* Admin bar offset — slide panel should not cover the admin bar */
+body.admin-bar .cmcc-slide-panel {
+  top: 32px !important;
+  height: calc(100vh - 32px) !important;
+  min-height: calc(100vh - 32px) !important;
+  max-height: calc(100vh - 32px) !important;
+}
+
+@media screen and (max-width: 782px) {
+  body.admin-bar .cmcc-slide-panel {
+    top: 46px !important;
+    height: calc(100vh - 46px) !important;
+    min-height: calc(100vh - 46px) !important;
+    max-height: calc(100vh - 46px) !important;
+  }
+}
+
+/* Prevent fixed-position context from WP admin transform */
+body:has(.cmcc-slide-backdrop) {
+  transform: none !important;
+}
+
+/* Left side panel */
+.cmcc-slide-panel.cmcc-panel-left {
+  left: 0 !important;
+  right: auto !important;
+  border-right: 1px solid var(--cmcc-border-card) !important;
+  border-left: none !important;
+}
+
+/* ─── Enter animation — slides in from right ──────────────── */
+.cmcc-slide-panel.cmcc-panel-entering {
+  animation: cmcc-keyframe-slide-in-right 0.35s cubic-bezier(0.16, 1, 0.3, 1)
+    forwards !important;
+}
+
+/* ─── Open state — fully visible ──────────────────────────── */
+.cmcc-slide-panel.cmcc-panel-open {
+  transform: translateX(0) !important;
+}
+
+/* ─── Closing animation — slides out to right ────────────── */
+.cmcc-slide-panel.cmcc-panel-closing {
+  animation: cmcc-keyframe-slide-out-right 0.25s cubic-bezier(0.4, 0, 0.2, 1)
+    forwards !important;
+}
+
+/* ─── Panel header ─────────────────────────────────────────── */
+.cmcc-slide-panel .cmcc-panel-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding: 16px 20px !important;
+  border-bottom: 1px solid var(--cmcc-border-secondary) !important;
+  flex-shrink: 0 !important;
+}
+
+.cmcc-slide-panel .cmcc-panel-title {
+  font-size: var(--cmcc-h3) !important;
+  font-weight: 700 !important;
+  color: var(--cmcc-text-heading);
+  margin: 0 !important;
+  letter-spacing: -0.01em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cmcc-slide-panel .cmcc-panel-close-btn {
+  color: var(--cmcc-text-muted) !important;
+  width: 32px !important;
+  height: 32px !important;
+  border-radius: var(--cmcc-radius-md) !important;
+  background: var(--cmcc-bg-tertiary) !important;
+  border: 1px solid var(--cmcc-border-primary) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  transition: all var(--cmcc-transition-fast);
+  flex-shrink: 0;
+  margin-left: 12px !important;
+}
+
+.cmcc-slide-panel .cmcc-panel-close-btn:hover {
+  color: var(--cmcc-error) !important;
+  background: var(--cmcc-error-bg) !important;
+  border-color: var(--cmcc-error) !important;
+}
+
+/* ─── Panel body — scrollable content area ────────────────── */
+.cmcc-slide-panel .cmcc-panel-body {
+  padding: 20px !important;
+  overflow-y: auto !important;
+  flex: 1 1 auto !important;
+  max-height: calc(100vh - 70px) !important;
+  scrollbar-width: thin;
+  scrollbar-color: var(--cmcc-border-primary) transparent;
+}
+
+.cmcc-slide-panel .cmcc-panel-body::-webkit-scrollbar {
+  width: 4px;
+}
+
+.cmcc-slide-panel .cmcc-panel-body::-webkit-scrollbar-thumb {
+  background: var(--cmcc-border-primary);
+  border-radius: 4px;
+}
+
+/* ─── Panel backdrop ────────────────────────────────────────── */
+.cmcc-slide-backdrop {
+  position: fixed !important;
+  inset: 0 !important;
+  background: rgba(15, 23, 42, 0.4) !important;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  z-index: 100000 !important;
+  transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.cmcc-slide-backdrop.cmcc-backdrop-visible {
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+
+.cmcc-slide-backdrop.cmcc-backdrop-hidden {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* ─── Keyframe animations ──────────────────────────────────── */
+@keyframes cmcc-keyframe-slide-in-right {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes cmcc-keyframe-slide-out-right {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+/* ─── Prevent parent transform interference ────────────── */
+body:has(.cmcc-slide-backdrop) #wpbody,
+body:has(.cmcc-slide-backdrop) #wpbody-content,
+body:has(.cmcc-slide-backdrop) #wpcontent {
+  position: static !important;
+  transform: none !important;
+}
+
+body.admin-bar #wpbody,
+body.admin-bar #wpbody-content,
+body.admin-bar #wpcontent {
+  position: static !important;
+  transform: none !important;
+}
+
+/* ─── Button Press Feedback ──────────────────────────────── */
+
 #cmcc-app button:active:not(:disabled),
 #cmcc-app .cmcc-btn:active:not(:disabled) {
   transform: scale(0.97);
 }
 
-/* ─── Skeleton shimmer enhancement ─────────────────────────────────── */
-#cmcc-app .cmcc-skeleton {
-  animation: cmcc-shimmer 1.5s ease-in-out infinite;
-}
+/* ─── Smooth Theme Transitions ────────────────────────────── */
 
-@keyframes cmcc-shimmer {
-  0% {
-    opacity: 0.6;
-  }
-  50% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0.6;
-  }
-}
-
-/* ─── Smooth transitions for theme switching (only on theme-aware properties) ── */
 #cmcc-app,
 #cmcc-app .cmcc-top-bar,
 #cmcc-app .cmcc-tab,
@@ -200,13 +374,14 @@
 #cmcc-app .cmcc-bulk-select,
 #cmcc-app .cmcc-per-page-select {
   transition:
-    background-color 0.2s ease,
-    border-color 0.2s ease,
-    color 0.2s ease,
-    box-shadow 0.2s ease;
+    background-color var(--cmcc-transition-normal),
+    border-color var(--cmcc-transition-normal),
+    color var(--cmcc-transition-normal),
+    box-shadow var(--cmcc-transition-normal);
 }
 
-/* ─── D4 Fix: Cursor pointer on interactive elements ──────────────────── */
+/* ─── Cursor Pointers ────────────────────────────────────── */
+
 #cmcc-app button:not(:disabled),
 #cmcc-app .cmcc-btn:not(:disabled),
 #cmcc-app .cmcc-tab:not(:disabled),
@@ -215,32 +390,33 @@
 #cmcc-app .cmcc-page-num:not(:disabled) {
   cursor: pointer;
 }
+
 #cmcc-app button:disabled,
 #cmcc-app .cmcc-btn:disabled,
 #cmcc-app .cmcc-page-btn:disabled {
   cursor: not-allowed;
-  opacity: 0.6;
+  opacity: 0.5;
 }
 
-/* ─── D5 Fix: Card shadows ────────────────────────────────────────────── */
+/* ─── Card Shadows ────────────────────────────────────────── */
+
 #cmcc-app .cmcc-stat-card {
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-#cmcc-app .cmcc-chart-card {
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--cmcc-shadow-sm);
 }
 
-/* ─── D7 Fix: Table row zebra-striping ────────────────────────────────── */
+#cmcc-app .cmcc-chart-card {
+  box-shadow: var(--cmcc-shadow-sm);
+}
+
+/* ─── Table Row Zebra Striping ────────────────────────────── */
+
 #cmcc-app .cmcc-queue-table-inner tbody tr:nth-child(even) td,
 #cmcc-app .cmcc-activity-table tbody tr:nth-child(even) td {
-  background-color: rgba(0, 0, 0, 0.02);
-}
-.dark #cmcc-app .cmcc-queue-table-inner tbody tr:nth-child(even) td,
-.dark #cmcc-app .cmcc-activity-table tbody tr:nth-child(even) td {
-  background-color: rgba(255, 255, 255, 0.03);
+  background-color: var(--cmcc-bg-table-stripe);
 }
 
-/* ─── D9 Fix: Consistent input heights ────────────────────────────────── */
+/* ─── Consistent Input Heights ────────────────────────────── */
+
 #cmcc-app .cmcc-search-input,
 #cmcc-app #cmcc-save-filter-input,
 #cmcc-app .cmcc-filter-select,
@@ -250,194 +426,3920 @@
   box-sizing: border-box;
 }
 
-/* ─── B11 Fix: Sortable header cursor and active state ───────────────────── */
+/* ─── Sortable Header ──────────────────────────────────────── */
+
 #cmcc-app .cmcc-th-sortable {
   cursor: pointer;
   user-select: none;
 }
+
 #cmcc-app .cmcc-th-sortable:hover {
-  background: #f0f0f1;
+  background: var(--cmcc-bg-table-hover);
 }
+
 #cmcc-app .cmcc-sort-icons {
   display: inline-flex;
   flex-direction: column;
   margin-left: 4px;
   line-height: 1;
   font-size: 10px;
-  color: #c3c4c7;
+  color: var(--cmcc-border-primary);
 }
+
 #cmcc-app .cmcc-sort-active {
-  color: #2563eb;
+  color: var(--cmcc-primary);
 }
 
-/* ─── D6 Fix: Responsive improvements (640px breakpoint) ──────────────── */
-@media screen and (max-width: 640px) {
-  #cmcc-app .cmcc-stats-grid {
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-  }
-  #cmcc-app .cmcc-stat-card {
-    padding: 12px;
-  }
-  #cmcc-app .cmcc-stat-value {
-    font-size: 24px;
-  }
-  #cmcc-app .cmcc-filter-select,
-  #cmcc-app .cmcc-bulk-select {
-    min-width: 120px;
-  }
-  #cmcc-app .cmcc-action-group {
-    flex-wrap: wrap;
-  }
-  #cmcc-app .cmcc-activity-table {
-    font-size: 11px;
-  }
-  #cmcc-app .cmcc-activity-table th,
-  #cmcc-app .cmcc-activity-table td {
-    padding: 6px 6px;
-  }
-  #cmcc-app .cmcc-tab {
-    font-size: 12px;
-    padding: 8px 10px;
-  }
-  #cmcc-app .cmcc-tab-nav {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-}
+/* ─── Activity Log Table Header ───────────────────────────── */
 
-/* ─── D6 Fix: Responsive improvements (enhanced 782px) ────────────────── */
-@media screen and (max-width: 782px) {
-  #cmcc-app .cmcc-charts-row {
-    flex-direction: column;
-  }
-  #cmcc-app .cmcc-tab-content {
-    padding: 12px;
-  }
-  #cmcc-app .cmcc-queue-toolbar-left,
-  #cmcc-app .cmcc-queue-toolbar-right {
-    width: 100%;
-  }
-  #cmcc-app .cmcc-queue-toolbar {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  #cmcc-app .cmcc-search-box {
-    width: 100%;
-  }
-  #cmcc-app .cmcc-search-input {
-    width: 100%;
-  }
-}
-
-/* ─── B14 Fix: Activity log table header styling ──────────────────────── */
 #cmcc-app .cmcc-activity-table th {
   font-weight: 600;
-  background: #f9fafb;
-  border-bottom: 2px solid #e5e7eb;
-  font-size: 12px;
+  background: var(--cmcc-bg-table-header);
+  border-bottom: 2px solid var(--cmcc-border-table);
+  font-size: var(--cmcc-small);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.05em;
 }
 
-/* ─── Settings Side Panel: Responsive (collapses on mobile) ───────────── */
-@media screen and (max-width: 640px) {
-  #cmcc-app .cmcc-settings-layout {
+/* ─── Hub Grid ──────────────────────────────────────────────── */
+
+#cmcc-app .cmcc-hub-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--cmcc-space-4);
+}
+
+/* ─── Confirm Dialog ───────────────────────────────────────── */
+
+#cmcc-app [role='alertdialog'] {
+  border-radius: var(--cmcc-radius-2xl);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SECTION: @cmcc/ui Component Overrides (Tailwind → Design Tokens)
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ─── CMCC Premium Card Component ────────────────────────── */
+
+#cmcc-app .cmcc-premium-card {
+  background: var(--cmcc-bg-card);
+  border: 1px solid var(--cmcc-border-card);
+  border-radius: var(--cmcc-radius-xl);
+  box-shadow: var(--cmcc-shadow-sm);
+  transition: all var(--cmcc-transition-normal);
+  overflow: hidden;
+}
+
+#cmcc-app .cmcc-premium-card:hover {
+  box-shadow: var(--cmcc-shadow-md);
+}
+
+#cmcc-app .cmcc-premium-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--cmcc-border-secondary);
+  background: var(--cmcc-bg-card);
+}
+
+#cmcc-app .cmcc-premium-card-header h3 {
+  font-size: var(--cmcc-font-size-md);
+  font-weight: 600;
+  margin: 0;
+  color: var(--cmcc-text-heading);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#cmcc-app .cmcc-premium-card-body {
+  padding: 20px;
+}
+
+/* Override for any card in the app using tw- classes */
+#cmcc-app .tw-rounded-lg.tw-border.tw-border-gray-200.tw-bg-white,
+#cmcc-app .tw-rounded-lg.tw-border.tw-border-gray-200 {
+  background: var(--cmcc-bg-card) !important;
+  border-color: var(--cmcc-border-card) !important;
+  border-radius: var(--cmcc-radius-xl) !important;
+  box-shadow: var(--cmcc-shadow-sm) !important;
+}
+
+/* ─── Premium Card: Section Card (used in Reports) ────────── */
+
+#cmcc-app .cmcc-section-card {
+  background: var(--cmcc-bg-card);
+  border: 1px solid var(--cmcc-border-card);
+  border-radius: var(--cmcc-radius-xl);
+  box-shadow: var(--cmcc-shadow-sm);
+  margin-bottom: 24px;
+  overflow: hidden;
+  transition: all var(--cmcc-transition-normal);
+}
+
+#cmcc-app .cmcc-section-card:hover {
+  box-shadow: var(--cmcc-shadow-md);
+}
+
+#cmcc-app .cmcc-section-card-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--cmcc-border-secondary);
+  background: var(--cmcc-bg-card);
+}
+
+#cmcc-app .cmcc-section-card-header h3 {
+  font-size: var(--cmcc-font-size-md);
+  font-weight: 600;
+  margin: 0;
+  color: var(--cmcc-text-heading);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#cmcc-app .cmcc-section-card-body {
+  padding: 20px;
+}
+
+/* ─── @cmcc/ui Table Component Override ─────────────────────── */
+
+#cmcc-app table[class*='tw-'],
+#cmcc-app .cmcc-ui-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--cmcc-body);
+}
+
+#cmcc-app table[class*='tw-'] thead th,
+#cmcc-app .cmcc-ui-table thead th {
+  text-align: left;
+  padding: 10px 14px;
+  border-bottom: 2px solid var(--cmcc-border-table);
+  font-weight: 600;
+  color: var(--cmcc-text-secondary);
+  background: var(--cmcc-bg-table-header);
+  white-space: nowrap;
+  font-size: var(--cmcc-small);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+#cmcc-app table[class*='tw-'] tbody td,
+#cmcc-app .cmcc-ui-table tbody td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--cmcc-border-table-row);
+  color: var(--cmcc-text-primary);
+  vertical-align: middle;
+}
+
+#cmcc-app table[class*='tw-'] tbody tr:hover td,
+#cmcc-app .cmcc-ui-table tbody tr:hover td {
+  background: var(--cmcc-bg-table-hover);
+}
+
+#cmcc-app table[class*='tw-'] tbody tr:nth-child(even) td,
+#cmcc-app .cmcc-ui-table tbody tr:nth-child(even) td {
+  background-color: var(--cmcc-bg-table-stripe);
+}
+
+#cmcc-app table[class*='tw-'] tbody tr:nth-child(even):hover td {
+  background-color: var(--cmcc-bg-table-hover);
+}
+
+/* ─── @cmcc/ui Pagination Component Override (MUI Table Style) ─── */
+
+#cmcc-app .cmcc-pagination-mui {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+/* Prev/Next chevron buttons */
+#cmcc-app .cmcc-pagination-mui-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--cmcc-radius-md);
+  background: transparent;
+  color: var(--cmcc-text-secondary);
+  font-size: var(--cmcc-body);
+  cursor: pointer;
+  transition: all var(--cmcc-transition-fast);
+  line-height: 1;
+  margin: 0;
+}
+
+#cmcc-app .cmcc-pagination-mui-btn:hover:not(:disabled) {
+  background: var(--cmcc-bg-table-hover);
+  color: var(--cmcc-text-primary);
+  border-color: var(--cmcc-border-primary);
+}
+
+#cmcc-app .cmcc-pagination-mui-btn:disabled {
+  color: var(--cmcc-border-primary);
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+#cmcc-app .cmcc-pagination-mui-btn:focus-visible {
+  outline: 2px solid var(--cmcc-primary);
+  outline-offset: 1px;
+}
+
+/* Page number buttons */
+#cmcc-app .cmcc-pagination-mui-page {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+  padding: 0 6px;
+  border: 1px solid transparent;
+  border-radius: var(--cmcc-radius-md);
+  background: transparent;
+  color: var(--cmcc-text-secondary);
+  font-size: var(--cmcc-body);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--cmcc-transition-fast);
+  line-height: 1;
+  margin: 0;
+}
+
+#cmcc-app .cmcc-pagination-mui-page:hover {
+  background: var(--cmcc-bg-table-hover);
+  color: var(--cmcc-text-primary);
+  border-color: var(--cmcc-border-primary);
+}
+
+#cmcc-app .cmcc-pagination-mui-page:focus-visible {
+  outline: 2px solid var(--cmcc-primary);
+  outline-offset: 1px;
+}
+
+/* Active page — subtle primary style like MUI */
+#cmcc-app .cmcc-pagination-mui-active {
+  background: var(--cmcc-primary) !important;
+  border-color: transparent !important;
+  color: #fff !important;
+  font-weight: 600;
+}
+
+#cmcc-app .cmcc-pagination-mui-active:hover {
+  background: var(--cmcc-primary-hover) !important;
+}
+
+/* Ellipsis */
+#cmcc-app .cmcc-pagination-mui-ellipsis {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 32px;
+  color: var(--cmcc-text-muted);
+  font-size: var(--cmcc-body);
+  letter-spacing: 2px;
+}
+
+/* ─── @cmcc/ui Button Component Override ───────────────────── */
+
+/* Primary variant */
+#cmcc-app button.tw-bg-primary-600,
+#cmcc-app .cmcc-ui-btn-primary {
+  background: var(--cmcc-gradient-primary) !important;
+  border-color: transparent !important;
+  color: #fff !important;
+  box-shadow: var(--cmcc-shadow-glow-sm);
+  border-radius: var(--cmcc-radius-lg);
+  font-weight: 500;
+  transition: all var(--cmcc-transition-fast);
+}
+
+#cmcc-app button.tw-bg-primary-600:hover,
+#cmcc-app .cmcc-ui-btn-primary:hover {
+  box-shadow: var(--cmcc-shadow-glow) !important;
+  transform: translateY(-1px);
+}
+
+/* Outline variant */
+#cmcc-app
+  button:not(.cmcc-tab):not(.cmcc-action-btn):not(.cmcc-page-btn):not(
+    .cmcc-page-num
+  ):not(.cmcc-theme-toggle):not(.cmcc-modal-close):not(
+    .cmcc-onboarding-skip
+  )[class*='tw-border'],
+#cmcc-app .cmcc-ui-btn-outline {
+  border: 1px solid var(--cmcc-border-primary) !important;
+  background: var(--cmcc-bg-primary) !important;
+  color: var(--cmcc-text-secondary) !important;
+  border-radius: var(--cmcc-radius-lg) !important;
+  font-size: var(--cmcc-body);
+  font-weight: 500;
+  padding: 7px 16px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all var(--cmcc-transition-fast);
+}
+
+#cmcc-app
+  button:not(.cmcc-tab):not(.cmcc-action-btn):not(.cmcc-page-btn):not(
+    .cmcc-page-num
+  ):not(.cmcc-theme-toggle):not(.cmcc-modal-close):not(
+    .cmcc-onboarding-skip
+  )[class*='tw-border']:hover {
+  background: var(--cmcc-bg-tertiary) !important;
+  border-color: var(--cmcc-primary) !important;
+  color: var(--cmcc-primary) !important;
+}
+
+/* ─── @cmcc/ui SlideOutPanel Override ──────────────────────── */
+/* Moved to new comprehensive section at end of file */
+
+/* ─── @cmcc/ui ConfirmationModal Override ───────────────────── */
+/* Moved to new comprehensive section at end of file */
+
+/* ─── @cmcc/ui EmptyState Override ────────────────────────── */
+
+#cmcc-app .cmcc-ui-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--cmcc-space-10) var(--cmcc-space-4);
+  text-align: center;
+  color: var(--cmcc-text-tertiary);
+}
+
+#cmcc-app .cmcc-ui-empty-state h3 {
+  font-size: var(--cmcc-h3);
+  font-weight: 600;
+  margin: 12px 0 4px;
+  color: var(--cmcc-text-secondary);
+}
+
+#cmcc-app .cmcc-ui-empty-state p {
+  font-size: var(--cmcc-body);
+  color: var(--cmcc-text-muted);
+  margin: 4px 0;
+}
+
+/* ─── @cmcc/ui Select/Dropdown Override ───────────────────── */
+
+#cmcc-app select.tw-border-gray-300,
+#cmcc-app .cmcc-ui-select {
+  padding: 6px 32px 6px 10px !important;
+  border: 1px solid var(--cmcc-border-input) !important;
+  border-radius: var(--cmcc-radius-md) !important;
+  font-size: var(--cmcc-body) !important;
+  background: var(--cmcc-bg-input) !important;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  color: var(--cmcc-text-primary) !important;
+  transition: all var(--cmcc-transition-fast);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  height: 36px !important;
+  line-height: normal !important;
+  box-sizing: border-box !important;
+}
+
+#cmcc-app select.tw-border-gray-300:focus,
+#cmcc-app .cmcc-ui-select:focus {
+  border-color: var(--cmcc-border-focus) !important;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+  outline: none;
+}
+
+/* ─── Inline Text Elements ─────────────────────────────────── */
+
+#cmcc-app .tw-text-gray-500,
+#cmcc-app .tw-text-gray-400 {
+  color: var(--cmcc-text-tertiary) !important;
+}
+
+#cmcc-app .tw-text-gray-300 {
+  color: var(--cmcc-border-primary) !important;
+}
+
+#cmcc-app .tw-text-gray-600,
+#cmcc-app .tw-text-gray-700 {
+  color: var(--cmcc-text-secondary) !important;
+}
+
+/* tw-text-gray-900 should resolve to primary (headings) in all modes */
+#cmcc-app .tw-text-gray-900 {
+  color: var(--cmcc-text-primary) !important;
+}
+
+#cmcc-app .tw-text-green-600 {
+  color: var(--cmcc-success) !important;
+}
+
+#cmcc-app .tw-text-red-600 {
+  color: var(--cmcc-error) !important;
+}
+
+#cmcc-app .tw-text-amber-600 {
+  color: var(--cmcc-warning) !important;
+}
+
+#cmcc-app .tw-text-orange-600 {
+  color: var(--cmcc-spam) !important;
+}
+
+#cmcc-app .tw-text-cyan-600 {
+  color: var(--cmcc-primary) !important;
+}
+
+#cmcc-app .tw-border-gray-200,
+#cmcc-app .tw-border-gray-300 {
+  border-color: var(--cmcc-border-primary) !important;
+}
+
+#cmcc-app .tw-bg-gray-50 {
+  background-color: var(--cmcc-bg-tertiary) !important;
+}
+
+#cmcc-app .tw-bg-gray-100 {
+  background-color: var(--cmcc-bg-toolbar) !important;
+}
+
+#cmcc-app .tw-bg-white {
+  background-color: var(--cmcc-bg-card) !important;
+}
+
+#cmcc-app .tw-shadow-sm {
+  box-shadow: var(--cmcc-shadow-sm) !important;
+}
+
+/* ─── Buttons with lucide icons alignment ─────────────────── */
+
+#cmcc-app button svg.tw-inline,
+#cmcc-app .cmcc-btn svg,
+#cmcc-app .cmcc-action-btn svg {
+  vertical-align: middle;
+}
+
+/* ─── Badge / Chip Styles (Tailwind-based from cmcc-ui) ──── */
+
+#cmcc-app span.tw-inline-flex.tw-items-center.tw-rounded-full {
+  font-weight: 600;
+  font-size: var(--cmcc-xs);
+  letter-spacing: 0.03em;
+}
+
+#cmcc-app span.tw-bg-green-100 {
+  background-color: var(--cmcc-success-bg) !important;
+  color: var(--cmcc-success-text) !important;
+}
+
+#cmcc-app span.tw-bg-red-100 {
+  background-color: var(--cmcc-error-bg) !important;
+  color: var(--cmcc-error-text) !important;
+}
+
+#cmcc-app span.tw-bg-blue-100 {
+  background-color: var(--cmcc-info-bg) !important;
+  color: var(--cmcc-info-text) !important;
+}
+
+#cmcc-app span.tw-bg-amber-100 {
+  background-color: var(--cmcc-warning-bg) !important;
+  color: var(--cmcc-warning-text) !important;
+}
+
+#cmcc-app span.tw-bg-orange-100 {
+  background-color: var(--cmcc-spam-bg) !important;
+  color: var(--cmcc-spam-text) !important;
+}
+
+#cmcc-app span.tw-text-green-800,
+#cmcc-app span.tw-text-green-600 {
+  color: var(--cmcc-success-text) !important;
+}
+
+#cmcc-app span.tw-text-red-800,
+#cmcc-app span.tw-text-red-600 {
+  color: var(--cmcc-error-text) !important;
+}
+
+#cmcc-app span.tw-text-blue-800 {
+  color: var(--cmcc-info-text) !important;
+}
+
+#cmcc-app span.tw-text-amber-800 {
+  color: var(--cmcc-warning-text) !important;
+}
+
+#cmcc-app span.tw-text-orange-800 {
+  color: var(--cmcc-spam-text) !important;
+}
+
+/* ─── Avatar fallback initials ─────────────────────────────── */
+
+#cmcc-app
+  span.tw-inline-flex.tw-items-center.tw-justify-center.tw-rounded-full.tw-bg-gray-200 {
+  background-color: var(--cmcc-bg-tertiary) !important;
+  color: var(--cmcc-text-secondary) !important;
+}
+
+/* ─── @cmcc/ui SettingsForm Override ───────────────────────── */
+
+#cmcc-app .cmcc-settings-layout {
+  display: flex;
+  gap: 24px;
+}
+
+#cmcc-app .cmcc-settings-layout nav[role='tablist'] {
+  width: 220px;
+  min-width: 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border-right: 1px solid var(--cmcc-border-primary);
+  padding-right: 16px;
+}
+
+#cmcc-app .cmcc-settings-layout nav[role='tablist'] button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border: none;
+  border-radius: var(--cmcc-radius-lg);
+  background: transparent;
+  color: var(--cmcc-text-secondary);
+  font-weight: 500;
+  font-size: var(--cmcc-body);
+  line-height: 1.4;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  transition: all var(--cmcc-transition-fast);
+  flex-shrink: 0;
+}
+
+#cmcc-app .cmcc-settings-layout nav[role='tablist'] button:hover {
+  background: var(--cmcc-bg-table-hover);
+  color: var(--cmcc-text-primary);
+}
+
+#cmcc-app
+  .cmcc-settings-layout
+  nav[role='tablist']
+  button[aria-selected='true'] {
+  background: var(--cmcc-bg-selected);
+  color: var(--cmcc-primary);
+  font-weight: 600;
+}
+
+/* Settings form section panel */
+#cmcc-app .cmcc-settings-layout > div:last-child {
+  flex: 1;
+  min-width: 0;
+}
+
+#cmcc-app .cmcc-settings-layout > div:last-child h3 {
+  font-size: var(--cmcc-h3);
+  font-weight: 600;
+  margin: 0 0 16px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--cmcc-border-secondary);
+  color: var(--cmcc-text-heading);
+}
+
+/* ─── @cmcc/ui QuickFilterBar Override ────────────────────── */
+
+#cmcc-app .cmcc-quick-filter-bar {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+#cmcc-app .cmcc-quick-filter-bar button {
+  padding: 5px 14px;
+  border: 1px solid var(--cmcc-border-primary);
+  border-radius: var(--cmcc-radius-full);
+  background: var(--cmcc-bg-primary);
+  color: var(--cmcc-text-secondary);
+  font-size: var(--cmcc-small);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--cmcc-transition-fast);
+}
+
+#cmcc-app .cmcc-quick-filter-bar button:hover {
+  background: var(--cmcc-bg-tertiary);
+  border-color: var(--cmcc-primary);
+  color: var(--cmcc-primary);
+}
+
+#cmcc-app .cmcc-quick-filter-bar button.cmcc-qfb-active {
+  background: var(--cmcc-primary);
+  border-color: var(--cmcc-primary);
+  color: #fff;
+}
+
+/* ─── @cmcc/ui Saved Filters ───────────────────────────────── */
+
+#cmcc-app .cmcc-saved-filters {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+#cmcc-app .cmcc-saved-filters button {
+  padding: 4px 12px;
+  border-radius: var(--cmcc-radius-full);
+  font-size: var(--cmcc-xs);
+  font-weight: 500;
+  border: 1px solid var(--cmcc-border-primary);
+  background: var(--cmcc-bg-tertiary);
+  color: var(--cmcc-text-secondary);
+  cursor: pointer;
+  transition: all var(--cmcc-transition-fast);
+}
+
+#cmcc-app .cmcc-saved-filters button:hover {
+  background: var(--cmcc-primary-light);
+  border-color: var(--cmcc-primary);
+  color: var(--cmcc-primary);
+}
+
+/* ─── Activity Feed (cmcc-ui) ───────────────────────────────── */
+
+#cmcc-app .cmcc-activity-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+#cmcc-app .cmcc-activity-feed-item {
+  display: flex;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--cmcc-bg-secondary);
+  border: 1px solid var(--cmcc-border-secondary);
+  border-radius: var(--cmcc-radius-lg);
+  transition: all var(--cmcc-transition-fast);
+}
+
+#cmcc-app .cmcc-activity-feed-item:hover {
+  background: var(--cmcc-bg-table-hover);
+  border-color: var(--cmcc-border-primary);
+}
+
+/* ─── Moderation Notes (cmcc-ui) ───────────────────────────── */
+
+#cmcc-app .cmcc-moderation-notes {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+#cmcc-app .cmcc-moderation-note {
+  padding: 10px 14px;
+  background: var(--cmcc-bg-secondary);
+  border: 1px solid var(--cmcc-border-secondary);
+  border-radius: var(--cmcc-radius-lg);
+  font-size: var(--cmcc-body);
+  color: var(--cmcc-text-primary);
+}
+
+/* ─── Charts Common ─────────────────────────────────────────── */
+
+#cmcc-app .cmcc-chart-card .cmcc-chart-title {
+  font-size: var(--cmcc-font-size-md);
+  font-weight: 600;
+  margin: 0 0 12px;
+  color: var(--cmcc-text-heading);
+}
+
+/* ─── Section/Report page reusable styles ─────────────────── */
+
+#cmcc-app .cmcc-page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+#cmcc-app .cmcc-page-header h2 {
+  font-size: var(--cmcc-h2);
+  font-weight: 700;
+  margin: 0;
+  color: var(--cmcc-text-heading);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ─── Multi-platform hub cards ─────────────────────────────── */
+
+#cmcc-app .cmcc-platform-card {
+  border-radius: var(--cmcc-radius-xl);
+  border: 1px solid var(--cmcc-border-card);
+  padding: 16px 12px;
+  text-align: center;
+  transition: all var(--cmcc-transition-normal);
+  cursor: pointer;
+}
+
+#cmcc-app .cmcc-platform-card:hover {
+  border-color: var(--cmcc-primary);
+  background: var(--cmcc-bg-selected);
+  box-shadow: var(--cmcc-shadow-glow-sm);
+  transform: translateY(-2px);
+}
+
+#cmcc-app .cmcc-platform-card.cmcc-connected {
+  border-color: var(--cmcc-success);
+  background: var(--cmcc-success-bg);
+}
+
+#cmcc-app .cmcc-platform-card .cmcc-platform-name {
+  font-size: var(--cmcc-body);
+  font-weight: 600;
+  margin-top: 8px;
+  color: var(--cmcc-text-primary);
+}
+
+#cmcc-app .cmcc-platform-card .cmcc-platform-status {
+  font-size: var(--cmcc-xs);
+  font-weight: 500;
+}
+
+/* ─── Grid helpers ─────────────────────────────────────────── */
+
+#cmcc-app .cmcc-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+@media screen and (min-width: 768px) {
+  #cmcc-app .cmcc-grid-2 {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+#cmcc-app .cmcc-grid-3 {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+@media screen and (min-width: 768px) {
+  #cmcc-app .cmcc-grid-3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* ─── Flex helpers ─────────────────────────────────────────── */
+
+#cmcc-app .cmcc-flex-center {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#cmcc-app .cmcc-flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+#cmcc-app .cmcc-flex-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+/* ─── MUI-Inspired DateRangePicker (CMCC Design Tokens) ─────── */
+
+/* Wrapper — relative positioning anchor for popover */
+#cmcc-app .cmcc-dp-wrapper {
+  position: relative;
+}
+
+/* ── Trigger Button (MUI TextField-inspired) ─────────────── */
+#cmcc-app .cmcc-dp-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 14px;
+  border: 1px solid var(--cmcc-border-input);
+  border-radius: var(--cmcc-radius-lg);
+  background: var(--cmcc-bg-input);
+  color: var(--cmcc-text-primary);
+  font-size: var(--cmcc-body);
+  font-family: var(--cmcc-font-sans);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--cmcc-transition-fast);
+  white-space: nowrap;
+  line-height: 1.5;
+  min-height: 36px;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+#cmcc-app .cmcc-dp-trigger:hover {
+  border-color: var(--cmcc-primary);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.08);
+}
+
+#cmcc-app .cmcc-dp-trigger:focus-visible {
+  outline: 2px solid var(--cmcc-primary);
+  outline-offset: 2px;
+}
+
+#cmcc-app .cmcc-dp-trigger-icon {
+  width: 16px;
+  height: 16px;
+  color: var(--cmcc-text-muted);
+  flex-shrink: 0;
+}
+
+#cmcc-app .cmcc-dp-trigger-text {
+  flex: 1;
+  text-align: left;
+  color: var(--cmcc-text-primary);
+  font-weight: 450;
+  font-size: var(--cmcc-body);
+  min-width: 180px;
+}
+
+#cmcc-app .cmcc-dp-chevron {
+  width: 14px;
+  height: 14px;
+  color: var(--cmcc-text-muted);
+  flex-shrink: 0;
+  transition: transform var(--cmcc-transition-fast);
+}
+
+#cmcc-app .cmcc-dp-chevron-open {
+  transform: rotate(180deg);
+}
+
+/* ── Popover ───────────────────────────────────────────────── */
+#cmcc-app .cmcc-dp-popover {
+  position: absolute;
+  right: 0;
+  z-index: 100002;
+  margin-top: 6px;
+  background: var(--cmcc-bg-card);
+  border: 1px solid var(--cmcc-border-card);
+  border-radius: var(--cmcc-radius-xl);
+  box-shadow: var(--cmcc-shadow-xl);
+  overflow: hidden;
+  min-width: 0;
+  width: auto;
+  max-width: min(640px, calc(100vw - 32px));
+  transform-origin: top right;
+}
+
+/* Responsive: On smaller screens the two-month layout may overflow;
+   ensure the popover width adapts without causing horizontal scroll */
+#cmcc-app .cmcc-dp-popover .cmcc-dp-months {
+  flex-wrap: wrap;
+}
+
+@media screen and (max-width: 600px) {
+  #cmcc-app .cmcc-dp-popover {
+    right: -70px;
+    max-width: calc(100vw - 32px);
+  }
+  #cmcc-app .cmcc-dp-popover .cmcc-dp-months {
+    flex-direction: column;
+    gap: 8px;
+  }
+}
+
+/* Popover enter animation */
+#cmcc-app .cmcc-dp-popover.cmcc-dp-popover-enter {
+  animation: cmcc-dp-scale-in 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Popover exit animation */
+#cmcc-app .cmcc-dp-popover.cmcc-dp-popover-exit {
+  animation: cmcc-dp-scale-out 0.15s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes cmcc-dp-scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes cmcc-dp-scale-out {
+  from {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.96) translateY(-6px);
+  }
+}
+
+/* ── Presets row ───────────────────────────────────────────── */
+#cmcc-app .cmcc-dp-presets {
+  display: flex;
+  gap: 4px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--cmcc-border-secondary);
+  background: var(--cmcc-bg-secondary);
+}
+
+#cmcc-app .cmcc-dp-preset-btn {
+  flex: 1;
+  padding: 5px 10px;
+  font-size: var(--cmcc-small);
+  font-weight: 500;
+  color: var(--cmcc-text-secondary);
+  background: var(--cmcc-bg-primary);
+  border: 1px solid var(--cmcc-border-primary);
+  border-radius: var(--cmcc-radius-full);
+  cursor: pointer;
+  transition: all var(--cmcc-transition-fast);
+  white-space: nowrap;
+  font-family: var(--cmcc-font-sans);
+  line-height: 1.4;
+}
+
+#cmcc-app .cmcc-dp-preset-btn:hover {
+  background: var(--cmcc-primary-light);
+  border-color: var(--cmcc-primary);
+  color: var(--cmcc-primary);
+}
+
+#cmcc-app .cmcc-dp-preset-btn:focus-visible {
+  outline: 2px solid var(--cmcc-primary);
+  outline-offset: 2px;
+}
+
+/* ── Calendar area ─────────────────────────────────────────── */
+#cmcc-app .cmcc-dp-calendar-wrap {
+  padding: 14px;
+}
+
+/* Months container — flex row for two months */
+#cmcc-app .cmcc-dp-months {
+  display: flex;
+  gap: 24px;
+}
+
+#cmcc-app .cmcc-dp-month {
+  margin: 0;
+}
+
+/* Caption row: month/year label + nav buttons */
+#cmcc-app .cmcc-dp-caption {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 2px 10px;
+}
+
+#cmcc-app .cmcc-dp-caption-label {
+  font-size: var(--cmcc-font-size-md);
+  font-weight: 600;
+  color: var(--cmcc-text-heading);
+  font-family: var(--cmcc-font-sans);
+}
+
+#cmcc-app .cmcc-dp-nav {
+  display: flex;
+  gap: 4px;
+}
+
+#cmcc-app .cmcc-dp-nav-btn {
+  width: 30px;
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--cmcc-radius-md);
+  color: var(--cmcc-text-secondary);
+  cursor: pointer;
+  transition: all var(--cmcc-transition-fast);
+  padding: 0;
+  font-size: 16px;
+  line-height: 1;
+}
+
+#cmcc-app .cmcc-dp-nav-btn:hover {
+  background: var(--cmcc-bg-table-hover);
+  border-color: var(--cmcc-border-primary);
+  color: var(--cmcc-primary);
+}
+
+#cmcc-app .cmcc-dp-nav-btn:focus-visible {
+  outline: 2px solid var(--cmcc-primary);
+  outline-offset: 1px;
+}
+
+/* ── Calendar grid ─────────────────────────────────────────── */
+#cmcc-app .cmcc-dp-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+#cmcc-app .cmcc-dp-head-row {
+  display: flex;
+}
+
+#cmcc-app .cmcc-dp-head-cell {
+  width: 38px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--cmcc-small);
+  font-weight: 600;
+  color: var(--cmcc-text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+#cmcc-app .cmcc-dp-row {
+  display: flex;
+  width: 100%;
+  margin: 0;
+}
+
+#cmcc-app .cmcc-dp-cell {
+  width: 38px;
+  height: 36px;
+  padding: 0;
+  text-align: center;
+  position: relative;
+}
+
+/* Individual day button */
+#cmcc-app .cmcc-dp-day {
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--cmcc-radius-md);
+  font-size: var(--cmcc-body);
+  font-weight: 450;
+  color: var(--cmcc-text-primary);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all var(--cmcc-transition-fast);
+  padding: 0;
+  line-height: 1;
+  font-family: var(--cmcc-font-sans);
+}
+
+#cmcc-app .cmcc-dp-day:hover {
+  background: var(--cmcc-bg-table-hover);
+}
+
+#cmcc-app .cmcc-dp-day:focus-visible {
+  outline: 2px solid var(--cmcc-primary);
+  outline-offset: 1px;
+}
+
+/* Selected day (single or range start/end) */
+#cmcc-app .cmcc-dp-day-selected {
+  background: var(--cmcc-primary) !important;
+  color: #ffffff !important;
+  font-weight: 600;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.3);
+}
+
+#cmcc-app .cmcc-dp-day-selected:hover {
+  background: var(--cmcc-primary-hover) !important;
+}
+
+/* Range middle days */
+#cmcc-app .cmcc-dp-day-range-middle {
+  background: var(--cmcc-primary-light) !important;
+  color: var(--cmcc-primary-dark) !important;
+  border-radius: 0;
+}
+
+#cmcc-app .cmcc-dp-day-range-middle:hover {
+  background: var(--cmcc-primary-100) !important;
+}
+
+/* Range start and end */
+#cmcc-app .cmcc-dp-day-range-start {
+  background: var(--cmcc-primary) !important;
+  color: #ffffff !important;
+  font-weight: 600;
+  border-radius: var(--cmcc-radius-md);
+}
+
+#cmcc-app .cmcc-dp-day-range-end {
+  background: var(--cmcc-primary) !important;
+  color: #ffffff !important;
+  font-weight: 600;
+  border-radius: var(--cmcc-radius-md);
+}
+
+/* Today indicator */
+#cmcc-app .cmcc-dp-day-today {
+  font-weight: 700;
+  box-shadow: inset 0 0 0 1.5px var(--cmcc-primary);
+}
+
+/* Outside and disabled days */
+#cmcc-app .cmcc-dp-day-outside {
+  color: var(--cmcc-text-disabled);
+  opacity: 0.4;
+}
+
+#cmcc-app .cmcc-dp-day-disabled {
+  color: var(--cmcc-text-disabled);
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* ─── MUI Table Pagination footer (shared across all tables) ─── */
+
+#cmcc-app .cmcc-table-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-top: 1px solid var(--cmcc-border-secondary);
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+#cmcc-app .cmcc-table-pagination-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+#cmcc-app .cmcc-table-pagination-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+#cmcc-app .cmcc-pagination-info {
+  font-size: var(--cmcc-body);
+  color: var(--cmcc-text-secondary);
+  white-space: nowrap;
+}
+
+#cmcc-app .cmcc-pagination-separator {
+  color: var(--cmcc-border-primary);
+  font-size: var(--cmcc-body);
+}
+
+#cmcc-app .cmcc-pagination-rows-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--cmcc-body);
+  color: var(--cmcc-text-secondary);
+  white-space: nowrap;
+}
+
+#cmcc-app .cmcc-pagination-rows-select {
+  padding: 4px 28px 4px 8px;
+  border: 1px solid var(--cmcc-border-input);
+  border-radius: var(--cmcc-radius-md);
+  font-size: var(--cmcc-small);
+  background: var(--cmcc-bg-input);
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  color: var(--cmcc-text-primary);
+  transition: all var(--cmcc-transition-fast);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 6px center;
+  min-width: 64px;
+  height: 30px;
+  line-height: normal;
+  box-sizing: border-box;
+}
+
+#cmcc-app .cmcc-pagination-rows-select:focus {
+  border-color: var(--cmcc-border-focus);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+  outline: none;
+}
+
+/* ─── Pagination label (shared) ───────────────────────────── */
+
+#cmcc-app .cmcc-pagination-label {
+  font-size: var(--cmcc-body);
+  color: var(--cmcc-text-secondary);
+  white-space: nowrap;
+}
+
+/* ─── Section heading with bottom border ──────────────────── */
+
+#cmcc-app .cmcc-section-heading {
+  font-size: var(--cmcc-h3);
+  font-weight: 600;
+  margin: 0 0 16px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--cmcc-border-secondary);
+  color: var(--cmcc-text-heading);
+}
+
+/* ─── Toolbar/Content footer with pagination ──────────────── */
+
+#cmcc-app .cmcc-table-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 4px 4px;
+}
+
+/* ─── Small header for report cards ────────────────────────── */
+
+#cmcc-app .cmcc-card-header-divider {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--cmcc-border-secondary);
+}
+
+#cmcc-app .cmcc-card-header-divider h3 {
+  font-size: var(--cmcc-font-size-md);
+  font-weight: 600;
+  margin: 0;
+  color: var(--cmcc-text-heading);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ─── Report export buttons row ────────────────────────────── */
+
+#cmcc-app .cmcc-export-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* ─── Schedule report form row ─────────────────────────────── */
+
+#cmcc-app .cmcc-schedule-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+#cmcc-app .cmcc-schedule-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+#cmcc-app .cmcc-schedule-field label {
+  font-size: var(--cmcc-xs);
+  font-weight: 500;
+  color: var(--cmcc-text-tertiary);
+}
+
+#cmcc-app .cmcc-schedule-field select {
+  padding: 6px 28px 6px 10px;
+  border: 1px solid var(--cmcc-border-input);
+  border-radius: var(--cmcc-radius-md);
+  font-size: var(--cmcc-body);
+  background: var(--cmcc-bg-input);
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  color: var(--cmcc-text-primary);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  height: 36px;
+}
+
+/* ─── Spinner SVG override for dark mode compatibility ────── */
+
+#cmcc-app .tw-animate-spin .tw-opacity-25 {
+  opacity: 0.25;
+}
+
+#cmcc-app .tw-animate-spin .tw-opacity-75 {
+  opacity: 0.75;
+}
+
+/* =========================================================================
+   SECTION: Slide-Out Panel — Premium Side Drawer
+   Smooth slide-in/out with backdrop and glassmorphism
+   ========================================================================= */
+
+/* Panel container — slides from the right, fixed position right sidebar */
+
+/* Portal-rendered panel dark mode styles */
+/* Since the panel is rendered to body via portal, it inherits from body */
+/* We need to explicitly set dark mode colors for portal elements */
+.dark .cmcc-slide-panel {
+  background: #131c31 !important;
+}
+
+.dark .cmcc-slide-panel.cmcc-panel-right {
+  border-left-color: #1e293b !important;
+}
+
+.dark .cmcc-slide-panel.cmcc-panel-left {
+  border-right-color: #1e293b !important;
+}
+
+.dark .cmcc-slide-panel .cmcc-panel-title {
+  color: #f1f5f9 !important;
+}
+
+.dark .cmcc-slide-panel h4,
+.dark .cmcc-slide-panel .tw-text-sm.tw-font-semibold {
+  color: #e2e8f0 !important;
+}
+
+.dark .cmcc-slide-panel .tw-text-gray-500,
+.dark .cmcc-slide-panel .tw-text-gray-400 {
+  color: var(--cmcc-text-tertiary) !important;
+}
+
+.dark .cmcc-slide-panel .tw-text-gray-600 {
+  color: var(--cmcc-text-secondary) !important;
+}
+
+.dark .cmcc-slide-panel .tw-bg-gray-50 {
+  background: var(--cmcc-bg-tertiary) !important;
+}
+
+.dark .cmcc-slide-panel input,
+.dark .cmcc-slide-panel select {
+  background: var(--cmcc-bg-input) !important;
+  border-color: var(--cmcc-border-input) !important;
+  color: var(--cmcc-text-primary) !important;
+}
+
+.dark .cmcc-slide-panel .tw-border-gray-100,
+.dark .cmcc-slide-panel .tw-border-gray-200,
+.dark .cmcc-slide-panel .tw-border-gray-300 {
+  border-color: var(--cmcc-border-secondary) !important;
+}
+
+.dark .cmcc-slide-panel .tw-bg-primary-600 {
+  background: var(--cmcc-gradient-primary) !important;
+}
+
+/* ─── Section dividers inside slide panel ─── */
+.dark .cmcc-slide-panel .tw-border-t {
+  border-top-color: var(--cmcc-border-secondary) !important;
+}
+
+/* ─── Slide panel internal Tailwind overrides (light mode) ──── */
+/* Panel renders via portal to body, so #cmcc-app prefixes don't apply */
+
+.cmcc-slide-panel h4 {
+  font-size: var(--cmcc-body) !important;
+  font-weight: 600 !important;
+  color: var(--cmcc-text-heading);
+  margin-bottom: 12px !important;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cmcc-slide-panel .tw-border-t {
+  border-top-color: var(--cmcc-border-secondary) !important;
+}
+
+.cmcc-slide-panel .tw-border-gray-100 {
+  border-color: var(--cmcc-border-secondary) !important;
+}
+
+.cmcc-slide-panel .tw-text-gray-500,
+.cmcc-slide-panel .tw-text-gray-400 {
+  color: var(--cmcc-text-tertiary) !important;
+}
+
+.cmcc-slide-panel .tw-text-gray-600 {
+  color: var(--cmcc-text-secondary) !important;
+}
+
+.cmcc-slide-panel .tw-bg-gray-50 {
+  background: var(--cmcc-bg-tertiary) !important;
+  border: 1px solid var(--cmcc-border-primary) !important;
+}
+
+.cmcc-slide-panel .tw-text-xs {
+  font-size: var(--cmcc-xs) !important;
+}
+
+.cmcc-slide-panel .tw-text-sm {
+  font-size: var(--cmcc-body) !important;
+}
+
+/* ─── Queue page header count text ───────────────────────────────── */
+#cmcc-app .cmcc-queue-count {
+  font-size: var(--cmcc-body);
+  color: var(--cmcc-text-tertiary);
+  white-space: nowrap;
+}
+
+/* ─── Queue page icon button ────────────────────────────────────── */
+#cmcc-app .cmcc-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  color: var(--cmcc-text-tertiary);
+  background: none;
+  border: none;
+  border-radius: var(--cmcc-radius-md);
+  cursor: pointer;
+  transition: all var(--cmcc-transition-fast);
+}
+
+#cmcc-app .cmcc-icon-btn:hover {
+  color: var(--cmcc-text-primary);
+  background: var(--cmcc-bg-table-hover);
+}
+
+/* =========================================================================
+	   SECTION: Accessibility Fixes — Color Contrast, Labels
+	   ========================================================================= */
+
+/* Fix contrast for author ID text (cmcc-text-muted on white fails WCAG AA) */
+#cmcc-app .cmcc-author-id {
+  color: var(--cmcc-text-tertiary) !important;
+}
+
+/* Add accessible label fallbacks for icon-only buttons */
+#cmcc-app button:not([aria-label]):not([aria-labelledby]) svg:only-child {
+  outline: none;
+}
+
+/* Ensure select elements in filters have higher contrast label colors */
+#cmcc-app select.cmcc-filter-select {
+  color: var(--cmcc-text-primary) !important;
+}
+
+/* =========================================================================
+   SECTION: Button & Action Spacing — Buttons, Icon Buttons, Action Groups
+   All buttons have consistent horizontal and vertical spacing to separate
+   them from other elements and each other.
+   ========================================================================= */
+
+/* All buttons in the app get consistent margin */
+#cmcc-app button,
+#cmcc-app .cmcc-btn,
+#cmcc-app .cmcc-action-btn {
+  margin: 2px !important;
+}
+
+/* Action button group in queue table */
+#cmcc-app .cmcc-action-group {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 8px !important;
+  align-items: center;
+  margin: 4px 0 !important;
+}
+
+/* Individual action buttons inside group */
+#cmcc-app .cmcc-action-group .cmcc-action-btn {
+  margin: 0 !important;
+}
+
+/* Button groups in toolbar — horizontal and vertical gap */
+#cmcc-app .cmcc-queue-toolbar-left {
+  display: flex !important;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px !important;
+  margin: 4px 0 !important;
+}
+
+#cmcc-app .cmcc-queue-toolbar-right {
+  display: flex !important;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px !important;
+  margin: 4px 0 !important;
+}
+
+/* Top action row (Refresh + items count + saved filters + keyboard shortcut) */
+#cmcc-app .cmcc-queue-toolbar-top {
+  display: flex !important;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px !important;
+  margin-bottom: 16px !important;
+}
+
+/* Save filter input row */
+#cmcc-app .cmcc-save-filter-row {
+  display: flex !important;
+  align-items: center;
+  gap: 10px !important;
+  margin-bottom: 16px !important;
+}
+
+/* Filter select spacing */
+#cmcc-app .cmcc-filter-select,
+#cmcc-app .cmcc-bulk-select {
+  margin: 2px 0 !important;
+}
+
+/* Generic button spacing for any button group */
+#cmcc-app .cmcc-btn-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 4px 0;
+}
+
+/* Quick filter bar button spacing */
+#cmcc-app .cmcc-quick-filter-bar {
+  display: flex !important;
+  flex-wrap: wrap;
+  gap: 6px !important;
+  margin-bottom: 16px !important;
+  padding: 4px 0 !important;
+}
+
+/* Quick filter bar individual buttons */
+#cmcc-app .cmcc-quick-filter-bar button,
+#cmcc-app [role='group'][aria-label='Quick filters'] button {
+  margin: 3px !important;
+}
+
+/* Generic spacing between inline buttons */
+#cmcc-app .cmcc-btn-group > * {
+  margin: 0 !important;
+}
+
+/* Any button followed by another button gets left margin for separation */
+#cmcc-app button + button {
+  margin-left: 6px !important;
+}
+
+/* Queue table toolbar buttons spacing */
+#cmcc-app .cmcc-queue-toolbar {
+  gap: 12px !important;
+  margin-bottom: 12px !important;
+}
+
+/* =========================================================================
+   SECTION: Form Element Spacing — Consistent margins and padding
+   ========================================================================= */
+
+/* All form elements get consistent spacing */
+#cmcc-app .cmcc-search-input,
+#cmcc-app .cmcc-filter-select,
+#cmcc-app .cmcc-bulk-select,
+#cmcc-app select.cmcc-filter-select,
+#cmcc-app select.cmcc-bulk-select,
+#cmcc-app input[type='text'],
+#cmcc-app input[type='search'],
+#cmcc-app input[type='number'],
+#cmcc-app input[type='email'],
+#cmcc-app input[type='url'],
+#cmcc-app input[type='password'],
+#cmcc-app select,
+#cmcc-app textarea {
+  margin: 4px 0 !important;
+  padding: 8px 12px !important;
+  border-radius: var(--cmcc-radius-md) !important;
+  border: 1px solid var(--cmcc-border-input) !important;
+  background: var(--cmcc-bg-input) !important;
+  color: var(--cmcc-text-primary) !important;
+  font-size: var(--cmcc-body) !important;
+  transition:
+    border-color var(--cmcc-transition-fast),
+    box-shadow var(--cmcc-transition-fast) !important;
+  line-height: 1.4 !important;
+  vertical-align: middle !important;
+}
+
+/* Focus state for form elements */
+#cmcc-app .cmcc-search-input:focus,
+#cmcc-app .cmcc-filter-select:focus,
+#cmcc-app select:focus,
+#cmcc-app input:focus,
+#cmcc-app textarea:focus {
+  border-color: var(--cmcc-border-focus) !important;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12) !important;
+  outline: none !important;
+}
+
+/* Ensure placeholder text is fully visible and not cut off */
+#cmcc-app input::placeholder,
+#cmcc-app textarea::placeholder,
+#cmcc-app .cmcc-search-input::placeholder,
+#cmcc-app #cmcc-save-filter-input::placeholder {
+  color: var(--cmcc-text-placeholder) !important;
+  opacity: 1 !important;
+  font-size: var(--cmcc-body) !important;
+  line-height: normal !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  white-space: nowrap !important;
+}
+
+/* Fix save filter input width to prevent placeholder clipping */
+#cmcc-app #cmcc-save-filter-input {
+  min-width: 220px !important;
+  width: auto !important;
+}
+
+/* =========================================================================
+   SECTION: Analytics Layout — Stats Cards in a Row
+   ========================================================================= */
+
+/* Analytics page top area */
+#cmcc-app .cmcc-analytics-page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+/* Analytics stats grid — always 4 in a row on desktop */
+#cmcc-app .cmcc-stats-grid.cmcc-stats-grid-4 {
+  display: grid !important;
+  grid-template-columns: repeat(4, 1fr) !important;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+@media screen and (max-width: 960px) {
+  #cmcc-app .cmcc-stats-grid.cmcc-stats-grid-4 {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 12px;
+  }
+}
+
+@media screen and (max-width: 600px) {
+  #cmcc-app .cmcc-stats-grid.cmcc-stats-grid-4 {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 10px;
+  }
+}
+
+/* Stat card improvements */
+#cmcc-app .cmcc-stat-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 20px 16px;
+  background: var(--cmcc-bg-card);
+  border: 1px solid var(--cmcc-border-card);
+  border-radius: var(--cmcc-radius-xl);
+  text-align: center;
+  box-shadow: var(--cmcc-shadow-sm);
+  transition: all var(--cmcc-transition-normal);
+  position: relative;
+  overflow: hidden;
+}
+
+#cmcc-app .cmcc-stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--cmcc-gradient-primary);
+  opacity: 0.6;
+}
+
+#cmcc-app .cmcc-stat-card:hover {
+  box-shadow: var(--cmcc-shadow-md);
+  transform: translateY(-2px);
+}
+
+/* Content breakdown table footer with pagination */
+#cmcc-app .cmcc-breakdown-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 16px 8px 8px;
+  border-top: 1px solid var(--cmcc-border-secondary);
+}
+
+/* =========================================================================
+   SECTION: Form Element Spacing
+   ========================================================================= */
+
+/* Form group: label + input */
+#cmcc-app .cmcc-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+#cmcc-app .cmcc-form-group label {
+  font-size: var(--cmcc-body);
+  font-weight: 600;
+  color: var(--cmcc-text-secondary);
+}
+
+#cmcc-app .cmcc-form-group input[type='text'],
+#cmcc-app .cmcc-form-group input[type='number'],
+#cmcc-app .cmcc-form-group input[type='email'],
+#cmcc-app .cmcc-form-group input[type='url'],
+#cmcc-app .cmcc-form-group input[type='password'],
+#cmcc-app .cmcc-form-group textarea,
+#cmcc-app .cmcc-form-group select {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--cmcc-border-input);
+  border-radius: var(--cmcc-radius-md);
+  font-size: var(--cmcc-body);
+  background: var(--cmcc-bg-input);
+  color: var(--cmcc-text-primary);
+  transition:
+    border-color var(--cmcc-transition-fast),
+    box-shadow var(--cmcc-transition-fast);
+}
+
+#cmcc-app .cmcc-form-group input:focus,
+#cmcc-app .cmcc-form-group textarea:focus,
+#cmcc-app .cmcc-form-group select:focus {
+  border-color: var(--cmcc-border-focus);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+  outline: none;
+}
+
+/* Inline form row (multiple fields side by side) */
+#cmcc-app .cmcc-form-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+#cmcc-app .cmcc-form-row > * {
+  flex: 1;
+  min-width: 140px;
+}
+
+/* Toggle / switch layout */
+#cmcc-app .cmcc-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+}
+
+#cmcc-app .cmcc-toggle-row label {
+  font-size: var(--cmcc-body);
+  font-weight: 500;
+  color: var(--cmcc-text-primary);
+}
+
+/* =========================================================================
+	   SECTION: Slide-Out Panel Buttons — CMCC Design-System Styled
+	   Replaces the raw Tailwind button classes with consistent styling
+	   that matches the Settings tab form elements.
+	   ========================================================================= */
+
+/* Action buttons row inside the slide-out panel */
+.cmcc-slide-panel .cmcc-slide-panel-actions {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 8px !important;
+  padding-top: 16px !important;
+  border-top: 1px solid var(--cmcc-border-secondary) !important;
+}
+
+/* Base slide panel button */
+.cmcc-sp-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  padding: 8px 14px !important;
+  border: none !important;
+  border-radius: var(--cmcc-radius-md) !important;
+  font-size: var(--cmcc-body) !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  transition: all var(--cmcc-transition-fast) !important;
+  box-shadow: var(--cmcc-shadow-sm) !important;
+  white-space: nowrap !important;
+  color: #ffffff !important;
+  line-height: 1.4 !important;
+}
+
+.cmcc-sp-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--cmcc-shadow-md);
+}
+
+.cmcc-sp-btn:active {
+  transform: translateY(0);
+}
+
+.cmcc-sp-btn svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+/* Approve button — gradient green */
+.cmcc-sp-btn-approve {
+  background: linear-gradient(135deg, #10b981, #34d399) !important;
+}
+.cmcc-sp-btn-approve:hover {
+  background: linear-gradient(135deg, #059669, #10b981) !important;
+}
+
+/* Reject button — gradient red */
+.cmcc-sp-btn-reject {
+  background: linear-gradient(135deg, #ef4444, #f87171) !important;
+}
+.cmcc-sp-btn-reject:hover {
+  background: linear-gradient(135deg, #dc2626, #ef4444) !important;
+}
+
+/* Spam button — gradient amber */
+.cmcc-sp-btn-spam {
+  background: linear-gradient(135deg, #f59e0b, #f97316) !important;
+}
+.cmcc-sp-btn-spam:hover {
+  background: linear-gradient(135deg, #d97706, #f59e0b) !important;
+}
+
+/* AI Evaluate button — gradient purple */
+.cmcc-sp-btn-ai {
+  background: linear-gradient(135deg, #8b5cf6, #a78bfa) !important;
+}
+.cmcc-sp-btn-ai:hover {
+  background: linear-gradient(135deg, #7c3aed, #8b5cf6) !important;
+}
+.cmcc-sp-btn-ai:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Save Assignment button — gradient primary */
+.cmcc-sp-btn-save {
+  background: var(--cmcc-gradient-primary) !important;
+  align-self: flex-start !important;
+  padding: 10px 20px !important;
+  font-size: var(--cmcc-body) !important;
+}
+.cmcc-sp-btn-save:hover {
+  opacity: 0.9;
+}
+
+/* Dark mode adjustments for slide panel buttons */
+.dark .cmcc-sp-btn-approve {
+  background: linear-gradient(135deg, #059669, #10b981) !important;
+}
+.dark .cmcc-sp-btn-reject {
+  background: linear-gradient(135deg, #dc2626, #ef4444) !important;
+}
+.dark .cmcc-sp-btn-spam {
+  background: linear-gradient(135deg, #d97706, #f59e0b) !important;
+}
+.dark .cmcc-sp-btn-ai {
+  background: linear-gradient(135deg, #7c3aed, #8b5cf6) !important;
+}
+.dark .cmcc-sp-btn-save {
+  background: linear-gradient(135deg, #4f46e5, #6366f1) !important;
+}
+
+/* Slide panel form groups use Settings tab consistent styling */
+.cmcc-slide-panel .cmcc-form-group {
+  margin-bottom: 12px !important;
+}
+
+.cmcc-slide-panel .cmcc-form-group label {
+  font-size: var(--cmcc-small) !important;
+  font-weight: 600 !important;
+  color: var(--cmcc-text-secondary) !important;
+  margin-bottom: 4px !important;
+  display: block;
+}
+
+.cmcc-slide-panel .cmcc-form-group input,
+.cmcc-slide-panel .cmcc-form-group select {
+  width: 100% !important;
+  padding: 8px 12px !important;
+  border: 1px solid var(--cmcc-border-input) !important;
+  border-radius: var(--cmcc-radius-md) !important;
+  font-size: var(--cmcc-body) !important;
+  background: var(--cmcc-bg-input) !important;
+  color: var(--cmcc-text-primary) !important;
+  transition:
+    border-color var(--cmcc-transition-fast),
+    box-shadow var(--cmcc-transition-fast);
+}
+
+.cmcc-slide-panel .cmcc-form-group input:focus,
+.cmcc-slide-panel .cmcc-form-group select:focus {
+  border-color: var(--cmcc-border-focus) !important;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12) !important;
+  outline: none !important;
+}
+
+/* Dark mode slide panel form group */
+.dark .cmcc-slide-panel .cmcc-form-group label {
+  color: var(--cmcc-text-secondary) !important;
+}
+
+.dark .cmcc-slide-panel .cmcc-form-group input,
+.dark .cmcc-slide-panel .cmcc-form-group select {
+  background: var(--cmcc-bg-input) !important;
+  border-color: var(--cmcc-border-input) !important;
+  color: var(--cmcc-text-primary) !important;
+}
+
+.dark .cmcc-slide-panel .cmcc-form-group input:focus,
+.dark .cmcc-slide-panel .cmcc-form-group select:focus {
+  border-color: var(--cmcc-border-focus) !important;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15) !important;
+}
+
+/* =========================================================================
+	   SECTION: Animation Keyframes
+	   ========================================================================= */
+
+@keyframes cmcc-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes cmcc-slide-in-right {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes cmcc-slide-out-right {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes cmcc-scale-in {
+  from {
+    transform: scale(0.95) translateY(8px);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes cmcc-fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes cmcc-pulse-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(99, 102, 241, 0);
+  }
+  50% {
+    box-shadow: 0 0 20px 2px rgba(99, 102, 241, 0.15);
+  }
+}
+
+/* Row enter animation */
+@keyframes cmcc-row-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Apply animations */
+#cmcc-app .cmcc-animate-fade-in {
+  animation: cmcc-fade-in 0.3s ease;
+}
+
+#cmcc-app .cmcc-animate-scale-in {
+  animation: cmcc-scale-in 0.25s ease;
+}
+
+#cmcc-app .cmcc-animate-fade-in-up {
+  animation: cmcc-fade-in-up 0.3s ease;
+}
+
+/* Toast animations */
+#cmcc-app .cmcc-toast-enter {
+  animation: cmcc-slide-in-right 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+#cmcc-app .cmcc-toast-exit {
+  animation: cmcc-slide-out-right 0.25s ease-in forwards;
+}
+
+/* =========================================================================
+   SECTION: Responsive Slide-Out Panel
+   ========================================================================= */
+
+@media screen and (max-width: 782px) {
+  /* Slide-out panel goes full width on mobile */
+  .cmcc-slide-panel {
+    width: 100vw !important;
+    max-width: 100vw !important;
+  }
+
+  /* Analytics stats grid: 2 columns on tablet */
+  #cmcc-app .tw-grid.tw-grid-cols-2.md\:tw-grid-cols-4 {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+@media screen and (max-width: 600px) {
+  /* Analytics stats grid: 2 columns on mobile */
+  #cmcc-app .tw-grid.tw-grid-cols-2.md\:tw-grid-cols-4 {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 10px !important;
+  }
+
+  /* Stat cards compact on mobile */
+  #cmcc-app .cmcc-stat-card {
+    padding: 14px 12px;
+  }
+
+  #cmcc-app .cmcc-stat-value {
+    font-size: var(--cmcc-font-size-2xl);
+  }
+
+  /* Queue action icons-only on very small screens */
+  #cmcc-app .cmcc-action-btn span.tw-sr-only {
+    position: static !important;
+    width: auto !important;
+    height: auto !important;
+    clip: auto !important;
+  }
+}
+
+/* =========================================================================
+   SECTION: Table Enhancements
+   ========================================================================= */
+
+/* Table row transition — queue table rows */
+#cmcc-app .cmcc-queue-table-inner tbody tr {
+  transition: background-color var(--cmcc-transition-fast);
+}
+
+/* Table cell padding consistency */
+#cmcc-app .cmcc-queue-table-inner th,
+#cmcc-app .cmcc-queue-table-inner td {
+  padding: 10px 12px !important;
+}
+
+/* ─── Generic Table Row Styles (matching QueueTable) ───────────────── */
+
+#cmcc-app .cmcc-table-row td {
+  padding: 10px 12px !important;
+  border-bottom: 1px solid var(--cmcc-border-table-row);
+  vertical-align: middle;
+  color: var(--cmcc-text-primary);
+  transition: background-color var(--cmcc-transition-fast);
+  font-size: var(--cmcc-body);
+}
+
+#cmcc-app .cmcc-queue-table-inner tbody tr.cmcc-table-row:last-child td {
+  border-bottom: none;
+}
+
+#cmcc-app .cmcc-queue-table-inner tbody tr.cmcc-table-row:hover td {
+  background: var(--cmcc-bg-table-hover) !important;
+}
+
+#cmcc-app .cmcc-queue-table-inner tbody tr.cmcc-table-row:nth-child(even) td {
+  background-color: var(--cmcc-bg-table-stripe);
+}
+
+/* ─── Column Resize Handle ─────────────────────────────────────────── */
+
+#cmcc-app .cmcc-col-resize-handle {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 6px;
+  cursor: col-resize;
+  opacity: 0;
+  transition: opacity var(--cmcc-transition-fast);
+  background: transparent;
+}
+
+#cmcc-app .cmcc-col-resize-handle:hover,
+#cmcc-app .cmcc-col-resize-handle:active {
+  opacity: 1;
+  background: var(--cmcc-primary);
+}
+
+/* Ensure th has relative positioning for resize handle */
+#cmcc-app .cmcc-queue-table-inner th {
+  position: relative;
+}
+
+/* =========================================================================
+   SECTION: Per-Page Control & Pagination Enhancements
+   ========================================================================= */
+
+/* Per-page select in analytics */
+#cmcc-app .cmcc-per-page-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#cmcc-app .cmcc-per-page-control select {
+  width: auto;
+  min-width: 64px;
+  padding: 6px 28px 6px 10px;
+  border: 1px solid var(--cmcc-border-input);
+  border-radius: var(--cmcc-radius-md);
+  font-size: var(--cmcc-small);
+  background: var(--cmcc-bg-input);
+  color: var(--cmcc-text-primary);
+  cursor: pointer;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%2364748b' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+}
+
+#cmcc-app .cmcc-per-page-control select:focus {
+  border-color: var(--cmcc-border-focus);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+  outline: none;
+}
+
+/* Pagination label */
+#cmcc-app .cmcc-pagination-label {
+  font-size: var(--cmcc-body);
+  color: var(--cmcc-text-tertiary);
+  white-space: nowrap;
+}
+
+/* Analytics table footer refinement */
+#cmcc-app .cmcc-breakdown-table-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 16px 12px 12px;
+  border-top: 1px solid var(--cmcc-border-secondary);
+}
+
+/* =========================================================================
+   SECTION: Settings Form — Sidebar & Fields
+   ========================================================================= */
+
+/* Settings container */
+#cmcc-app .cmcc-settings-layout {
+  display: flex !important;
+  gap: 24px !important;
+  align-items: flex-start;
+}
+
+#cmcc-app .cmcc-settings-layout nav[role='tablist'] {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 4px !important;
+  min-width: 200px !important;
+  padding: 8px !important;
+  background: var(--cmcc-bg-card);
+  border: 1px solid var(--cmcc-border-card);
+  border-radius: var(--cmcc-radius-xl);
+  box-shadow: var(--cmcc-shadow-sm);
+}
+
+#cmcc-app .cmcc-settings-layout nav[role='tablist'] button {
+  display: flex !important;
+  align-items: center;
+  gap: 10px !important;
+  padding: 10px 14px !important;
+  border: none;
+  border-radius: var(--cmcc-radius-md);
+  background: transparent;
+  color: var(--cmcc-text-secondary);
+  font-size: var(--cmcc-body);
+  font-weight: 500;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  transition: all var(--cmcc-transition-fast);
+}
+
+#cmcc-app .cmcc-settings-layout nav[role='tablist'] button:hover {
+  background: var(--cmcc-bg-table-hover);
+  color: var(--cmcc-text-primary);
+}
+
+#cmcc-app
+  .cmcc-settings-layout
+  nav[role='tablist']
+  button[aria-selected='true'] {
+  background: var(--cmcc-bg-selected);
+  color: var(--cmcc-text-link);
+  font-weight: 600;
+  box-shadow: inset 3px 0 0 var(--cmcc-primary);
+}
+
+/* Settings form content area */
+#cmcc-app .cmcc-settings-layout > div:last-child {
+  flex: 1;
+  min-width: 0;
+  background: var(--cmcc-bg-card);
+  border: 1px solid var(--cmcc-border-card);
+  border-radius: var(--cmcc-radius-xl);
+  padding: 24px;
+  box-shadow: var(--cmcc-shadow-sm);
+}
+
+#cmcc-app .cmcc-settings-layout > div:last-child h3 {
+  font-size: var(--cmcc-h3);
+  font-weight: 700;
+  margin: 0 0 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--cmcc-border-secondary);
+  color: var(--cmcc-text-heading);
+}
+
+/* Settings section spacing */
+#cmcc-app .cmcc-settings-section {
+  margin-bottom: 24px;
+}
+
+#cmcc-app .cmcc-settings-section h4 {
+  font-size: var(--cmcc-body);
+  font-weight: 600;
+  color: var(--cmcc-text-secondary);
+  margin: 0 0 12px;
+}
+
+/* =========================================================================
+   SECTION: Confirmation Modal — Premium Styling
+   ========================================================================= */
+
+#cmcc-app [role='alertdialog'] > div[class*='tw-bg-white'] {
+  background: var(--cmcc-bg-card) !important;
+  border-radius: var(--cmcc-radius-2xl) !important;
+  box-shadow: var(--cmcc-shadow-modal) !important;
+  border: 1px solid var(--cmcc-border-card);
+  padding: 24px !important;
+  max-width: 420px;
+  width: 100%;
+}
+
+#cmcc-app [role='alertdialog'] h2 {
+  font-size: var(--cmcc-h2) !important;
+  font-weight: 700 !important;
+  color: var(--cmcc-text-heading) !important;
+  margin-bottom: 8px !important;
+}
+
+#cmcc-app [role='alertdialog'] .tw-text-gray-600 {
+  color: var(--cmcc-text-secondary) !important;
+  font-size: var(--cmcc-body) !important;
+  line-height: 1.6;
+}
+
+#cmcc-app [role='alertdialog'] .tw-flex.tw-gap-3 {
+  gap: 10px !important;
+  margin-top: 20px !important;
+}
+
+#cmcc-app [role='alertdialog'] button.tw-border-gray-300 {
+  border: 1px solid var(--cmcc-border-input) !important;
+  color: var(--cmcc-text-secondary) !important;
+  background: var(--cmcc-bg-card) !important;
+  border-radius: var(--cmcc-radius-md) !important;
+  font-weight: 600 !important;
+  padding: 8px 20px !important;
+  transition: all var(--cmcc-transition-fast);
+}
+
+#cmcc-app [role='alertdialog'] button.tw-border-gray-300:hover {
+  background: var(--cmcc-bg-tertiary) !important;
+  border-color: var(--cmcc-border-primary) !important;
+}
+
+#cmcc-app [role='alertdialog'] button.tw-bg-primary-600 {
+  background: var(--cmcc-gradient-primary) !important;
+  color: #fff !important;
+  border: none !important;
+  border-radius: var(--cmcc-radius-md) !important;
+  font-weight: 600 !important;
+  padding: 8px 20px !important;
+  box-shadow: var(--cmcc-shadow-glow-sm);
+  transition: all var(--cmcc-transition-fast);
+}
+
+#cmcc-app [role='alertdialog'] button.tw-bg-primary-600:hover {
+  box-shadow: var(--cmcc-shadow-glow);
+  transform: translateY(-1px);
+}
+
+#cmcc-app [role='alertdialog'] button.tw-bg-red-600 {
+  background: var(--cmcc-gradient-warm) !important;
+  color: #fff !important;
+  border: none !important;
+  border-radius: var(--cmcc-radius-md) !important;
+  font-weight: 600 !important;
+  padding: 8px 20px !important;
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.15);
+  transition: all var(--cmcc-transition-fast);
+}
+
+#cmcc-app [role='alertdialog'] button.tw-bg-red-600:hover {
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.25);
+  transform: translateY(-1px);
+}
+
+#cmcc-app [role='alertdialog'] button.tw-bg-amber-600 {
+  background: linear-gradient(135deg, #f59e0b, #d97706) !important;
+  color: #fff !important;
+  border: none !important;
+  border-radius: var(--cmcc-radius-md) !important;
+  font-weight: 600 !important;
+  padding: 8px 20px !important;
+  transition: all var(--cmcc-transition-fast);
+}
+
+#cmcc-app [role='alertdialog'] button.tw-bg-amber-600:hover {
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.25);
+  transform: translateY(-1px);
+}
+
+/* =========================================================================
+   SECTION: Slide-Out Panel — Keyframe Animations
+   ========================================================================= */
+
+@keyframes cmcc-panel-slide-in-right {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes cmcc-panel-slide-out-right {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+@keyframes cmcc-backdrop-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes cmcc-backdrop-fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+/* =========================================================================
+   SECTION: Placeholder Text Fix
+   ========================================================================= */
+
+/* Ensure placeholder text is not cut off or hidden */
+#cmcc-app .cmcc-search-input::placeholder,
+#cmcc-app #cmcc-save-filter-input::placeholder,
+#cmcc-app input::placeholder,
+#cmcc-app textarea::placeholder {
+  color: var(--cmcc-text-placeholder);
+  opacity: 1;
+  font-size: var(--cmcc-body);
+  line-height: 1.4 !important;
+  overflow: visible;
+  text-overflow: clip;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+/* Fix save filter input width to prevent placeholder clipping */
+#cmcc-app #cmcc-save-filter-input {
+  min-width: 200px !important;
+  width: auto !important;
+}
+
+/* =========================================================================
+   SECTION: QuickFilterBar Button Margin Fix
+   ========================================================================= */
+
+/* Add vertical + horizontal margins between QuickFilterBar buttons */
+#cmcc-app .cmcc-quick-filter-bar button,
+#cmcc-app [role='group'][aria-label='Quick filters'] button {
+  margin: 3px !important;
+}
+
+/* Ensure button groups have proper separation from surrounding elements */
+#cmcc-app .cmcc-btn-group {
+  margin: 4px 0;
+}
+
+#cmcc-app .cmcc-queue-toolbar-top .cmcc-btn-group {
+  margin: 0;
+}
+
+/* Add bottom margin after the filter toolbar to separate from table */
+#cmcc-app .cmcc-quick-filter-bar {
+  margin-bottom: 16px !important;
+}
+
+/* =========================================================================
+   SECTION: Filter Select and Search Input Spacing
+   ========================================================================= */
+
+#cmcc-app .cmcc-filter-select,
+#cmcc-app .cmcc-bulk-select,
+#cmcc-app .cmcc-search-input {
+  margin: 2px 0 !important;
+}
+
+/* Ensure queue toolbar search input matches search button height */
+#cmcc-app .cmcc-queue-toolbar-left input[type='text'],
+#cmcc-app .cmcc-queue-toolbar-left input.tw-w-64 {
+  height: 36px !important;
+  min-height: 36px !important;
+  line-height: 1.4 !important;
+  padding-top: 4px !important;
+  padding-bottom: 4px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+}
+
+/* =========================================================================
+   SECTION: Activity Log & Reports Page Consistency
+   ========================================================================= */
+
+/* Style activity-log pagination like settings tab */
+#cmcc-app .cmcc-activity-pagination {
+  border-top: 1px solid var(--cmcc-border-secondary);
+  padding: 16px 12px 12px;
+}
+
+/* =========================================================================
+   SECTION: Responsive Fixes for Small Screens
+   ========================================================================= */
+
+@media screen and (max-width: 782px) {
+  /* QuickFilterBar buttons wrap with margins */
+  #cmcc-app .cmcc-quick-filter-bar {
+    gap: 2px !important;
+  }
+
+  #cmcc-app .cmcc-quick-filter-bar button {
+    margin: 2px !important;
+    font-size: var(--cmcc-xs) !important;
+    padding: 4px 10px !important;
+  }
+
+  /* Full-width inputs on mobile */
+  #cmcc-app .cmcc-save-filter-row {
+    flex-direction: column;
+    align-items: stretch !important;
+  }
+
+  #cmcc-app #cmcc-save-filter-input {
+    width: 100% !important;
+    min-width: unset !important;
+  }
+}
+
+/* =========================================================================
+   SECTION: Report Cards — Settings Tab Consistency
+   ========================================================================= */
+
+/* Report/export cards use cmcc-section-card styling */
+#cmcc-app .cmcc-report-card {
+  background: var(--cmcc-bg-card);
+  border: 1px solid var(--cmcc-border-card);
+  border-radius: var(--cmcc-radius-xl);
+  padding: 20px;
+  box-shadow: var(--cmcc-shadow-sm);
+  transition: all var(--cmcc-transition-normal);
+}
+
+#cmcc-app .cmcc-report-card:hover {
+  box-shadow: var(--cmcc-shadow-md);
+}
+
+#cmcc-app .cmcc-report-card h3 {
+  font-size: var(--cmcc-h3);
+  font-weight: 700;
+  margin: 0 0 8px;
+  color: var(--cmcc-text-heading);
+}
+
+#cmcc-app .cmcc-report-card p {
+  font-size: var(--cmcc-body);
+  color: var(--cmcc-text-tertiary);
+  line-height: 1.6;
+  margin: 0 0 16px;
+}
+
+/* Report section card (scheduled, user reputation, etc.) */
+#cmcc-app .cmcc-report-section-card {
+  background: var(--cmcc-bg-card);
+  border: 1px solid var(--cmcc-border-card);
+  border-radius: var(--cmcc-radius-xl);
+  box-shadow: var(--cmcc-shadow-sm);
+  margin-bottom: 24px;
+  overflow: hidden;
+  transition: box-shadow var(--cmcc-transition-normal);
+}
+
+#cmcc-app .cmcc-report-section-card:hover {
+  box-shadow: var(--cmcc-shadow-md);
+}
+
+#cmcc-app .cmcc-report-section-card .cmcc-report-section-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--cmcc-border-secondary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#cmcc-app .cmcc-report-section-card .cmcc-report-section-header h3 {
+  font-size: var(--cmcc-body);
+  font-weight: 700;
+  margin: 0;
+  color: var(--cmcc-text-heading);
+}
+
+#cmcc-app .cmcc-report-section-card .cmcc-report-section-body {
+  padding: 20px;
+}
+
+/* =========================================================================
+   SECTION: Sortable Table Column Header Styles
+   ========================================================================= */
+
+#cmcc-app table[class*='tw-'] thead th.tw-cursor-pointer {
+  user-select: none;
+}
+
+#cmcc-app table[class*='tw-'] thead th.tw-cursor-pointer:hover {
+  background: var(--cmcc-bg-table-hover) !important;
+}
+
+/* Sort icon alignment */
+#cmcc-app table[class*='tw-'] thead th .tw-inline-flex.tw-items-center {
+  gap: 4px;
+}
+
+/* ─── Analytics section card styling ─────────────────────────────── */
+#cmcc-app .cmcc-analytics-section {
+  background: var(--cmcc-bg-card);
+  border: 1px solid var(--cmcc-border-card);
+  border-radius: var(--cmcc-radius-xl);
+  padding: 20px;
+  margin-bottom: 24px;
+  box-shadow: var(--cmcc-shadow-sm);
+}
+
+#cmcc-app .cmcc-analytics-section h3 {
+  font-size: var(--cmcc-h3);
+  font-weight: 700;
+  margin: 0 0 16px;
+  color: var(--cmcc-text-heading);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ─── Analytics stats grid fix ──────────────────────────────────── */
+#cmcc-app .cmcc-stats-grid.cmcc-stats-grid-4 {
+  display: grid !important;
+  grid-template-columns: repeat(4, 1fr) !important;
+  gap: 16px !important;
+  margin-bottom: 24px !important;
+}
+
+@media screen and (max-width: 960px) {
+  #cmcc-app .cmcc-stats-grid.cmcc-stats-grid-4 {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+@media screen and (max-width: 600px) {
+  #cmcc-app .cmcc-stats-grid.cmcc-stats-grid-4 {
+    grid-template-columns: 1fr 1fr !important;
+  }
+}
+
+/* ─── Chart card consistent styling ─────────────────────────────── */
+#cmcc-app .cmcc-charts-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+@media screen and (max-width: 782px) {
+  #cmcc-app .cmcc-charts-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+#cmcc-app .cmcc-chart-card {
+  background: var(--cmcc-bg-card);
+  border: 1px solid var(--cmcc-border-card);
+  border-radius: var(--cmcc-radius-xl);
+  padding: 20px;
+  box-shadow: var(--cmcc-shadow-sm);
+}
+
+/* ─── Sort arrows in all tables ─────────────────────────────────── */
+#cmcc-app table[class*='tw-'] thead th,
+#cmcc-app .cmcc-ui-table thead th {
+  position: relative;
+}
+
+#cmcc-app table[class*='tw-'] thead th .cmcc-sort-arrows,
+#cmcc-app .cmcc-ui-table thead th .cmcc-sort-arrows {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1;
+  margin-left: 4px;
+  vertical-align: middle;
+  gap: 0;
+  font-size: 10px;
+}
+
+/* ─── Content Breakdown specific tweaks ─────────────────────────── */
+#cmcc-app .cmcc-section-heading {
+  font-size: var(--cmcc-h3);
+  font-weight: 700;
+  margin: 0 0 16px;
+  color: var(--cmcc-text-heading);
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--cmcc-border-secondary);
+}
+
+/* =========================================================================
+	   SECTION: Dark Mode — Heading Readability
+	   Ensures h1–h6 are bright and readable against dark backgrounds.
+	   ========================================================================= */
+
+.dark #cmcc-app h1,
+.dark #cmcc-app h2,
+.dark #cmcc-app h3,
+.dark #cmcc-app h4,
+.dark #cmcc-app h5,
+.dark #cmcc-app h6 {
+  color: var(--cmcc-text-heading) !important;
+}
+
+.dark #cmcc-app h1 {
+  color: #f8fafc !important;
+}
+
+.dark #cmcc-app h2 {
+  color: #f1f5f9 !important;
+}
+
+.dark #cmcc-app h3 {
+  color: #e2e8f0 !important;
+}
+
+.dark #cmcc-app h4,
+.dark #cmcc-app h5,
+.dark #cmcc-app h6 {
+  color: #cbd5e1 !important;
+}
+
+/* =========================================================================
+   SECTION: Pagination — Modern consistent styling
+   ========================================================================= */
+
+/* Queue table pagination footer */
+#cmcc-app .cmcc-queue-table .tw-flex.tw-items-center.tw-justify-between {
+  padding: 16px 4px !important;
+}
+
+/* All pagination button bars (including Queue, Analytics, Activity, Reports) */
+#cmcc-app .tw-flex.tw-items-center.tw-justify-center.tw-gap-1 {
+  gap: 4px !important;
+}
+
+#cmcc-app button.tw-bg-primary-600.tw-text-white {
+  background: var(--cmcc-gradient-primary) !important;
+  border: none !important;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.25) !important;
+}
+
+#cmcc-app button.tw-bg-primary-600.tw-text-white:hover {
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.35) !important;
+  transform: translateY(-1px);
+}
+
+/* Pagination prev/next buttons */
+#cmcc-app
+  .tw-flex.tw-items-center.tw-justify-center.tw-gap-1
+  > button:first-child,
+#cmcc-app
+  .tw-flex.tw-items-center.tw-justify-center.tw-gap-1
+  > button:last-child {
+  width: 32px !important;
+  height: 32px !important;
+  border-radius: var(--cmcc-radius-md) !important;
+  border: 1px solid var(--cmcc-border-input) !important;
+  background: var(--cmcc-bg-card) !important;
+  color: var(--cmcc-text-secondary) !important;
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  cursor: pointer;
+  transition: all var(--cmcc-transition-fast);
+}
+
+#cmcc-app
+  .tw-flex.tw-items-center.tw-justify-center.tw-gap-1
+  > button:first-child:hover:not(:disabled),
+#cmcc-app
+  .tw-flex.tw-items-center.tw-justify-center.tw-gap-1
+  > button:last-child:hover:not(:disabled) {
+  background: var(--cmcc-bg-table-hover) !important;
+  border-color: var(--cmcc-primary) !important;
+  color: var(--cmcc-primary) !important;
+}
+
+#cmcc-app
+  .tw-flex.tw-items-center.tw-justify-center.tw-gap-1
+  > button:first-child:disabled,
+#cmcc-app
+  .tw-flex.tw-items-center.tw-justify-center.tw-gap-1
+  > button:last-child:disabled {
+  opacity: 0.35 !important;
+  cursor: not-allowed !important;
+}
+
+/* Page number buttons */
+#cmcc-app
+  .tw-flex.tw-items-center.tw-justify-center.tw-gap-1
+  > button:not(:first-child):not(:last-child) {
+  min-width: 32px !important;
+  height: 32px !important;
+  border-radius: var(--cmcc-radius-md) !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  border: 1px solid transparent !important;
+  background: transparent !important;
+  color: var(--cmcc-text-secondary) !important;
+  cursor: pointer;
+  transition: all var(--cmcc-transition-fast);
+}
+
+#cmcc-app
+  .tw-flex.tw-items-center.tw-justify-center.tw-gap-1
+  > button:not(:first-child):not(:last-child):hover {
+  background: var(--cmcc-bg-table-hover) !important;
+  border-color: var(--cmcc-border-input) !important;
+}
+
+/* Active page number */
+#cmcc-app
+  .tw-flex.tw-items-center.tw-justify-center.tw-gap-1
+  > button.tw-bg-primary-600 {
+  background: var(--cmcc-gradient-primary) !important;
+  color: white !important;
+  border-color: transparent !important;
+  font-weight: 600 !important;
+}
+
+/* Ellipsis */
+#cmcc-app .tw-flex.tw-items-center.tw-justify-center.tw-gap-1 > span.tw-px-1 {
+  padding: 0 2px !important;
+  color: var(--cmcc-text-muted) !important;
+  font-size: 13px !important;
+}
+
+/* =========================================================================
+   SECTION: Button Spacing & Form Element Consistency
+   ========================================================================= */
+
+/* Spacing between buttons in button groups */
+#cmcc-app .cmcc-btn-group {
+  gap: 8px !important;
+}
+
+#cmcc-app .cmcc-btn-group > * {
+  margin: 0 !important;
+}
+
+/* Generic spacing between inline buttons */
+#cmcc-app button + button:not([class*='cmcc-queue']) {
+  margin-left: 8px;
+}
+
+/* Queue table toolbar buttons */
+#cmcc-app .cmcc-queue-toolbar {
+  gap: 12px !important;
+}
+
+#cmcc-app .cmcc-queue-toolbar-left {
+  gap: 8px !important;
+}
+
+/* Filter buttons spacing */
+#cmcc-app .cmcc-quick-filter-bar {
+  gap: 6px !important;
+}
+
+/* Form elements - consistent spacing */
+#cmcc-app .cmcc-search-input,
+#cmcc-app .cmcc-filter-select,
+#cmcc-app .cmcc-bulk-select,
+#cmcc-app select.tw-w-36,
+#cmcc-app select.tw-w-40,
+#cmcc-app select.tw-w-52,
+#cmcc-app select.tw-w-64,
+#cmcc-app input.tw-w-64 {
+  padding: 6px 32px 6px 10px !important;
+  border-radius: var(--cmcc-radius-md) !important;
+  border: 1px solid var(--cmcc-border-input) !important;
+  background: var(--cmcc-bg-input) !important;
+  color: var(--cmcc-text-primary) !important;
+  font-size: var(--cmcc-body) !important;
+  height: 36px !important;
+  line-height: normal !important;
+  box-sizing: border-box !important;
+  transition:
+    border-color var(--cmcc-transition-fast),
+    box-shadow var(--cmcc-transition-fast);
+}
+
+/* ⭐ CRITICAL: Fix select element text vertical clipping */
+/* Ensure all <select> elements display their text fully, not cut off */
+#cmcc-app select,
+#cmcc-app .cmcc-filter-select,
+#cmcc-app .cmcc-bulk-select,
+#cmcc-app .cmcc-per-page-select,
+#cmcc-app .cmcc-pagination-rows-select,
+#cmcc-app .cmcc-per-page-control select,
+#cmcc-app .cmcc-schedule-field select {
+  min-height: 36px !important;
+  padding-top: 4px !important;
+  padding-bottom: 4px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  line-height: 1.4 !important;
+  vertical-align: middle !important;
+  text-overflow: ellipsis;
+}
+
+/* Fix the native appearance rendering for select elements */
+#cmcc-app select,
+#cmcc-app select[class*='cmcc-'] {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 8px center !important;
+  padding-right: 28px !important;
+}
+
+#cmcc-app .cmcc-search-input:focus,
+#cmcc-app .cmcc-filter-select:focus,
+#cmcc-app select:focus {
+  border-color: var(--cmcc-border-focus) !important;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12) !important;
+  outline: none;
+}
+
+/* Ensure placeholder text is fully visible */
+#cmcc-app input::placeholder,
+#cmcc-app textarea::placeholder,
+#cmcc-app .cmcc-search-input::placeholder {
+  color: var(--cmcc-text-placeholder) !important;
+  opacity: 1 !important;
+  font-size: var(--cmcc-body) !important;
+  line-height: 1.4 !important;
+  vertical-align: middle !important;
+}
+
+/* =========================================================================
+   SECTION: Analytics Page — Stats Cards Row
+   ========================================================================= */
+
+#cmcc-app .cmcc-stats-grid.cmcc-stats-grid-4 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+@media screen and (max-width: 960px) {
+  #cmcc-app .cmcc-stats-grid.cmcc-stats-grid-4 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media screen and (max-width: 600px) {
+  #cmcc-app .cmcc-stats-grid.cmcc-stats-grid-4 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* =========================================================================
+   SECTION: Responsive Improvements
+   ========================================================================= */
+
+@media screen and (max-width: 782px) {
+  /* Queue toolbar wraps properly */
+  #cmcc-app .cmcc-queue-toolbar {
     flex-direction: column !important;
+    align-items: stretch !important;
+  }
+
+  #cmcc-app .cmcc-queue-toolbar-left {
+    flex-wrap: wrap !important;
+  }
+
+  #cmcc-app .cmcc-queue-toolbar-left > * {
+    flex: 1 1 auto !important;
+    min-width: 140px !important;
+  }
+
+  /* Tables scroll horizontally on small screens */
+  #cmcc-app .cmcc-queue-table-wrapper,
+  #cmcc-app table[class*='tw-'],
+  #cmcc-app .tw-overflow-x-auto {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Pagination wraps on mobile */
+  #cmcc-app .cmcc-breakdown-table-footer {
+    flex-direction: column !important;
+    align-items: stretch !important;
     gap: 12px !important;
   }
 
-  #cmcc-app .cmcc-settings-layout nav[role='tablist'] {
-    width: 100% !important;
-    min-width: unset !important;
-    flex-direction: row !important;
-    overflow-x: auto !important;
-    -webkit-overflow-scrolling: touch;
-    border-right: none !important;
-    border-bottom: 1px solid #e5e7eb !important;
-    padding-right: 0 !important;
-    padding-bottom: 8px !important;
-    gap: 4px !important;
+  #cmcc-app .cmcc-per-page-control {
+    flex-wrap: wrap !important;
   }
 
-  #cmcc-app .cmcc-settings-layout nav[role='tablist'] button {
-    white-space: nowrap !important;
-    flex-shrink: 0 !important;
+  /* Slide-out panel is full-width on mobile */
+  .cmcc-slide-panel {
+    width: 100vw !important;
+    max-width: 100vw !important;
+  }
+
+  /* Reports grid goes single column */
+  #cmcc-app .cmcc-report-section-card .tw-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Stats cards */
+  #cmcc-app .cmcc-stats-grid.cmcc-stats-grid-4 {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  /* Charts */
+  #cmcc-app .cmcc-charts-row {
+    flex-direction: column !important;
+  }
+
+  #cmcc-app .cmcc-chart-card {
+    width: 100% !important;
   }
 }
 
-/* ── QueueTable → card layout on mobile ────────────── */
-@media screen and (max-width: 640px) {
-  #cmcc-app .cmcc-queue-table thead {
-    display: none;
-  }
-  #cmcc-app .cmcc-queue-table tbody tr {
-    display: block;
-    border: 1px solid var(--cmcc-border, #c3c4c7);
-    border-radius: var(--cmcc-radius-lg, 6px);
-    padding: var(--cmcc-space-3, 12px);
-    margin-bottom: var(--cmcc-space-3, 12px);
-    background: var(--cmcc-bg-card, #fff);
-  }
-  #cmcc-app .cmcc-queue-table tbody td {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: var(--cmcc-space-1, 4px) 0;
-    border: none;
-    font-size: var(--cmcc-small, 0.75rem);
-  }
-  #cmcc-app .cmcc-queue-table tbody td::before {
-    content: attr(data-label);
-    font-weight: 600;
-    color: var(--cmcc-text-secondary, #50575e);
-    margin-right: var(--cmcc-space-2, 8px);
-  }
-  #cmcc-app .cmcc-queue-table .cmcc-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--cmcc-space-1, 4px);
-    margin-top: var(--cmcc-space-2, 8px);
+@media screen and (max-width: 600px) {
+  #cmcc-app .cmcc-stats-grid.cmcc-stats-grid-4 {
+    grid-template-columns: 1fr !important;
   }
 
-  /* ── Tab nav → horizontal scroll (strengthen) ──────── */
-  #cmcc-app .cmcc-tab-nav {
+  #cmcc-app .cmcc-queue-toolbar-left > * {
+    min-width: 100% !important;
+  }
+
+  /* Hide less important columns on very small screens */
+  #cmcc-app .cmcc-td-author,
+  #cmcc-app .cmcc-td-score {
+    display: none;
+  }
+
+  #cmcc-app .cmcc-th-authorId,
+  #cmcc-app .cmcc-th-spamScore {
+    display: none;
+  }
+
+  /* Pagination buttons get smaller */
+  #cmcc-app .tw-flex.tw-items-center.tw-justify-center.tw-gap-1 > button {
+    min-width: 28px !important;
+    height: 28px !important;
+    font-size: 12px !important;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  #cmcc-app .tw-flex.tw-items-center.tw-justify-center.tw-gap-1 > button {
+    min-width: 24px !important;
+    height: 24px !important;
+    font-size: 11px !important;
+    padding: 2px 4px !important;
+  }
+  #cmcc-app .cmcc-per-page-control {
+    font-size: var(--cmcc-xs) !important;
+  }
+  #cmcc-app .cmcc-per-page-control select {
+    font-size: var(--cmcc-xs) !important;
+    padding: 4px 20px 4px 8px !important;
+    min-width: 50px !important;
+  }
+  #cmcc-app .cmcc-pagination-label {
+    font-size: var(--cmcc-xs) !important;
+  }
+  #cmcc-app .cmcc-page-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+  }
+  #cmcc-app .cmcc-breakdown-table-footer {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+  }
+}
+
+/* =========================================================================
+   SECTION: Settings Tab Consistency — Apply to ALL tabs
+   All pages now use the same design language as the Settings tab:
+   same card borders, shadows, heading sizes, spacing, and form elements.
+   ========================================================================= */
+
+/* ─── Prevent horizontal scroll from date picker or overlays ── */
+#cmcc-app {
+  overflow-x: hidden;
+}
+
+/* ─── Consistent page header styling across all tabs */
+#cmcc-app .cmcc-page-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  flex-wrap: wrap !important;
+  gap: 12px !important;
+  margin-bottom: 20px !important;
+  padding-bottom: 16px !important;
+  border-bottom: 1px solid var(--cmcc-border-secondary) !important;
+}
+
+#cmcc-app .cmcc-page-header h2 {
+  font-size: var(--cmcc-h2) !important;
+  font-weight: 700 !important;
+  margin: 0 !important;
+  color: var(--cmcc-text-heading) !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  letter-spacing: -0.01em;
+}
+
+/* Consistent tab panel spacing */
+#cmcc-app .cmcc-tab-panel {
+  padding: 0;
+}
+
+/* Consistent section card border/shadow - Settings tab style */
+#cmcc-app .cmcc-tab-panel > .tw-flex.tw-items-center.tw-justify-between {
+  margin-bottom: 20px !important;
+  padding-bottom: 16px !important;
+  border-bottom: 1px solid var(--cmcc-border-secondary);
+}
+
+/* Consistent section card styling for Reports page */
+#cmcc-app .cmcc-report-section-card {
+  background: var(--cmcc-bg-card) !important;
+  border: 1px solid var(--cmcc-border-card) !important;
+  border-radius: var(--cmcc-radius-xl) !important;
+  overflow: hidden;
+  margin-bottom: 16px;
+  box-shadow: var(--cmcc-shadow-sm);
+  transition: box-shadow var(--cmcc-transition-normal);
+}
+
+#cmcc-app .cmcc-report-section-card:hover {
+  box-shadow: var(--cmcc-shadow-md);
+}
+
+/* Consistent section heading styling */
+#cmcc-app .cmcc-report-section-card .cmcc-report-section-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--cmcc-border-secondary);
+  background: var(--cmcc-bg-table-header);
+}
+
+#cmcc-app .cmcc-report-section-card .cmcc-report-section-header h3 {
+  font-size: var(--cmcc-h3);
+  font-weight: 700;
+  margin: 0;
+  color: var(--cmcc-text-heading);
+}
+
+#cmcc-app .cmcc-report-section-card .cmcc-report-section-body {
+  padding: 20px;
+}
+
+/* Report cards consistent spacing */
+#cmcc-app .cmcc-report-card {
+  background: var(--cmcc-bg-card) !important;
+  border: 1px solid var(--cmcc-border-card) !important;
+  border-radius: var(--cmcc-radius-xl) !important;
+  padding: 20px;
+  box-shadow: var(--cmcc-shadow-sm);
+  transition: box-shadow var(--cmcc-transition-normal);
+}
+
+#cmcc-app .cmcc-report-card:hover {
+  box-shadow: var(--cmcc-shadow-md);
+}
+
+#cmcc-app .cmcc-report-card h3 {
+  font-size: var(--cmcc-h3);
+  font-weight: 700;
+  margin: 0 0 8px;
+  color: var(--cmcc-text-heading);
+}
+
+#cmcc-app .cmcc-report-card p {
+  color: var(--cmcc-text-secondary);
+  font-size: var(--cmcc-body);
+  margin: 0 0 16px;
+  line-height: 1.5;
+}
+
+/* Consistent analytics section styling */
+#cmcc-app .cmcc-analytics-section {
+  background: var(--cmcc-bg-card) !important;
+  border: 1px solid var(--cmcc-border-card) !important;
+  border-radius: var(--cmcc-radius-xl) !important;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: var(--cmcc-shadow-sm);
+}
+
+#cmcc-app .cmcc-analytics-section h3 {
+  font-size: var(--cmcc-h3);
+  font-weight: 700;
+  margin: 0 0 16px;
+  color: var(--cmcc-text-heading);
+}
+
+/* Chart cards consistent styling */
+#cmcc-app .cmcc-chart-card {
+  background: var(--cmcc-bg-card) !important;
+  border: 1px solid var(--cmcc-border-card) !important;
+  border-radius: var(--cmcc-radius-xl) !important;
+  padding: 20px;
+  flex: 1;
+  box-shadow: var(--cmcc-shadow-sm);
+}
+
+#cmcc-app .cmcc-charts-row {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+/* =========================================================================
+   SECTION: Activity Log consistent styling
+   ========================================================================= */
+
+#cmcc-app .cmcc-activity-pagination {
+  padding: 16px 4px !important;
+}
+
+#cmcc-app .cmcc-breakdown-table-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 4px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+#cmcc-app .cmcc-per-page-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--cmcc-text-secondary);
+  font-size: var(--cmcc-body);
+}
+
+#cmcc-app .cmcc-per-page-control select {
+  padding: 6px 24px 6px 10px !important;
+  border: 1px solid var(--cmcc-border-input) !important;
+  border-radius: var(--cmcc-radius-md) !important;
+  background: var(--cmcc-bg-input) !important;
+  color: var(--cmcc-text-primary) !important;
+  font-size: var(--cmcc-body) !important;
+  min-width: 60px;
+  appearance: auto;
+  -webkit-appearance: auto;
+  cursor: pointer;
+  transition:
+    border-color var(--cmcc-transition-fast),
+    box-shadow var(--cmcc-transition-fast);
+}
+
+#cmcc-app .cmcc-per-page-control select:focus {
+  border-color: var(--cmcc-border-focus) !important;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12) !important;
+  outline: none;
+}
+
+#cmcc-app .cmcc-pagination-label {
+  color: var(--cmcc-text-secondary);
+  font-size: var(--cmcc-body);
+  white-space: nowrap;
+}
+
+/* Activity log page filter consistent with queue */
+#cmcc-app .cmcc-activity-filters {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* =========================================================================
+   SECTION: Consistent Table Design — QueueTable Style Applied to ALL Tables
+   Every table (Content Breakdown, Activity Log, User Reputation, etc.)
+   uses the exact same design as the QueueTable with identical header
+   styling, sort arrows, row hover, striped rows, and modern spacing.
+   ========================================================================= */
+
+/* All tables using the cmcc-ui Table component get cmcc-queue-table-inner class */
+/* Target both the queue table class and any table styled by the UI library */
+
+#cmcc-app .cmcc-queue-table-inner,
+#cmcc-app table[class*='tw-'],
+#cmcc-app .cmcc-ui-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: var(--cmcc-body);
+  background: var(--cmcc-bg-card);
+  border: 1px solid var(--cmcc-border-table);
+  border-radius: var(--cmcc-radius-xl);
+  overflow: hidden;
+}
+
+/* Table header row — all tables */
+#cmcc-app .cmcc-queue-table-inner thead,
+#cmcc-app table[class*='tw-'] thead,
+#cmcc-app .cmcc-ui-table thead {
+  background: var(--cmcc-bg-table-header);
+}
+
+/* Table header cells — QueueTable design exactly */
+#cmcc-app .cmcc-queue-table-inner th,
+#cmcc-app table[class*='tw-'] thead th,
+#cmcc-app .cmcc-ui-table thead th {
+  text-align: left;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--cmcc-border-table);
+  font-weight: 600;
+  font-size: var(--cmcc-small);
+  color: var(--cmcc-text-secondary);
+  background: var(--cmcc-bg-table-header);
+  white-space: nowrap;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  user-select: none;
+  position: relative;
+}
+
+/* The sort icon containers from the Table component (▲ ▼) */
+#cmcc-app .cmcc-queue-table-inner th .cmcc-sort-icons,
+#cmcc-app table[class*='tw-'] thead th .cmcc-sort-icons,
+#cmcc-app .cmcc-ui-table thead th .cmcc-sort-icons {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1;
+  margin-left: 6px;
+  vertical-align: middle;
+  gap: 0;
+  font-size: 9px;
+  opacity: 0.4;
+  transition: opacity var(--cmcc-transition-fast);
+}
+
+/* Active sort icon */
+#cmcc-app .cmcc-queue-table-inner th .cmcc-sort-active,
+#cmcc-app table[class*='tw-'] thead th .cmcc-sort-active,
+#cmcc-app .cmcc-ui-table thead th .cmcc-sort-active {
+  color: var(--cmcc-primary) !important;
+  opacity: 1 !important;
+  font-weight: 700;
+}
+
+/* Show sort icons on hover for sortable columns */
+#cmcc-app .cmcc-queue-table-inner th.cmcc-th-sortable .cmcc-sort-icons,
+#cmcc-app table[class*='tw-'] thead th.sortable .cmcc-sort-icons,
+#cmcc-app .cmcc-ui-table thead th.sortable .cmcc-sort-icons {
+  opacity: 0.4;
+}
+
+#cmcc-app .cmcc-queue-table-inner th.cmcc-th-sortable:hover .cmcc-sort-icons,
+#cmcc-app table[class*='tw-'] thead th:hover .cmcc-sort-icons,
+#cmcc-app .cmcc-ui-table thead th:hover .cmcc-sort-icons {
+  opacity: 1;
+}
+
+/* Sortable header columns get pointer cursor and hover state */
+#cmcc-app .cmcc-queue-table-inner th.cmcc-th-sortable,
+#cmcc-app table[class*='tw-'] thead th[style*='cursor: pointer'],
+#cmcc-app table[class*='tw-'] thead th.tw-cursor-pointer {
+  cursor: pointer !important;
+  transition: background var(--cmcc-transition-fast);
+}
+
+#cmcc-app .cmcc-queue-table-inner th.cmcc-th-sortable:hover,
+#cmcc-app table[class*='tw-'] thead th[style*='cursor: pointer']:hover,
+#cmcc-app table[class*='tw-'] thead th.tw-cursor-pointer:hover {
+  background: var(--cmcc-bg-table-hover) !important;
+  color: var(--cmcc-primary);
+}
+
+/* Sort arrow text styling for inline ▲ ▼ characters */
+#cmcc-app .cmcc-queue-table-inner th .cmcc-th-content span.cmcc-sort-icons span,
+#cmcc-app
+  table[class*='tw-']
+  thead
+  th
+  .cmcc-th-content
+  span.cmcc-sort-icons
+  span {
+  font-size: 9px;
+  line-height: 1;
+  color: var(--cmcc-text-disabled);
+  transition: color var(--cmcc-transition-fast);
+}
+
+/* Table body cells — all tables */
+#cmcc-app .cmcc-queue-table-inner td,
+#cmcc-app table[class*='tw-'] tbody td,
+#cmcc-app .cmcc-ui-table tbody td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--cmcc-border-table-row);
+  color: var(--cmcc-text-primary);
+  vertical-align: middle;
+  font-size: var(--cmcc-body);
+}
+
+/* No bottom border on last row */
+#cmcc-app .cmcc-queue-table-inner tbody tr:last-child td,
+#cmcc-app table[class*='tw-'] tbody tr:last-child td,
+#cmcc-app .cmcc-ui-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Row hover */
+#cmcc-app .cmcc-queue-table-inner tbody tr:hover td,
+#cmcc-app table[class*='tw-'] tbody tr:hover td,
+#cmcc-app .cmcc-ui-table tbody tr:hover td {
+  background: var(--cmcc-bg-table-hover);
+}
+
+/* Striped rows */
+#cmcc-app .cmcc-queue-table-inner tbody tr:nth-child(even) td,
+#cmcc-app table[class*='tw-'] tbody tr:nth-child(even) td,
+#cmcc-app .cmcc-ui-table tbody tr:nth-child(even) td {
+  background: var(--cmcc-bg-table-stripe);
+}
+
+/* Hover on striped rows */
+#cmcc-app .cmcc-queue-table-inner tbody tr:nth-child(even):hover td,
+#cmcc-app table[class*='tw-'] tbody tr:nth-child(even):hover td,
+#cmcc-app .cmcc-ui-table tbody tr:nth-child(even):hover td {
+  background: var(--cmcc-bg-table-hover);
+}
+
+/* =========================================================================
+   SECTION: Animation Keyframes for Slide-Out Panel
+   ========================================================================= */
+
+@keyframes cmcc-slide-in-right {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes cmcc-slide-out-right {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes cmcc-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes cmcc-fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+/* ─── Text Button (used in feed date range clear) ─────────────────── */
+
+#cmcc-app .cmcc-text-btn {
+  background: none;
+  border: none;
+  padding: 6px 12px;
+  font-size: var(--cmcc-body);
+  color: var(--cmcc-text-tertiary);
+  cursor: pointer;
+  border-radius: var(--cmcc-radius-md);
+  transition: all var(--cmcc-transition-fast);
+}
+
+#cmcc-app .cmcc-text-btn:hover {
+  color: var(--cmcc-text-primary);
+  background: var(--cmcc-bg-table-hover);
+}
+
+#cmcc-app .cmcc-text-btn-sm {
+  font-size: var(--cmcc-small);
+  padding: 4px 8px;
+}
+
+/* =========================================================================
+   SECTION: Activity Log Page — Settings Tab Consistency
+   ========================================================================= */
+
+/* Make the Activity Log page consistent with Settings tab */
+#cmcc-app .cmcc-activity-log-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--cmcc-border-secondary);
+}
+
+#cmcc-app .cmcc-activity-log-header h2 {
+  font-size: var(--cmcc-h2);
+  font-weight: 700;
+  margin: 0;
+  color: var(--cmcc-text-heading);
+}
+
+/* =========================================================================
+   SECTION: Pagination Consistency Across All Tables
+   ========================================================================= */
+
+/* Consistent pagination bar for all tables */
+#cmcc-app .cmcc-breakdown-table-footer,
+#cmcc-app .cmcc-activity-pagination {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  flex-wrap: wrap !important;
+  gap: 12px !important;
+  padding: 16px 4px !important;
+  border-top: 1px solid var(--cmcc-border-secondary) !important;
+  margin-top: 0 !important;
+}
+
+/* Also style the QueueTable's own pagination footer to match */
+#cmcc-app
+  .cmcc-queue-table-inner
+  + .tw-flex.tw-items-center.tw-justify-between {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  flex-wrap: wrap !important;
+  gap: 12px !important;
+  padding: 16px 4px !important;
+  border-top: 1px solid var(--cmcc-border-secondary) !important;
+}
+
+#cmcc-app
+  .cmcc-queue-table-inner
+  + .tw-flex.tw-items-center.tw-justify-between
+  .tw-text-sm.tw-text-gray-500 {
+  color: var(--cmcc-text-secondary) !important;
+  font-size: var(--cmcc-body) !important;
+  white-space: nowrap !important;
+}
+
+#cmcc-app
+  .cmcc-queue-table-inner
+  + .tw-flex.tw-items-center.tw-justify-between
+  .tw-text-gray-300 {
+  color: var(--cmcc-text-muted) !important;
+  opacity: 0.5 !important;
+}
+
+/* Ensure all pagination elements match QueueTable style */
+#cmcc-app .cmcc-per-page-control {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  color: var(--cmcc-text-secondary) !important;
+  font-size: var(--cmcc-body) !important;
+}
+
+#cmcc-app .cmcc-per-page-control select {
+  padding: 6px 24px 6px 10px !important;
+  border: 1px solid var(--cmcc-border-input) !important;
+  border-radius: var(--cmcc-radius-md) !important;
+  background: var(--cmcc-bg-input) !important;
+  color: var(--cmcc-text-primary) !important;
+  font-size: var(--cmcc-body) !important;
+  min-width: 60px;
+  appearance: auto;
+  -webkit-appearance: auto;
+  cursor: pointer;
+  transition:
+    border-color var(--cmcc-transition-fast),
+    box-shadow var(--cmcc-transition-fast);
+}
+
+#cmcc-app .cmcc-per-page-control select:focus {
+  border-color: var(--cmcc-border-focus) !important;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12) !important;
+  outline: none;
+}
+
+#cmcc-app .cmcc-pagination-label {
+  color: var(--cmcc-text-secondary) !important;
+  font-size: var(--cmcc-body) !important;
+  white-space: nowrap !important;
+}
+
+/* Reports page pagination consistency */
+#cmcc-app .cmcc-reports-pagination {
+  margin-top: 16px;
+}
+
+/* Improved spacing for action groups inside table cells */
+#cmcc-app table[class*='tw-'] tbody td .tw-flex.tw-gap-2,
+#cmcc-app .cmcc-ui-table tbody td .tw-flex.tw-gap-2 {
+  gap: 8px !important;
+}
+
+/* Consistent button spacing inside all table cells */
+#cmcc-app table[class*='tw-'] tbody td button,
+#cmcc-app .cmcc-ui-table tbody td button {
+  margin: 0 2px !important;
+}
+
+/* Page header button group spacing */
+#cmcc-app .cmcc-page-header .cmcc-btn-group {
+  margin: 0 !important;
+}
+
+/* =========================================================================
+   SECTION: Table Consistency — Report Cards & Analytics Sections
+   Ensures tables inside report section cards do NOT have double borders
+   and match the QueueTable design exactly.
+   ========================================================================= */
+
+/* Remove outer table border when inside a report card (card provides the border) */
+#cmcc-app .cmcc-report-section-card .cmcc-queue-table-inner,
+#cmcc-app .cmcc-report-section-card table[class*='tw-'],
+#cmcc-app .cmcc-report-section-card .cmcc-ui-table {
+  border: none !important;
+  border-radius: 0 !important;
+}
+
+/* Ensure the report section body has proper overflow for rounded corners */
+#cmcc-app .cmcc-report-section-card .cmcc-report-section-body {
+  overflow: hidden;
+}
+
+/* Analytics section — table should fill the section width */
+#cmcc-app .cmcc-analytics-section .cmcc-queue-table-inner,
+#cmcc-app .cmcc-analytics-section table[class*='tw-'],
+#cmcc-app .cmcc-analytics-section .cmcc-ui-table {
+  margin-top: 4px;
+}
+
+/* =========================================================================
+   SECTION: Pagination Buttons — Modern Styling
+   Consistent pagination buttons across ALL tables (Queue, Analytics, Activity, Reports)
+   ========================================================================= */
+
+/* All pagination wrapper divs inside tables and footers */
+#cmcc-app .tw-flex.tw-items-center.tw-justify-center.tw-gap-1 {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  flex-wrap: wrap !important;
+}
+
+/* Pagination page number buttons — универсальный селектор для всех таблиц */
+/* Matches any button inside the Pagination component's flex container */
+#cmcc-app
+  .tw-flex.tw-items-center.tw-justify-center.tw-gap-1
+  button:where(:not([class*='cmcc-action'])) {
+  min-width: 32px !important;
+  height: 32px !important;
+  padding: 0 8px !important;
+  font-size: var(--cmcc-body) !important;
+  font-weight: 500 !important;
+  border-radius: var(--cmcc-radius-md) !important;
+  border: 1px solid var(--cmcc-border-input) !important;
+  background: var(--cmcc-bg-card) !important;
+  color: var(--cmcc-text-secondary) !important;
+  cursor: pointer !important;
+  transition: all var(--cmcc-transition-fast) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  line-height: 1 !important;
+  box-shadow: none !important;
+}
+
+#cmcc-app
+  .tw-flex.tw-items-center.tw-justify-center.tw-gap-1
+  button:where(:not([class*='cmcc-action'])):hover:not(:disabled) {
+  background: var(--cmcc-bg-table-hover) !important;
+  color: var(--cmcc-primary) !important;
+  border-color: var(--cmcc-primary) !important;
+}
+
+/* Active page button — universal selector */
+#cmcc-app
+  .tw-flex.tw-items-center.tw-justify-center.tw-gap-1
+  button[aria-current='page'],
+#cmcc-app
+  .tw-flex.tw-items-center.tw-justify-center.tw-gap-1
+  button.tw-bg-primary-600 {
+  background: var(--cmcc-gradient-primary) !important;
+  color: #fff !important;
+  border-color: transparent !important;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.25) !important;
+  font-weight: 600 !important;
+}
+
+#cmcc-app
+  .tw-flex.tw-items-center.tw-justify-center.tw-gap-1
+  button[aria-current='page']:hover,
+#cmcc-app
+  .tw-flex.tw-items-center.tw-justify-center.tw-gap-1
+  button.tw-bg-primary-600:hover {
+  background: var(--cmcc-gradient-primary) !important;
+  color: #fff !important;
+}
+
+/* Disabled pagination buttons */
+#cmcc-app .tw-flex.tw-items-center.tw-justify-center.tw-gap-1 button:disabled {
+  opacity: 0.4 !important;
+  cursor: not-allowed !important;
+  background: var(--cmcc-bg-disabled) !important;
+  border-color: var(--cmcc-border-secondary) !important;
+  color: var(--cmcc-text-disabled) !important;
+  box-shadow: none !important;
+}
+
+/* Ellipsis in pagination */
+#cmcc-app .tw-flex.tw-items-center.tw-justify-center.tw-gap-1 .tw-px-1 {
+  color: var(--cmcc-text-muted) !important;
+  font-size: var(--cmcc-body) !important;
+  padding: 0 4px !important;
+}
+
+/* =========================================================================
+   SECTION: Slide Panel — Extra Safeguards & Fallbacks
+   ========================================================================= */
+
+/* Ensure slide panel is always above everything */
+.cmcc-slide-panel {
+  z-index: 100001 !important;
+}
+
+/* Ensure the slide panel body has proper scrolling */
+.cmcc-slide-panel .cmcc-panel-body {
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+}
+
+/* =========================================================================
+   SECTION: Dark Mode — Slide Panel & Table Consistency
+   ========================================================================= */
+
+/* Dark mode slide panel headings with extra brightness */
+.dark .cmcc-slide-panel h4,
+.dark .cmcc-slide-panel h5,
+.dark .cmcc-slide-panel .tw-text-sm.tw-font-semibold {
+  color: #e2e8f0 !important;
+}
+
+/* Dark mode report section card text */
+.dark #cmcc-app .cmcc-report-section-card .cmcc-report-section-header h3 {
+  color: var(--cmcc-text-heading) !important;
+}
+
+/* Dark mode — pagination active page */
+.dark
+  #cmcc-app
+  .tw-flex.tw-items-center.tw-justify-center.tw-gap-1
+  button[aria-current='page'] {
+  color: #fff !important;
+}
+
+/* =========================================================================
+   SECTION: Button & Form Spacing — Final Overrides
+   ========================================================================= */
+
+/* Extra spacing between buttons in groups */
+#cmcc-app .cmcc-btn-group {
+  gap: 8px !important;
+}
+
+#cmcc-app .cmcc-btn-group > * {
+  margin: 0 !important;
+}
+
+/* Spacing between form elements */
+#cmcc-app .cmcc-form-group {
+  margin-bottom: 16px !important;
+}
+
+#cmcc-app .cmcc-form-group + .cmcc-form-group {
+  margin-top: 0 !important;
+}
+
+/* Spacing in slide panel form groups */
+.cmcc-slide-panel .cmcc-form-group {
+  margin-bottom: 14px !important;
+}
+
+.cmcc-slide-panel .cmcc-form-group + .cmcc-form-group {
+  margin-top: 4px !important;
+}
+
+/* =========================================================================
+   SECTION: Responsive — Extra Safeguards
+   ========================================================================= */
+
+/* Ensure tables don't overflow on smaller screens */
+@media screen and (max-width: 960px) {
+  .cmcc-slide-panel {
+    width: 380px !important;
+  }
+}
+
+@media screen and (max-width: 782px) {
+  #cmcc-app .cmcc-report-section-card .cmcc-report-section-body {
     overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    flex-wrap: nowrap;
-    scrollbar-width: none;
-  }
-  #cmcc-app .cmcc-tab-nav::-webkit-scrollbar {
-    display: none;
-  }
-  #cmcc-app .cmcc-tab {
-    white-space: nowrap;
-    flex-shrink: 0;
   }
 
-  /* ── Filters → collapsible ─────────────────────────── */
-  #cmcc-app .cmcc-queue-filters,
-  #cmcc-app .cmcc-queue-toolbar {
-    flex-direction: column;
-    align-items: stretch;
+  .cmcc-slide-panel {
+    width: 100vw !important;
+    max-width: 100vw !important;
   }
-  #cmcc-app .cmcc-queue-filters-row,
-  #cmcc-app .cmcc-queue-toolbar-right {
-    flex-wrap: wrap;
-  }
-  #cmcc-app .cmcc-filter-select {
-    width: 100%;
+}
+
+@media screen and (max-width: 600px) {
+  /* Compact table cells on mobile */
+  #cmcc-app .cmcc-queue-table-inner th,
+  #cmcc-app table[class*='tw-'] thead th,
+  #cmcc-app .cmcc-ui-table thead th {
+    padding: 10px 12px !important;
+    font-size: var(--cmcc-xs) !important;
   }
 
-  /* ── Action buttons → icon-only ────────────────────── */
-  #cmcc-app .cmcc-actions button,
-  #cmcc-app .cmcc-actions .cmcc-btn {
-    padding: 6px 8px;
-    font-size: 0;
-    min-width: 32px;
-    min-height: 32px;
+  #cmcc-app .cmcc-queue-table-inner td,
+  #cmcc-app table[class*='tw-'] tbody td,
+  #cmcc-app .cmcc-ui-table tbody td {
+    padding: 10px 12px !important;
   }
-  #cmcc-app .cmcc-actions button::after {
-    font-size: 0.75rem;
+
+  /* Stack pagination fully on mobile */
+  #cmcc-app .cmcc-breakdown-table-footer,
+  #cmcc-app .cmcc-activity-pagination {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 12px !important;
+  }
+
+  #cmcc-app .cmcc-per-page-control {
+    justify-content: center !important;
+  }
+
+  /* Pagination buttons smaller on mobile — universal selector */
+  #cmcc-app
+    .tw-flex.tw-items-center.tw-justify-center.tw-gap-1
+    button:where(:not([class*='cmcc-action'])) {
+    min-width: 28px !important;
+    height: 28px !important;
+    padding: 0 6px !important;
+    font-size: var(--cmcc-small) !important;
+  }
+}
+
+/* Print styles */
+@media print {
+  #cmcc-app .cmcc-tab-nav,
+  #cmcc-app .cmcc-top-bar,
+  .cmcc-slide-panel,
+  .cmcc-slide-backdrop,
+  #cmcc-app .cmcc-quick-filter-bar,
+  #cmcc-app .cmcc-toast {
+    display: none !important;
   }
 }

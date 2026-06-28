@@ -193,6 +193,8 @@ export function AiSettingsForm({
           AI Moderation Engine
         </label>
         <select
+          id="cmfc-ai-engine"
+          name="cmfc-ai-engine"
           value={config.engine}
           onChange={(e) =>
             updateField('engine', e.target.value as AiEngineType)
@@ -220,6 +222,8 @@ export function AiSettingsForm({
             <div className="tw-flex tw-gap-2">
               <input
                 type={showApiKey ? 'text' : 'password'}
+                id="cmfc-ai-api-key"
+                name="cmfc-ai-api-key"
                 value={config.apiKey}
                 onChange={(e) => updateField('apiKey', e.target.value)}
                 placeholder={apiKeyPlaceholder}
@@ -249,6 +253,8 @@ export function AiSettingsForm({
               </div>
             ) : (
               <select
+                id="cmfc-ai-model"
+                name="cmfc-ai-model"
                 value={config.model}
                 onChange={(e) => updateField('model', e.target.value)}
                 className="tw-w-full tw-rounded-md tw-border tw-border-gray-300 tw-bg-white tw-px-3 tw-py-2 tw-text-sm focus:tw-border-blue-500 focus:tw-ring-1 focus:tw-ring-blue-500"
@@ -297,6 +303,8 @@ export function AiSettingsForm({
             <label className="tw-relative tw-inline-flex tw-items-center tw-cursor-pointer">
               <input
                 type="checkbox"
+                id="cmfc-ai-auto-moderate"
+                name="cmfc-ai-auto-moderate"
                 checked={config.autoModerate}
                 onChange={(e) => updateField('autoModerate', e.target.checked)}
                 className="tw-sr-only tw-peer"
@@ -312,6 +320,8 @@ export function AiSettingsForm({
             </label>
             <input
               type="range"
+              id="cmfc-ai-spam-threshold"
+              name="cmfc-ai-spam-threshold"
               min="0"
               max="100"
               value={config.spamThreshold}
@@ -339,6 +349,8 @@ export function AiSettingsForm({
               <label className="tw-relative tw-inline-flex tw-items-center tw-cursor-pointer">
                 <input
                   type="checkbox"
+                  id="cmfc-ai-language-detection"
+                  name="cmfc-ai-language-detection"
                   checked={config.enableLanguageDetection}
                   onChange={(e) =>
                     updateField('enableLanguageDetection', e.target.checked)
@@ -356,6 +368,8 @@ export function AiSettingsForm({
               <label className="tw-relative tw-inline-flex tw-items-center tw-cursor-pointer">
                 <input
                   type="checkbox"
+                  id="cmfc-ai-sentiment-analysis"
+                  name="cmfc-ai-sentiment-analysis"
                   checked={config.enableSentimentAnalysis}
                   onChange={(e) =>
                     updateField('enableSentimentAnalysis', e.target.checked)

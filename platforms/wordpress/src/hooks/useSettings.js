@@ -603,7 +603,25 @@ export function useSettings({ addToast }) {
     }
 
     {
-      const sectionData = s('ai_moderation')
+      // Map snake_case API keys to camelCase for form fields
+      const snakeToCamelAi = (obj) => {
+        const map = {
+          api_key: 'apiKey',
+          auto_moderate: 'autoModerate',
+          spam_threshold: 'spamThreshold',
+          enable_language_detection: 'enableLanguageDetection',
+          enable_sentiment_analysis: 'enableSentimentAnalysis',
+        }
+        const result = { ...obj }
+        for (const [snake, camel] of Object.entries(map)) {
+          if (result[snake] !== undefined) {
+            result[camel] = result[snake]
+            delete result[snake]
+          }
+        }
+        return result
+      }
+      const sectionData = snakeToCamelAi(s('ai_moderation'))
       sections.push({
         id: 'ai_moderation',
         title: 'AI Moderation',
@@ -691,8 +709,10 @@ export function useSettings({ addToast }) {
       const data = await apiFetch('settings')
       buildSections(data)
     } catch (err) {
-      // eslint-disable-next-line no-console
-      console.error('Failed to fetch settings:', err)
+      if (process.env.NODE_ENV !== 'production') {
+        // eslint-disable-next-line no-console
+        console.error('Failed to fetch settings:', err)
+      }
       addToast('Failed to load settings', 'error')
     }
   }, [buildSections, addToast])
@@ -709,7 +729,7 @@ export function useSettings({ addToast }) {
         ) {
           validators[field.name] = (value) => {
             if (!value || value.trim() === '') {
-              return 'API endpoint URL is required'
+              return null // Optional field — empty is allowed
             }
             try {
               new URL(value)
@@ -766,8 +786,8 @@ export function useSettings({ addToast }) {
             if (isNaN(num)) {
               return 'Must be a valid number'
             }
-            if (num < 0 || num > 1) {
-              return 'Spam threshold must be between 0 and 1'
+            if (num < 0 || num > 100) {
+              return 'Spam threshold must be between 0 and 100'
             }
             return null
           }
@@ -801,12 +821,25 @@ export function useSettings({ addToast }) {
   const handleSettingsSave = useCallback(
     async (formData) => {
       try {
+        // Map camelCase form field names back to snake_case for server
+        const camelToSnake = {
+          apiKey: 'api_key',
+          autoModerate: 'auto_moderate',
+          spamThreshold: 'spam_threshold',
+          enableLanguageDetection: 'enable_language_detection',
+          enableSentimentAnalysis: 'enable_sentiment_analysis',
+        }
         const payload = {}
         for (const section of settingsSections) {
           payload[section.id] = {}
           for (const field of section.fields) {
             if (formData[field.name] !== undefined) {
-              payload[section.id][field.name] = formData[field.name]
+              // Map camelCase to snake_case for ai_moderation section
+              const name =
+                section.id === 'ai_moderation'
+                  ? camelToSnake[field.name] || field.name
+                  : field.name
+              payload[section.id][name] = formData[field.name]
             }
           }
         }
@@ -816,8 +849,10 @@ export function useSettings({ addToast }) {
         })
         addToast('Settings saved successfully', 'success')
       } catch (err) {
-        // eslint-disable-next-line no-console
-        console.error('Failed to save settings:', err)
+        if (process.env.NODE_ENV !== 'production') {
+          // eslint-disable-next-line no-console
+          console.error('Failed to save settings:', err)
+        }
         addToast(
           'Failed to save settings: ' + (err?.message || 'Unknown error'),
           'error',

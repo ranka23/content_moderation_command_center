@@ -1,4 +1,10 @@
-import React, { useEffect, startTransition, useState } from 'react'
+import React, {
+  useEffect,
+  startTransition,
+  useState,
+  useMemo,
+  useCallback,
+} from 'react'
 import {
   Button,
   Table,
@@ -19,6 +25,7 @@ import {
   Plus,
 } from 'lucide-react'
 import { apiFetch } from '../lib/api'
+import { DateRangePicker } from '../components/DateRangePicker'
 
 const PO = [10, 25, 50, 100]
 const PF = [
@@ -181,30 +188,32 @@ const v = (id) => document.getElementById(id)?.value || ''
 const PagBar = ({ t, p, pp, oc, opc, l }) => {
   const tp = Math.ceil(t / pp)
   return (
-    <div className="tw-flex tw-items-center tw-justify-between tw-py-4 tw-px-2">
-      <div className="tw-flex tw-items-center tw-gap-2">
-        <span className="tw-text-sm tw-text-gray-500">
+    <div className="cmcc-table-pagination">
+      <div className="cmcc-table-pagination-left">
+        <span className="cmcc-pagination-info">
           {t > 0
-            ? `${(p - 1) * pp + 1}\u2013${Math.min(p * pp, t)} of ${t} ${l}`
+            ? `${(p - 1) * pp + 1}–${Math.min(p * pp, t)} of ${t} ${l}`
             : `No ${l}`}
         </span>
-        <span className="tw-text-gray-300">|</span>
-        <label className="tw-flex tw-items-center tw-gap-1 tw-text-sm tw-text-gray-500">
+        <span className="cmcc-pagination-separator">|</span>
+        <label className="cmcc-pagination-rows-label">
           Show
           <select
+            id="cmcc-reports-per-page"
+            name="cmcc-reports-per-page"
+            className="cmcc-pagination-rows-select"
             value={String(pp)}
             onChange={(e) => {
               opc(Number(e.target.value))
               oc(1)
             }}
-            className="tw-w-16 tw-h-8 tw-text-xs tw-border tw-border-gray-300 tw-rounded tw-px-1"
           >
             {PO.map((n) => (
               <option key={n} value={n}>
                 {n}
               </option>
             ))}
-          </select>{' '}
+          </select>
           per page
         </label>
       </div>
@@ -222,10 +231,36 @@ export default function ReportsPage({
   analyticsDateRange,
   addToast,
 }) {
+  // ── Sort state for User Reputation table ────────────────────────────
+  const [repSortField, setRepSortField] = useState(null)
+  const [repSortDir, setRepSortDir] = useState('asc')
+  const handleRepSort = (field) => {
+    if (repSortField === field) {
+      setRepSortDir((prev) => (prev === 'asc' ? 'desc' : 'asc'))
+    } else {
+      setRepSortField(field)
+      setRepSortDir('asc')
+    }
+  }
+
+  // ── Sort state for Moderator Performance table ──────────────────────
+  const [perfSortField, setPerfSortField] = useState(null)
+  const [perfSortDir, setPerfSortDir] = useState('asc')
+  const handlePerfSort = (field) => {
+    if (perfSortField === field) {
+      setPerfSortDir((prev) => (prev === 'asc' ? 'desc' : 'asc'))
+    } else {
+      setPerfSortField(field)
+      setPerfSortDir('asc')
+    }
+  }
+
   const [rp, srp] = useState(1)
   const [rpp, srpp] = useState(25)
   const [mp, smp] = useState(1)
   const [mpp, smpp] = useState(25)
+  const [feedPage, setFeedPage] = useState(1)
+  const [feedPerPage, setFeedPerPage] = useState(10)
   const {
     reputationUsers: ru,
     isReputationLoading: irl,
@@ -235,6 +270,16 @@ export default function ReportsPage({
     feedError: fe,
     fetchActivityFeed: faf,
   } = reports
+
+  // ── Activity Feed date range ────────────────────────────────────────
+  const [feedDateRange, setFeedDateRange] = useState(null)
+  const handleFeedRangeChange = useCallback(
+    (range) => {
+      setFeedDateRange(range)
+      faf(range)
+    },
+    [faf],
+  )
   const pl = analytics?.analyticsData?.moderatorPerformance || []
 
   useEffect(() => {
@@ -248,6 +293,48 @@ export default function ReportsPage({
   const rpag = ru.slice((rp - 1) * rpp, (rp - 1) * rpp + rpp)
   const pt = pl.length
   const ppag = pl.slice((mp - 1) * mpp, (mp - 1) * mpp + mpp)
+
+  // ── Activity Feed pagination ────────────────────────────────────────────
+  const feedTotal = af.length
+  const feedStart = (feedPage - 1) * feedPerPage
+  const feedEnd = Math.min(feedPage * feedPerPage, feedTotal)
+  const feedPaginated = af.slice(feedStart, feedEnd)
+
+  // ── Sort reputation users locally ──────────────────────────────────────
+  const sortedRPag = useMemo(() => {
+    if (!repSortField) return rpag
+    return [...rpag].sort((a, b) => {
+      const aVal = a[repSortField]
+      const bVal = b[repSortField]
+      let cmp = 0
+      if (typeof aVal === 'number' && typeof bVal === 'number') {
+        cmp = aVal - bVal
+      } else {
+        cmp = String(aVal ?? '').localeCompare(String(bVal ?? ''), undefined, {
+          numeric: true,
+        })
+      }
+      return repSortDir === 'asc' ? cmp : -cmp
+    })
+  }, [rpag, repSortField, repSortDir])
+
+  // ── Sort moderator performance data locally ────────────────────────────
+  const sortedPPag = useMemo(() => {
+    if (!perfSortField) return ppag
+    return [...ppag].sort((a, b) => {
+      const aVal = a[perfSortField]
+      const bVal = b[perfSortField]
+      let cmp = 0
+      if (typeof aVal === 'number' && typeof bVal === 'number') {
+        cmp = aVal - bVal
+      } else {
+        cmp = String(aVal ?? '').localeCompare(String(bVal ?? ''), undefined, {
+          numeric: true,
+        })
+      }
+      return perfSortDir === 'asc' ? cmp : -cmp
+    })
+  }, [ppag, perfSortField, perfSortDir])
 
   const hex = async (ep, pre) => {
     try {
@@ -344,19 +431,17 @@ export default function ReportsPage({
 
   return (
     <div className="cmcc-tab-panel" role="tabpanel">
-      <h2 className="tw-text-lg tw-font-semibold tw-mb-4">
-        <FileText size={20} className="tw-inline tw-mr-2" />
-        Reports &amp; Compliance
-      </h2>
+      <div className="cmcc-page-header">
+        <h2>
+          <FileText size={20} />
+          Reports &amp; Compliance
+        </h2>
+      </div>
       <div className="tw-grid tw-grid-cols-1 md:tw-grid-cols-2 tw-gap-4 tw-mb-6">
-        <div className="tw-rounded-lg tw-border tw-border-gray-200 tw-bg-white tw-p-4 tw-shadow-sm">
-          <h3 className="tw-text-sm tw-font-semibold tw-mb-3">
-            Moderation Activity Report
-          </h3>
-          <p className="tw-text-sm tw-text-gray-500 tw-mb-4">
-            Export all moderation activity for the selected period.
-          </p>
-          <div className="tw-flex tw-gap-2">
+        <div className="cmcc-report-card">
+          <h3>Moderation Activity Report</h3>
+          <p>Export all moderation activity for the selected period.</p>
+          <div className="cmcc-btn-group">
             <Button
               variant="outline"
               size="sm"
@@ -375,44 +460,37 @@ export default function ReportsPage({
             </Button>
           </div>
         </div>
-        <div className="tw-rounded-lg tw-border tw-border-gray-200 tw-bg-white tw-p-4 tw-shadow-sm">
-          <h3 className="tw-text-sm tw-font-semibold tw-mb-3">
-            Compliance Audit Log
-          </h3>
-          <p className="tw-text-sm tw-text-gray-500 tw-mb-4">
+        <div className="cmcc-report-card">
+          <h3>Compliance Audit Log</h3>
+          <p>
             Export compliance audit trail with timestamps and moderator details.
           </p>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => hex('reports/compliance-audit', 'cmcc-compliance')}
-          >
-            <Download size={14} className="tw-inline tw-mr-1" /> Export Audit
-            Log
-          </Button>
+          <div className="cmcc-btn-group">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => hex('reports/compliance-audit', 'cmcc-compliance')}
+            >
+              <Download size={14} className="tw-inline tw-mr-1" /> Export Audit
+              Log
+            </Button>
+          </div>
         </div>
       </div>
-      <div className="tw-rounded-lg tw-border tw-border-gray-200 tw-bg-white tw-shadow-sm tw-mb-6">
-        <div className="tw-px-4 tw-py-3 tw-border-b tw-border-gray-100">
-          <h3 className="tw-text-sm tw-font-semibold">
-            <Calendar size={16} className="tw-inline tw-mr-1" /> Scheduled
-            Reports
-          </h3>
+      <div className="cmcc-report-section-card">
+        <div className="cmcc-report-section-header">
+          <Calendar size={16} />
+          <h3>Scheduled Reports</h3>
         </div>
-        <div className="tw-p-4">
+        <div className="cmcc-report-section-body">
           <p className="tw-text-sm tw-text-gray-500 tw-mb-4">
             Schedule recurring reports to be generated and emailed.
           </p>
-          <div className="tw-flex tw-flex-wrap tw-gap-3 tw-items-end">
+          <div className="cmcc-schedule-row">
             {SF.map((f) => (
-              <div key={f.id} className="tw-flex tw-flex-col tw-gap-1">
-                <label className="tw-text-xs tw-text-gray-500" htmlFor={f.id}>
-                  {f.label}
-                </label>
-                <select
-                  id={f.id}
-                  className="tw-text-sm tw-border tw-border-gray-300 tw-rounded tw-px-2 tw-py-1.5"
-                >
+              <div key={f.id} className="cmcc-schedule-field">
+                <label htmlFor={f.id}>{f.label}</label>
+                <select id={f.id} name={f.id}>
                   {f.opts.map((o) => (
                     <option
                       key={o}
@@ -424,20 +502,20 @@ export default function ReportsPage({
                 </select>
               </div>
             ))}
-            <Button variant="primary" size="sm" onClick={hs}>
-              <Plus size={14} className="tw-inline tw-mr-1" /> Schedule Report
-            </Button>
+            <div className="cmcc-schedule-field cmcc-schedule-action">
+              <Button variant="primary" size="sm" onClick={hs}>
+                <Plus size={14} className="tw-inline tw-mr-1" /> Schedule Report
+              </Button>
+            </div>
           </div>
         </div>
       </div>
-      <div className="tw-rounded-lg tw-border tw-border-gray-200 tw-bg-white tw-shadow-sm tw-mb-6">
-        <div className="tw-px-4 tw-py-3 tw-border-b tw-border-gray-100">
-          <h3 className="tw-text-sm tw-font-semibold">
-            <Users size={16} className="tw-inline tw-mr-1" /> User Reputation
-            Dashboard
-          </h3>
+      <div className="cmcc-report-section-card">
+        <div className="cmcc-report-section-header">
+          <Users size={16} />
+          <h3>User Reputation Dashboard</h3>
         </div>
-        <div className="tw-p-4">
+        <div className="cmcc-report-section-body">
           {irl ? (
             <SkeletonTable rows={4} columns={5} />
           ) : ru.length === 0 ? (
@@ -448,33 +526,110 @@ export default function ReportsPage({
             />
           ) : (
             <>
-              <Table columns={RC} data={rpag} rowKey={(r) => r.author_id} />
+              <Table
+                columns={RC}
+                data={sortedRPag}
+                sortConfig={
+                  repSortField
+                    ? { field: repSortField, direction: repSortDir }
+                    : undefined
+                }
+                onSort={handleRepSort}
+                rowKey={(r) => r.author_id}
+              />
               <PagBar t={rt} p={rp} pp={rpp} oc={srp} opc={srpp} l="users" />
             </>
           )}
         </div>
       </div>
-      <div className="tw-rounded-lg tw-border tw-border-gray-200 tw-bg-white tw-shadow-sm tw-mb-6">
-        <div className="tw-px-4 tw-py-3 tw-border-b tw-border-gray-100">
-          <h3 className="tw-text-sm tw-font-semibold">
-            <RefreshCw size={16} className="tw-inline tw-mr-1" /> Activity Feed
-          </h3>
+      <div className="cmcc-report-section-card">
+        <div className="cmcc-report-section-header">
+          <RefreshCw size={16} />
+          <h3>Activity Feed</h3>
         </div>
-        <div className="tw-p-4">
-          <ActivityFeed events={af} isLoading={ifl} error={fe} onRetry={faf} />
+        <div className="cmcc-report-section-body">
+          <div className="tw-flex tw-items-center tw-gap-3 tw-mb-4">
+            <DateRangePicker
+              value={feedDateRange}
+              onChange={handleFeedRangeChange}
+            />
+            {feedDateRange && (
+              <button
+                className="cmcc-text-btn cmcc-text-btn-sm"
+                onClick={() => {
+                  setFeedDateRange(null)
+                  faf()
+                }}
+                title="Clear date filter"
+              >
+                × Clear
+              </button>
+            )}
+          </div>
+          <ActivityFeed
+            events={feedPaginated}
+            isLoading={ifl}
+            error={fe}
+            onRetry={faf}
+          />
+          {feedTotal > feedPerPage && (
+            <div className="cmcc-table-pagination">
+              <div className="cmcc-table-pagination-left">
+                <span className="cmcc-pagination-info">
+                  {feedTotal > 0
+                    ? `${feedStart + 1}–${feedEnd} of ${feedTotal} events`
+                    : 'No events'}
+                </span>
+                <span className="cmcc-pagination-separator">|</span>
+                <label className="cmcc-pagination-rows-label">
+                  Show
+                  <select
+                    id="cmcc-feed-per-page"
+                    name="cmcc-feed-per-page"
+                    className="cmcc-pagination-rows-select"
+                    value={String(feedPerPage)}
+                    onChange={(e) => {
+                      setFeedPerPage(Number(e.target.value))
+                      setFeedPage(1)
+                    }}
+                  >
+                    {[10, 25, 50, 100].map((n) => (
+                      <option key={n} value={n}>
+                        {n}
+                      </option>
+                    ))}
+                  </select>
+                  per page
+                </label>
+              </div>
+              <Pagination
+                currentPage={feedPage}
+                totalPages={Math.ceil(feedTotal / feedPerPage)}
+                onPageChange={(p) => setFeedPage(p)}
+              />
+            </div>
+          )}
         </div>
       </div>
-      <div className="tw-rounded-lg tw-border tw-border-gray-200 tw-bg-white tw-shadow-sm tw-mb-6">
-        <div className="tw-px-4 tw-py-3 tw-border-b tw-border-gray-100">
-          <h3 className="tw-text-sm tw-font-semibold">
-            <BarChart3 size={16} className="tw-inline tw-mr-1" /> Moderator
-            Performance
-          </h3>
+      <div className="cmcc-report-section-card">
+        <div className="cmcc-report-section-header">
+          <BarChart3 size={16} />
+          <h3>Moderator Performance</h3>
         </div>
-        <div className="tw-p-4">
+        <div className="cmcc-report-section-body">
           {pl.length > 0 ? (
             <>
-              <Table columns={PC} data={ppag} rowKey={(r) => r.moderator} />
+              <Table
+                columns={PC}
+                data={sortedPPag}
+                sortConfig={
+                  perfSortField
+                    ? { field: perfSortField, direction: perfSortDir }
+                    : undefined
+                }
+                onSort={handlePerfSort}
+                rowKey={(r) => r.moderator}
+              />
               <PagBar
                 t={pt}
                 p={mp}
@@ -493,13 +648,12 @@ export default function ReportsPage({
           )}
         </div>
       </div>
-      <div className="tw-rounded-lg tw-border tw-border-gray-200 tw-bg-white tw-shadow-sm">
-        <div className="tw-px-4 tw-py-3 tw-border-b tw-border-gray-100">
-          <h3 className="tw-text-sm tw-font-semibold">
-            <Globe size={16} className="tw-inline tw-mr-1" /> Multi-Platform Hub
-          </h3>
+      <div className="cmcc-report-section-card">
+        <div className="cmcc-report-section-header">
+          <Globe size={16} />
+          <h3>Multi-Platform Hub</h3>
         </div>
-        <div className="tw-p-4">
+        <div className="cmcc-report-section-body">
           <p className="tw-text-sm tw-text-gray-500 tw-mb-4">
             Connect and manage all your platforms from a single dashboard.
           </p>

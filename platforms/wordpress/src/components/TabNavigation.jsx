@@ -19,14 +19,11 @@ const TAB_ICONS = {
 
 /**
  * Tab navigation bar with icons, labels, and notification badges.
+ * Modern design with refined spacing and active indicator.
  */
-export default function TabNavigation({
-  activeTab,
-  onTabChange,
-  queueStats,
-}) {
+export default function TabNavigation({ activeTab, onTabChange, queueStats }) {
   return (
-    <div className="cmcc-tab-nav">
+    <div className="cmcc-tab-nav" role="tablist">
       {TABS.map((tab) => {
         const isActive = activeTab === tab.id
         const Icon = TAB_ICONS[tab.id]
@@ -38,8 +35,8 @@ export default function TabNavigation({
             role="tab"
             aria-selected={isActive}
           >
-            {Icon && <Icon size={16} className="tw-inline tw-mr-1" />}
-            {tab.label}
+            {Icon && <Icon size={16} aria-hidden="true" />}
+            <span>{tab.label}</span>
             {tab.id === 'queue' && queueStats.total > 0 && (
               <NotificationBadge
                 count={queueStats.pending}

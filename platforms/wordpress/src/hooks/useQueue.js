@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { startTransition } from 'react'
 import { apiFetch } from '../lib/api'
 import { useSavedFilters } from '@cmcc/ui'
@@ -47,6 +47,7 @@ export function useQueue({ addToast }) {
   const [detailItem, setDetailItem] = useState(null)
   const [itemHistory, setItemHistory] = useState([])
   const [isHistoryLoading, setIsHistoryLoading] = useState(false)
+  const historyRequestRef = useRef(0)
 
   // ── Notes ──────────────────────────────────────────────────────────
   const [itemNotes, setItemNotes] = useState([])
@@ -127,8 +128,10 @@ export function useQueue({ addToast }) {
         setQueueTotal(data.total || 0)
         setQueuePage(data.page || 1)
       } catch (err) {
-        // eslint-disable-next-line no-console
-        console.error('Failed to fetch queue:', err)
+        if (process.env.NODE_ENV !== 'production') {
+          // eslint-disable-next-line no-console
+          console.error('Failed to fetch queue:', err)
+        }
         addToast('Failed to fetch queue items', 'error')
       } finally {
         setIsQueueLoading(false)
@@ -156,8 +159,10 @@ export function useQueue({ addToast }) {
           'success',
         )
       } catch (err) {
-        // eslint-disable-next-line no-console
-        console.error('Action failed:', err)
+        if (process.env.NODE_ENV !== 'production') {
+          // eslint-disable-next-line no-console
+          console.error('Action failed:', err)
+        }
         addToast(
           `Failed to ${actionType} item: ${err?.message || 'Unknown error'}`,
           'error',
@@ -233,8 +238,10 @@ export function useQueue({ addToast }) {
           'success',
         )
       } catch (err) {
-        // eslint-disable-next-line no-console
-        console.error('Bulk action failed:', err)
+        if (process.env.NODE_ENV !== 'production') {
+          // eslint-disable-next-line no-console
+          console.error('Bulk action failed:', err)
+        }
         addToast(
           `Bulk action failed: ${err?.message || 'Unknown error'}`,
           'error',
@@ -246,15 +253,24 @@ export function useQueue({ addToast }) {
 
   // ── Fetch Item History ─────────────────────────────────────────────
   const fetchItemHistory = useCallback(async (itemId) => {
+    const requestId = ++historyRequestRef.current
     setIsHistoryLoading(true)
+    // Clear stale history immediately when viewing a new item
+    if (requestId > 1) setItemHistory([])
     try {
       const data = await apiFetch(`queue/${encodeURIComponent(itemId)}/history`)
+      // Ignore stale responses from previous requests (race condition guard)
+      if (requestId !== historyRequestRef.current) return
       setItemHistory(data.timeline || data.history || data.items || [])
     } catch (err) {
-      // eslint-disable-next-line no-console
-      console.error('Failed to fetch item history:', err)
+      if (process.env.NODE_ENV !== 'production') {
+        // eslint-disable-next-line no-console
+        console.error('Failed to fetch item history:', err)
+      }
     } finally {
-      setIsHistoryLoading(false)
+      if (requestId === historyRequestRef.current) {
+        setIsHistoryLoading(false)
+      }
     }
   }, [])
 
@@ -265,8 +281,10 @@ export function useQueue({ addToast }) {
       const data = await apiFetch(`queue/${encodeURIComponent(itemId)}/notes`)
       setItemNotes(data.notes || [])
     } catch (err) {
-      // eslint-disable-next-line no-console
-      console.error('Failed to fetch notes:', err)
+      if (process.env.NODE_ENV !== 'production') {
+        // eslint-disable-next-line no-console
+        console.error('Failed to fetch notes:', err)
+      }
     } finally {
       setIsNotesLoading(false)
     }

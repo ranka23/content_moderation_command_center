@@ -1,14 +1,4 @@
-/* ─── Dark Mode Skeleton ────────────────────────────────────────────── */
-.dark #cmcc-app .cmcc-skeleton {
-  background: linear-gradient(90deg, #2a2a4a 25%, #3a3a5a 50%, #2a2a4a 75%);
-  background-size: 200% 100%;
-}
-
-/* ===========================================================
-   SECTION: Toast Notifications
-   =========================================================== */
-
-/* ─── Toast Notifications (U8 Fix) ─────────────────────── */
+/* ─── Toast Notifications — Premium 2026 Design ────────── */
 
 #cmcc-app .cmcc-toast-container {
   position: fixed;
@@ -24,74 +14,75 @@
 #cmcc-app .cmcc-toast {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 12px var(--cmcc-space-4, 16px);
-  border-radius: 6px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  font-size: 13px;
+  gap: 12px;
+  padding: 14px 18px;
+  border-radius: var(--cmcc-radius-xl);
+  box-shadow: var(--cmcc-shadow-toast);
+  font-size: var(--cmcc-body);
   font-weight: 500;
   color: #fff;
   cursor: pointer;
-  animation: cmcc-toast-in 0.3s ease;
-  transition: opacity 0.2s ease;
+  animation: cmcc-toast-in 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition:
+    opacity var(--cmcc-transition-fast),
+    transform var(--cmcc-transition-fast);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 #cmcc-app .cmcc-toast:hover {
-  opacity: 0.9;
+  opacity: 0.95;
+  transform: translateY(-2px);
 }
 
 @keyframes cmcc-toast-in {
   from {
-    transform: translateX(100%);
+    transform: translateX(100%) scale(0.9);
     opacity: 0;
   }
   to {
-    transform: translateX(0);
+    transform: translateX(0) scale(1);
     opacity: 1;
   }
 }
 
 #cmcc-app .cmcc-toast-success {
-  background: #00a32a;
+  background: linear-gradient(135deg, #10b981, #059669);
 }
 
 #cmcc-app .cmcc-toast-error {
-  background: #d63638;
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+
+#cmcc-app .cmcc-toast-info {
+  background: linear-gradient(135deg, #6366f1, #4f46e5);
+}
+
+#cmcc-app .cmcc-toast-warning {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
 }
 
 #cmcc-app .cmcc-toast-icon {
   font-size: 16px;
   font-weight: 700;
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
 }
 
 #cmcc-app .cmcc-toast-message {
   flex: 1;
 }
 
-/* ─── Activity Log Toolbar (U6/U8 fixes) ──────────────────────────────── */
-
-#cmcc-app .cmcc-activity-toolbar {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  margin-bottom: 12px;
-}
-
-#cmcc-app .cmcc-table-wrapper {
-  overflow-x: auto;
-  border: 1px solid #c3c4c7;
-  border-radius: 4px;
-}
-
-#cmcc-app .cmcc-moderator-name {
-  font-weight: 500;
-  color: #1d2327;
-}
-
-/* ─── Action badge for deactivate-users (B4 fix) ──────────────────────── */
-
-#cmcc-app .cmcc-action-deactivate-users {
-  background: #f0f0f1;
-  color: #50575e;
+/* Progress bar at bottom of toast */
+#cmcc-app .cmcc-toast-progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.4);
+  border-radius: 0 0 var(--cmcc-radius-xl) var(--cmcc-radius-xl);
+  transition: width linear;
 }

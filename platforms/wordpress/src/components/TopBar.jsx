@@ -1,9 +1,10 @@
 import React from 'react'
-import { Shield, Moon, Sun, Heart } from 'lucide-react'
+import { Moon, Sun, Heart, Sparkles } from 'lucide-react'
 import { TABS } from '../lib/constants'
 
 /**
  * Top bar with app title, breadcrumb indicator, theme toggle, and donate link.
+ * 2026 modern design with gradient icon container and refined spacing.
  */
 export default function TopBar({ theme, toggleTheme, activeTab }) {
   return (
@@ -11,10 +12,9 @@ export default function TopBar({ theme, toggleTheme, activeTab }) {
       <div className="cmcc-top-bar-left">
         <h1 className="cmcc-title">
           <span className="cmcc-title-icon">
-            <Shield size={20} />
+            <Sparkles size={18} />
           </span>
-          CMCC{' '}
-          <span className="cmcc-title-light">Content Moderation</span>
+          CMCC <span className="cmcc-title-light">Content Moderation</span>
         </h1>
         {/* Breadcrumb / Page title indicator */}
         <span className="cmcc-page-indicator">
@@ -29,8 +29,9 @@ export default function TopBar({ theme, toggleTheme, activeTab }) {
           className="cmcc-theme-toggle"
           onClick={toggleTheme}
           title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+          aria-label="Toggle theme"
         >
-          {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
+          {theme === 'light' ? <Moon size={16} /> : <Sun size={16} />}
         </button>
         <a
           className="cmcc-donate-link"
@@ -39,7 +40,8 @@ export default function TopBar({ theme, toggleTheme, activeTab }) {
           rel="noopener noreferrer"
           title="Support the creator — Donate $1"
         >
-          <Heart size={14} /> Donate $1
+          <Heart size={14} />
+          <span>Donate $1</span>
         </a>
       </div>
     </div>

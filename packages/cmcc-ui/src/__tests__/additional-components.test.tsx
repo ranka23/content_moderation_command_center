@@ -72,6 +72,7 @@ describe('SlideOutPanel', () => {
   })
 
   it('calls onClose when close button clicked', () => {
+    jest.useFakeTimers()
     const handleClose = jest.fn()
     render(
       <SlideOutPanel open={true} onClose={handleClose} title="Close me">
@@ -80,7 +81,10 @@ describe('SlideOutPanel', () => {
     )
     const closeBtn = screen.getByRole('button')
     fireEvent.click(closeBtn)
+    // Advance the timer to fire the delayed onClose callback
+    jest.advanceTimersByTime(300)
     expect(handleClose).toHaveBeenCalledTimes(1)
+    jest.useRealTimers()
   })
 })
 

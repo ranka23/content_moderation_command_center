@@ -2,16 +2,16 @@ import React, { useState, useRef, useEffect, useCallback } from 'react'
 import { format, subDays, startOfDay, endOfDay } from 'date-fns'
 import { DayPicker } from 'react-day-picker'
 import { cn } from '@cmcc/ui'
-import { Button } from '@cmcc/ui'
+
 /**
- * Date range picker with a popover calendar.
- * Default: last 7 days.
+ * MUI-inspired date range picker styled with CMCC design tokens.
+ * Trigger looks like an outlined text field; popover shows a two-month
+ * calendar with preset quick-picks. Same API: value={range} onChange={fn}.
  */
 export function DateRangePicker({ value, onChange, className }) {
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
 
-  // Default range: last 7 days
   const defaultRange = {
     from: subDays(startOfDay(new Date()), 6),
     to: endOfDay(new Date()),
@@ -19,7 +19,9 @@ export function DateRangePicker({ value, onChange, className }) {
 
   const range = value || defaultRange
 
-  // Preset options
+  // Reset animation class on every open
+  const [animClass, setAnimClass] = useState('')
+
   const presets = [
     {
       label: 'Last 7 days',
@@ -64,6 +66,16 @@ export function DateRangePicker({ value, onChange, className }) {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [open])
 
+  // Trigger animation class on open/close
+  useEffect(() => {
+    if (open) {
+      // Small delay to ensure DOM mounted before adding enter class
+      requestAnimationFrame(() => setAnimClass('cmcc-dp-popover-enter'))
+    } else {
+      setAnimClass('cmcc-dp-popover-exit')
+    }
+  }, [open])
+
   const displayText = range?.from
     ? range.to
       ? `${format(range.from, 'MMM d, yyyy')} – ${format(range.to, 'MMM d, yyyy')}`
@@ -87,72 +99,81 @@ export function DateRangePicker({ value, onChange, className }) {
         })
       }
       if (selected?.from && selected?.to) {
-        setOpen(false)
+        // Delay close slightly for a smoother UX
+        setTimeout(() => setOpen(false), 120)
       }
     },
     [onChange],
   )
 
   return (
-    <div className={cn('tw-relative', className)} ref={ref}>
-      <Button
-        variant="outline"
-        size="sm"
+    <div className={cn('cmcc-dp-wrapper', className)} ref={ref}>
+      {/* ── MUI-Inspired Trigger ────────────────────────────── */}
+      <button
+        type="button"
         onClick={() => setOpen(!open)}
-        className="tw-w-[280px] tw-justify-start tw-text-left tw-font-normal"
+        className="cmcc-dp-trigger"
+        aria-haspopup="dialog"
+        aria-expanded={open}
       >
-        <CalendarIcon className="tw-mr-2 tw-h-4 tw-w-4" />
-        <span>{displayText}</span>
-      </Button>
+        <CalendarIcon className="cmcc-dp-trigger-icon" />
+        <span className="cmcc-dp-trigger-text">{displayText}</span>
+        <ChevronIcon
+          className={cn('cmcc-dp-chevron', open && 'cmcc-dp-chevron-open')}
+        />
+      </button>
 
+      {/* ── Calendar Popover ────────────────────────────────── */}
       {open && (
-        <div className="tw-absolute tw-z-50 tw-mt-1 tw-rounded-lg tw-border tw-border-border tw-bg-background tw-shadow-lg">
-          {/* Presets */}
-          <div className="tw-flex tw-border-b tw-border-border">
+        <div
+          className={cn('cmcc-dp-popover', animClass)}
+          role="dialog"
+          aria-label="Date range picker"
+        >
+          {/* Presets row */}
+          <div className="cmcc-dp-presets">
             {presets.map((preset) => (
               <button
                 key={preset.label}
-                className="tw-flex-1 tw-px-3 tw-py-2 tw-text-xs tw-font-medium tw-text-muted-foreground hover:tw-bg-muted hover:tw-text-foreground tw-transition-colors first:tw-rounded-tl-lg last:tw-rounded-tr-lg"
+                type="button"
+                className="cmcc-dp-preset-btn"
                 onClick={() => handlePreset(preset)}
               >
                 {preset.label}
               </button>
             ))}
           </div>
+
           {/* Calendar */}
-          <div className="tw-p-2">
+          <div className="cmcc-dp-calendar-wrap">
             <DayPicker
               mode="range"
               selected={range}
               onSelect={handleDayPickerSelect}
               numberOfMonths={2}
               defaultMonth={range?.from}
-              className="!tw-m-0"
               classNames={{
-                months: 'tw-flex tw-gap-4',
-                month: 'tw-m-0',
-                caption:
-                  'tw-flex tw-items-center tw-justify-between tw-px-1 tw-py-2 tw-text-sm tw-font-semibold',
-                nav: 'tw-flex tw-gap-1',
-                nav_button:
-                  'tw-h-7 tw-w-7 tw-bg-transparent tw-p-0 tw-opacity-50 hover:tw-opacity-100',
-                nav_button_previous: 'tw-mr-auto',
-                nav_button_next: 'tw-ml-auto',
-                table: 'tw-w-full tw-border-collapse',
-                head_row: 'tw-flex',
-                head_cell:
-                  'tw-w-9 tw-text-xs tw-font-medium tw-text-muted-foreground tw-text-center tw-pb-2',
-                row: 'tw-flex tw-w-full tw-mt-0',
-                cell: 'tw-h-9 tw-w-9 tw-text-center tw-text-sm tw-p-0 tw-relative',
-                day: 'tw-h-9 tw-w-9 tw-rounded-md tw-p-0 tw-text-sm tw-font-normal tw-aria-selected:tw-opacity-100 hover:tw-bg-muted',
-                day_selected:
-                  'tw-bg-primary-600 tw-text-white hover:tw-bg-primary-600 hover:tw-text-white',
-                day_today: 'tw-bg-muted tw-font-semibold',
-                day_outside: 'tw-text-muted-foreground tw-opacity-50',
-                day_disabled: 'tw-text-muted-foreground tw-opacity-50',
-                day_range_middle: 'tw-bg-primary-100 tw-text-primary-800',
-                day_range_end: 'tw-bg-primary-600 tw-text-white',
-                day_range_start: 'tw-bg-primary-600 tw-text-white',
+                months: 'cmcc-dp-months',
+                month: 'cmcc-dp-month',
+                caption: 'cmcc-dp-caption',
+                caption_label: 'cmcc-dp-caption-label',
+                nav: 'cmcc-dp-nav',
+                nav_button: 'cmcc-dp-nav-btn',
+                nav_button_previous: 'cmcc-dp-nav-prev',
+                nav_button_next: 'cmcc-dp-nav-next',
+                table: 'cmcc-dp-table',
+                head_row: 'cmcc-dp-head-row',
+                head_cell: 'cmcc-dp-head-cell',
+                row: 'cmcc-dp-row',
+                cell: 'cmcc-dp-cell',
+                day: 'cmcc-dp-day',
+                day_selected: 'cmcc-dp-day-selected',
+                day_today: 'cmcc-dp-day-today',
+                day_outside: 'cmcc-dp-day-outside',
+                day_disabled: 'cmcc-dp-day-disabled',
+                day_range_middle: 'cmcc-dp-day-range-middle',
+                day_range_end: 'cmcc-dp-day-range-end',
+                day_range_start: 'cmcc-dp-day-range-start',
               }}
             />
           </div>
@@ -161,6 +182,8 @@ export function DateRangePicker({ value, onChange, className }) {
     </div>
   )
 }
+
+/* ─── Icons ─────────────────────────────────────────────────────────── */
 
 function CalendarIcon({ className }) {
   return (
@@ -180,6 +203,25 @@ function CalendarIcon({ className }) {
       <line x1="16" x2="16" y1="2" y2="6" />
       <line x1="8" x2="8" y1="2" y2="6" />
       <line x1="3" x2="21" y1="10" y2="10" />
+    </svg>
+  )
+}
+
+function ChevronIcon({ className }) {
+  return (
+    <svg
+      className={className}
+      xmlns="http://www.w3.org/2000/svg"
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <polyline points="6 9 12 15 18 9" />
     </svg>
   )
 }

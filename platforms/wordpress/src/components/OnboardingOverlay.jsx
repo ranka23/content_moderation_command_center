@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react'
-import { X, ChevronLeft, ChevronRight, Shield } from 'lucide-react'
+import { X, ChevronLeft, ChevronRight, Sparkles } from 'lucide-react'
 
 const STEPS = [
   {
@@ -22,7 +22,7 @@ const STEPS = [
 
 /**
  * Onboarding overlay with step-by-step walkthrough.
- * Supports prev/next navigation and a progress indicator.
+ * 2026 modern design with gradient accents, glass backdrop, and spring animations.
  */
 export default function OnboardingOverlay({ onDismiss }) {
   const [currentStep, setCurrentStep] = useState(0)
@@ -46,24 +46,42 @@ export default function OnboardingOverlay({ onDismiss }) {
 
   return (
     <div className="cmcc-onboarding-overlay">
-      <div className="cmcc-onboarding-card">
+      <div className="cmcc-onboarding-card" style={{ position: 'relative' }}>
         <button
           className="cmcc-onboarding-skip"
           onClick={onDismiss}
           title="Skip onboarding"
+          aria-label="Skip onboarding"
         >
           <X size={18} />
         </button>
 
-        <div className="tw-flex tw-items-center tw-gap-3 tw-mb-4">
-          <div className="tw-w-10 tw-h-10 tw-rounded-full tw-bg-primary-100 tw-flex tw-items-center tw-justify-center">
-            <Shield size={20} className="tw-text-primary-600" />
+        <div className="tw-flex tw-items-center tw-gap-4 tw-mb-6">
+          <div
+            style={{
+              width: 44,
+              height: 44,
+              borderRadius: 'var(--cmcc-radius-xl)',
+              background: 'var(--cmcc-gradient-primary)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: 'var(--cmcc-shadow-glow-sm)',
+            }}
+          >
+            <Sparkles size={22} className="tw-text-white" />
           </div>
           <div>
-            <h3 className="tw-text-lg tw-font-semibold tw-m-0">
+            <h3
+              className="tw-text-xl tw-font-bold tw-m-0"
+              style={{ color: 'var(--cmcc-text-heading)' }}
+            >
               Welcome to CMCC
             </h3>
-            <p className="tw-text-xs tw-text-gray-500 tw-m-0">
+            <p
+              className="tw-text-xs tw-m-0 tw-mt-0.5"
+              style={{ color: 'var(--cmcc-text-tertiary)' }}
+            >
               Step {currentStep + 1} of {totalSteps}
             </p>
           </div>
@@ -90,7 +108,7 @@ export default function OnboardingOverlay({ onDismiss }) {
               <span className="cmcc-onboarding-step-number">
                 {i < currentStep ? '✓' : i + 1}
               </span>
-              <div>
+              <div style={{ flex: 1 }}>
                 <strong>{s.title}</strong>
                 {i === currentStep && <p>{s.desc}</p>}
               </div>
@@ -109,13 +127,13 @@ export default function OnboardingOverlay({ onDismiss }) {
           <button
             onClick={goPrev}
             disabled={currentStep === 0}
-            className={`tw-rounded tw-px-3 tw-py-2 tw-text-sm tw-transition-colors ${
-              currentStep === 0
-                ? 'tw-text-gray-300 tw-cursor-not-allowed'
-                : 'tw-text-gray-600 hover:tw-bg-gray-100'
-            }`}
+            className="cmcc-btn cmcc-btn-secondary"
+            style={{
+              opacity: currentStep === 0 ? 0.4 : 1,
+              cursor: currentStep === 0 ? 'not-allowed' : 'pointer',
+            }}
           >
-            <ChevronLeft size={16} className="tw-inline tw-mr-1" />
+            <ChevronLeft size={16} />
             Back
           </button>
 
@@ -124,26 +142,29 @@ export default function OnboardingOverlay({ onDismiss }) {
               <button
                 key={i}
                 onClick={() => setCurrentStep(i)}
-                className={`tw-w-2 tw-h-2 tw-rounded-full tw-transition-all ${
-                  i === currentStep
-                    ? 'tw-w-6 tw-bg-primary-600'
-                    : i < currentStep
-                      ? 'tw-bg-primary-300'
-                      : 'tw-bg-gray-300'
-                }`}
+                className="tw-rounded-full tw-transition-all"
+                style={{
+                  width: i === currentStep ? 24 : 8,
+                  height: 8,
+                  background:
+                    i === currentStep
+                      ? 'var(--cmcc-gradient-primary)'
+                      : i < currentStep
+                        ? 'var(--cmcc-primary-300)'
+                        : 'var(--cmcc-bg-tertiary)',
+                  border: 'none',
+                  cursor: 'pointer',
+                }}
                 aria-label={`Go to step ${i + 1}`}
               />
             ))}
           </div>
 
-          <button
-            onClick={goNext}
-            className="tw-rounded tw-bg-primary-600 tw-text-white tw-px-4 tw-py-2 tw-text-sm hover:tw-bg-primary-700 tw-transition-colors"
-          >
+          <button onClick={goNext} className="cmcc-btn cmcc-btn-primary">
             {currentStep < totalSteps - 1 ? (
               <>
                 Next
-                <ChevronRight size={16} className="tw-inline tw-ml-1" />
+                <ChevronRight size={16} />
               </>
             ) : (
               'Get Started →'

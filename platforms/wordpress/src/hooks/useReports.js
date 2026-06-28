@@ -85,19 +85,28 @@ export function useReports({ addToast: _addToast }) {
 
       setReputationUsers(processed)
     } catch (err) {
-      // eslint-disable-next-line no-console
-      console.error('Failed to fetch user reputation:', err)
+      if (process.env.NODE_ENV !== 'production') {
+        // eslint-disable-next-line no-console
+        console.error('Failed to fetch user reputation:', err)
+      }
     } finally {
       setIsReputationLoading(false)
     }
   }, [reputationPage, reputationPerPage])
 
   // ── Fetch Activity Feed ────────────────────────────────────────────
-  const fetchActivityFeed = useCallback(async () => {
+  const fetchActivityFeed = useCallback(async (dateRange) => {
     setIsFeedLoading(true)
     setFeedError(null)
     try {
-      const data = await apiFetch('activity-feed?limit=20')
+      let url = 'activity-feed?limit=20'
+      if (dateRange?.from) {
+        url += '&start_date=' + encodeURIComponent(dateRange.from.toISOString())
+      }
+      if (dateRange?.to) {
+        url += '&end_date=' + encodeURIComponent(dateRange.to.toISOString())
+      }
+      const data = await apiFetch(url)
       setActivityFeed(data.events || [])
     } catch {
       setFeedError('Failed to load activity feed')

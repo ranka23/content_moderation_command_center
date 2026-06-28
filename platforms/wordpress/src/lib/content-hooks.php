@@ -76,7 +76,11 @@ function cmcc_hook_new_comment( int $comment_id, WP_Comment $comment ): void {
         $comment->comment_author_email ?: '',
         $comment->comment_author_IP ?: '',
         $comment->comment_content ?: '',
-        esc_html( get_the_title( $comment->comment_post_ID ) ?: 'Untitled' )
+        esc_html(
+            mb_substr( wp_strip_all_tags( $comment->comment_content ), 0, 80 )
+            ?: get_the_title( $comment->comment_post_ID )
+            ?: 'Untitled'
+        )
     );
 }
 
@@ -363,6 +367,34 @@ function cmcc_add_to_queue(
     $ai_threshold_flag    = isset( $auto_mod['spam_score_flag_threshold'] ) ? (int) $auto_mod['spam_score_flag_threshold'] : 60;
     $ai_threshold_spam    = isset( $auto_mod['spam_score_spam_threshold'] ) ? (int) $auto_mod['spam_score_spam_threshold'] : 80;
     $ai_threshold_discard = isset( $auto_mod['spam_score_discard_threshold'] ) ? (int) $auto_mod['spam_score_discard_threshold'] : 95;
+
+    // ── AI-powered evaluation (if configured) ────────────────────────────
+    $ai_mod = isset( $settings['ai_moderation'] ) ? $settings['ai_moderation'] : array();
+    $ai_engine = isset( $ai_mod['engine'] ) ? $ai_mod['engine'] : 'none';
+    $ai_auto_moderate = ! empty( $ai_mod['auto_moderate'] );
+
+    if ( 'openai' === $ai_engine && ! empty( $ai_mod['api_key'] ) && ! empty( $content ) ) {
+        $ai_model  = ! empty( $ai_mod['model'] ) ? $ai_mod['model'] : 'openai/gpt-4o-mini';
+        $ai_result = cmcc_ai_evaluate_openrouter( $content, $ai_mod['api_key'], $ai_model );
+
+        // Blend AI score with existing spam score
+        $ai_spam_score = $ai_result['spam_score'];
+        if ( $ai_spam_score >= $spam_score / 100.0 ) {
+            $spam_score = round( $ai_spam_score * 100 );
+            if ( $ai_auto_moderate && $auto_moderate ) {
+                if ( $ai_spam_score >= 0.9 ) {
+                    $status = 'spam';
+                } elseif ( $ai_spam_score >= ( isset( $ai_mod['spam_threshold'] ) ? (int) $ai_mod['spam_threshold'] : 70 ) / 100.0 ) {
+                    $status = 'flagged';
+                    if ( 'pending' === $status ) {
+                        $status = 'flagged';
+                    }
+                } elseif ( 'pending' === $status && $ai_spam_score < 0.2 ) {
+                    $status = 'approved';
+                }
+            }
+        }
+    }
 
     // Check if this is from a known bad author
     $author_reputation = cmcc_get_author_reputation( $author_name, $author_email, $author_ip );

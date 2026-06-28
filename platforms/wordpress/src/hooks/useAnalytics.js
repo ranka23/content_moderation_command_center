@@ -326,8 +326,10 @@ export function useAnalytics({ addToast }) {
           })
         }
       } catch (err) {
-        // eslint-disable-next-line no-console
-        console.error('Failed to fetch analytics:', err)
+        if (process.env.NODE_ENV !== 'production') {
+          // eslint-disable-next-line no-console
+          console.error('Failed to fetch analytics:', err)
+        }
         addToast('Failed to fetch analytics data', 'error')
       } finally {
         setIsAnalyticsLoading(false)

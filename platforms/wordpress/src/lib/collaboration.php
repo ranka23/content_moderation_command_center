@@ -231,17 +231,35 @@ if ( ! function_exists( 'cmcc_rest_get_activity_feed' ) ) :
 function cmcc_rest_get_activity_feed( WP_REST_Request $request ): WP_REST_Response {
     global $wpdb;
 
-    $limit     = min( 50, max( 1, (int) $request->get_param( 'limit' ) ) );
-    $log_table = CMCC_ACTIVITY_LOG_TABLE;
+    $limit      = min( 50, max( 1, (int) $request->get_param( 'limit' ) ) );
+    $start_date = $request->get_param( 'start_date' );
+    $end_date   = $request->get_param( 'end_date' );
+    $log_table  = CMCC_ACTIVITY_LOG_TABLE;
 
-    $rows = $wpdb->get_results( $wpdb->prepare(
-        "SELECT l.*, u.display_name as moderator_name
-        FROM {$log_table} l
-        LEFT JOIN {$wpdb->users} u ON l.moderator_id = u.ID
-        ORDER BY l.timestamp DESC
-        LIMIT %d",
-        $limit
-    ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+    $where  = '';
+    $params = array();
+
+    if ( $start_date ) {
+        $where     .= ' AND l.timestamp >= %s';
+        $params[]   = $start_date;
+    }
+    if ( $end_date ) {
+        $where     .= ' AND l.timestamp <= %s';
+        $params[]   = $end_date;
+    }
+
+    $params[] = $limit;
+
+    $sql = "SELECT l.*, u.display_name as moderator_name
+            FROM {$log_table} l
+            LEFT JOIN {$wpdb->users} u ON l.moderator_id = u.ID
+            WHERE 1=1 {$where}
+            ORDER BY l.timestamp DESC
+            LIMIT %d";
+
+    $rows = $wpdb->get_results(
+        $wpdb->prepare( $sql, $params ) // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+    );
 
     $events = array();
     foreach ( $rows as $row ) {

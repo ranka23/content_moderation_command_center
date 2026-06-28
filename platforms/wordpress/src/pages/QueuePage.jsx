@@ -95,10 +95,7 @@ export default function QueuePage({
       setAiEvalResult(null)
       try {
         const result = await apiFetch(
-          `queue/${encodeURIComponent(id)}/evaluate`,
-          {
-            method: 'POST',
-          },
+          `queue/${encodeURIComponent(id)}/ai-evaluate`,
         )
         setAiEvalResult(result)
         addToast('AI evaluation complete', 'success')
@@ -123,7 +120,7 @@ export default function QueuePage({
             <div className="tw-w-2 tw-h-2 tw-rounded-full tw-mt-1.5 tw-flex-shrink-0 tw-bg-blue-500" />
             <div className="tw-flex-1 tw-min-w-0">
               <div className="tw-flex tw-items-center tw-gap-2 tw-flex-wrap">
-                <span className="tw-text-xs tw-font-medium">{e.moderator_name || e.moderator_display_name || `User #${e.moderator_id}`}</span>
+                <span className="tw-text-xs tw-font-medium">{e.moderator_name || e.moderator || e.moderator_display_name || e.performedBy || (e.moderator_id ? `User #${e.moderator_id}` : 'Unknown user')}</span>
                 <span className={`tw-inline-flex tw-items-center tw-rounded-full tw-px-2 tw-py-0.5 tw-text-xs tw-font-medium ${hb(e.action)}`}>{e.action}</span>
               </div>
               <p className="tw-text-xs tw-text-gray-400 tw-mt-0.5">{e.timestamp ? new Date(e.timestamp).toLocaleString() : ''}</p>
@@ -155,25 +152,27 @@ export default function QueuePage({
           />
         </div>
       )}
-      <div className="tw-flex tw-items-center tw-justify-between tw-mb-4">
-        <div className="tw-flex tw-items-center tw-gap-2">
+      <div className="cmcc-page-header">
+        <div className="cmcc-btn-group">
           <Button
             variant="outline"
             size="sm"
             onClick={() => h.fetchQueue(h.queuePage)}
           >
             <>
-              <RefreshCw size={14} className="tw-inline tw-mr-1" /> Refresh
+              <RefreshCw size={14} /> Refresh
             </>
           </Button>
-          <span className="tw-text-xs tw-text-gray-400 tw-hidden sm:tw-inline">
+          <span className="cmcc-queue-count">
             {h.isQueueLoading ? 'Loading...' : `${h.queueTotal} items`}
           </span>
         </div>
-        <div className="tw-flex tw-items-center tw-gap-2">
+        <div className="cmcc-btn-group">
           {h.savedFilters.length > 0 && (
             <select
-              className="tw-text-xs tw-border tw-border-gray-300 tw-rounded tw-px-2 tw-py-1"
+              id="cmcc-saved-filters"
+              name="cmcc-saved-filters"
+              className="cmcc-filter-select"
               onChange={(e) => {
                 if (e.target.value) {
                   const f = h.savedFilters.find(
@@ -193,7 +192,7 @@ export default function QueuePage({
             </select>
           )}
           <button
-            className="tw-text-xs tw-text-gray-400 hover:tw-text-gray-600 tw-px-2"
+            className="cmcc-icon-btn"
             onClick={() => scba({ action: '__shortcuts' })}
             title="Keyboard shortcuts"
           >
@@ -201,11 +200,13 @@ export default function QueuePage({
           </button>
         </div>
       </div>
-      <div className="tw-flex tw-items-center tw-gap-2 tw-mb-2">
+      <div className="cmcc-save-filter-row">
         <input
           type="text"
           id="cmcc-save-filter-input"
-          className="tw-text-xs tw-border tw-border-gray-300 tw-rounded tw-px-2 tw-py-1 tw-w-40"
+          name="cmcc-save-filter-input"
+          className="cmcc-search-input"
+          style={{ width: '200px' }}
           placeholder="Name this filter..."
           onKeyDown={(e) => {
             if (e.key === 'Enter' && e.target.value.trim()) {
@@ -215,8 +216,9 @@ export default function QueuePage({
             }
           }}
         />
-        <button
-          className="tw-text-xs tw-text-primary-600 hover:tw-text-primary-800 tw-font-medium"
+        <Button
+          variant="primary"
+          size="sm"
           onClick={() => {
             const inp = document.getElementById('cmcc-save-filter-input')
             if (inp && inp.value.trim()) {
@@ -227,7 +229,7 @@ export default function QueuePage({
           }}
         >
           + Save Filter
-        </button>
+        </Button>
       </div>
       {h.isQueueLoading && h.queueItems.length === 0 ? (
         <SkeletonTable rows={5} columns={6} />
@@ -310,41 +312,47 @@ export default function QueuePage({
                 </p>
               </div>
             )}
-            <div className="tw-flex tw-gap-2 tw-pt-2 tw-border-t tw-border-gray-100">
+            <div className="cmcc-slide-panel-actions">
               {d.status !== 'approved' && (
                 <button
                   onClick={() => requestConfirmAction('approve', d)}
-                  className="tw-flex-1 tw-rounded tw-bg-green-600 tw-text-white tw-px-3 tw-py-1.5 tw-text-sm hover:tw-bg-green-700 tw-transition-colors tw-cursor-pointer"
+                  className="cmcc-sp-btn cmcc-sp-btn-approve"
+                  title="Approve this item"
                 >
-                  <CheckCircle size={16} className="tw-inline tw-mr-1" />
-                  Approve
+                  <CheckCircle size={16} />
+                  <span>Approve</span>
                 </button>
               )}
               {d.status !== 'rejected' && (
                 <button
                   onClick={() => requestConfirmAction('reject', d)}
-                  className="tw-flex-1 tw-rounded tw-bg-red-600 tw-text-white tw-px-3 tw-py-1.5 tw-text-sm hover:tw-bg-red-700 tw-transition-colors tw-cursor-pointer"
+                  className="cmcc-sp-btn cmcc-sp-btn-reject"
+                  title="Reject this item"
                 >
-                  <XCircle size={16} className="tw-inline tw-mr-1" /> Reject
+                  <XCircle size={16} />
+                  <span>Reject</span>
                 </button>
               )}
               <button
                 onClick={() => requestConfirmAction('spam', d)}
-                className="tw-flex-1 tw-rounded tw-bg-amber-600 tw-text-white tw-px-3 tw-py-1.5 tw-text-sm hover:tw-bg-amber-700 tw-transition-colors tw-cursor-pointer"
+                className="cmcc-sp-btn cmcc-sp-btn-spam"
+                title="Mark as spam"
               >
-                <Flag size={16} className="tw-inline tw-mr-1" /> Spam
+                <Flag size={16} />
+                <span>Spam</span>
               </button>
               <button
                 onClick={() => handleAiEvaluate(d)}
-                className="tw-flex-1 tw-rounded tw-bg-purple-600 tw-text-white tw-px-3 tw-py-1.5 tw-text-sm hover:tw-bg-purple-700"
+                className="cmcc-sp-btn cmcc-sp-btn-ai"
                 disabled={aiEvalLoading}
+                title={aiEvalLoading ? 'Evaluating...' : 'Run AI evaluation'}
               >
-                <>
-                  <Cpu size={16} className="tw-inline tw-mr-1" />{' '}
-                  {aiEvalLoading ? 'Evaluating...' : 'AI Evaluate'}
-                </>
+                <Cpu size={16} />
+                {aiEvalLoading ? 'Evaluating...' : 'AI Evaluate'}
               </button>
             </div>
+            {/* Button spacing spacer */}
+            <div className="tw-h-2" />
             {(aiEvalResult || aiEvalLoading || aiEvalError) && (
               <div className="tw-pt-4 tw-border-t tw-border-gray-100">
                 <AiEvaluationResult
@@ -362,31 +370,40 @@ export default function QueuePage({
                   Assignment
                 </>
               </h4>
-              <div className="tw-flex tw-flex-col tw-gap-2">
-                <input
-                  type="text"
-                  placeholder="Assign to (moderator name)"
-                  id="cmcc-assign-input"
-                  className="tw-text-xs tw-border tw-border-gray-300 tw-rounded tw-px-2 tw-py-1.5"
-                />
-                <div className="tw-flex tw-gap-2">
+              <div className="tw-flex tw-flex-col tw-gap-3">
+                <div className="cmcc-form-group">
+                  <label htmlFor="cmcc-assign-input">Assign To</label>
                   <input
-                    type="date"
-                    id="cmcc-assign-due"
-                    className="tw-text-xs tw-border tw-border-gray-300 tw-rounded tw-px-2 tw-py-1.5 tw-flex-1"
+                    type="text"
+                    placeholder="Moderator name"
+                    id="cmcc-assign-input"
+                    name="cmcc-assign-input"
                   />
-                  <select
-                    id="cmcc-assign-priority"
-                    className="tw-text-xs tw-border tw-border-gray-300 tw-rounded tw-px-2 tw-py-1.5"
-                  >
-                    <option value="low">Low</option>
-                    <option value="normal">Normal</option>
-                    <option value="high">High</option>
-                    <option value="critical">Critical</option>
-                  </select>
+                </div>
+                <div className="cmcc-form-row">
+                  <div className="cmcc-form-group">
+                    <label htmlFor="cmcc-assign-due">Due Date</label>
+                    <input
+                      type="date"
+                      id="cmcc-assign-due"
+                      name="cmcc-assign-due"
+                    />
+                  </div>
+                  <div className="cmcc-form-group">
+                    <label htmlFor="cmcc-assign-priority">Priority</label>
+                    <select
+                      id="cmcc-assign-priority"
+                      name="cmcc-assign-priority"
+                    >
+                      <option value="low">Low</option>
+                      <option value="normal">Normal</option>
+                      <option value="high">High</option>
+                      <option value="critical">Critical</option>
+                    </select>
+                  </div>
                 </div>
                 <button
-                  className="tw-rounded tw-bg-primary-600 tw-text-white tw-px-3 tw-py-1.5 tw-text-xs hover:tw-bg-primary-700"
+                  className="cmcc-sp-btn cmcc-sp-btn-save"
                   onClick={() => {
                     const a =
                       document.getElementById('cmcc-assign-input')?.value

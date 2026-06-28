@@ -1,5 +1,5 @@
 /* ===========================================================
-   SECTION: Header & Navigation
+   SECTION: Header & Navigation — 2026 Edition
    =========================================================== */
 
 /* ─── Top Bar ─────────────────────────────────────────── */
@@ -8,111 +8,191 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 0;
-  margin-bottom: 4px;
+  padding: 20px 0 16px;
+  margin-bottom: 0;
 }
 
 #cmcc-app .cmcc-top-bar-left {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
 }
 
 #cmcc-app .cmcc-title {
-  font-size: 23px;
-  font-weight: 400;
+  font-size: var(--cmcc-h1);
+  font-weight: 700;
   margin: 0;
   padding: 0;
-  color: #1d2327;
-  line-height: 1.3;
+  color: var(--cmcc-text-heading);
+  line-height: 1.2;
+  letter-spacing: -0.02em;
 }
 
 #cmcc-app .cmcc-title-icon {
-  margin-right: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: var(--cmcc-gradient-primary);
+  border-radius: var(--cmcc-radius-lg);
+  color: #fff;
+  margin-right: 10px;
+  box-shadow: var(--cmcc-shadow-glow-sm);
 }
 
 #cmcc-app .cmcc-title-light {
-  font-weight: 300;
-  color: #787c82;
+  font-weight: 400;
+  color: var(--cmcc-text-tertiary);
+  font-size: 0.85em;
 }
+
+/* ─── Breadcrumb / Page Indicator ──────────────────────── */
+
+#cmcc-app .cmcc-page-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px;
+  background: var(--cmcc-bg-tertiary);
+  border-radius: var(--cmcc-radius-full);
+  font-size: var(--cmcc-small);
+  color: var(--cmcc-text-secondary);
+}
+
+#cmcc-app .cmcc-page-indicator-sep {
+  color: var(--cmcc-text-muted);
+}
+
+#cmcc-app .cmcc-page-indicator-label {
+  font-weight: 600;
+  color: var(--cmcc-text-primary);
+}
+
+/* ─── Top Bar Right ─────────────────────────────────────── */
 
 #cmcc-app .cmcc-top-bar-right {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 #cmcc-app .cmcc-theme-toggle {
-  background: #f0f0f1;
-  border: 1px solid #c3c4c7;
-  border-radius: 4px;
-  padding: 6px 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: var(--cmcc-bg-tertiary);
+  border: 1px solid var(--cmcc-border-primary);
+  border-radius: var(--cmcc-radius-lg);
   font-size: 16px;
   cursor: pointer;
   line-height: 1;
-  transition: background 0.1s ease;
+  color: var(--cmcc-text-secondary);
+  transition: all var(--cmcc-transition-fast);
 }
 
 #cmcc-app .cmcc-theme-toggle:hover {
-  background: #dcdcde;
+  background: var(--cmcc-bg-badge);
+  color: var(--cmcc-primary);
+  border-color: var(--cmcc-primary);
+  box-shadow: var(--cmcc-shadow-glow-sm);
 }
 
 #cmcc-app .cmcc-donate-link {
-  color: var(--cmcc-primary, #007cba);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--cmcc-text-secondary);
   text-decoration: none;
-  font-size: 13px;
+  font-size: var(--cmcc-body);
   font-weight: 500;
-  padding: 4px 10px;
-  border-radius: 4px;
-  transition: background 0.1s ease;
+  padding: 6px 14px;
+  border-radius: var(--cmcc-radius-lg);
+  border: 1px solid var(--cmcc-border-primary);
+  background: var(--cmcc-bg-primary);
+  transition: all var(--cmcc-transition-fast);
   white-space: nowrap;
 }
 
 #cmcc-app .cmcc-donate-link:hover {
-  background: #e5f5ff;
-  text-decoration: underline;
+  background: var(--cmcc-primary-light);
+  border-color: var(--cmcc-primary);
+  color: var(--cmcc-primary);
+  box-shadow: var(--cmcc-shadow-glow-sm);
 }
 
-.dark #cmcc-app .cmcc-donate-link:hover {
-  background: #1e293b;
-}
-
-/* ─── Tab Navigation ──────────────────────────────────────────────────── */
+/* ─── Tab Navigation ──────────────────────────────────── */
 
 #cmcc-app .cmcc-tab-nav {
   display: flex;
-  gap: 0;
-  border-bottom: 1px solid #c3c4c7;
+  gap: 2px;
+  border-bottom: 1px solid var(--cmcc-border-primary);
   margin-bottom: 20px;
-  background: #fff;
+  background: var(--cmcc-bg-primary);
+  border-radius: var(--cmcc-radius-lg) var(--cmcc-radius-lg) 0 0;
+  padding: 0 4px;
+  position: relative;
+}
+
+/* Subtle gradient accent line at the bottom */
+#cmcc-app .cmcc-tab-nav::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--cmcc-border-primary) 20%,
+    var(--cmcc-border-primary) 80%,
+    transparent 100%
+  );
 }
 
 #cmcc-app .cmcc-tab {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 10px 16px;
+  gap: 8px;
+  padding: 10px 18px;
   border: none;
   border-bottom: 2px solid transparent;
   background: transparent;
-  color: #50575e;
-  font-size: 14px;
+  color: var(--cmcc-text-secondary);
+  font-size: var(--cmcc-font-size-md);
   font-weight: 500;
   cursor: pointer;
-  transition:
-    color 0.15s ease,
-    border-color 0.15s ease;
+  transition: all var(--cmcc-transition-normal);
   margin-bottom: -1px;
+  position: relative;
+  border-radius: var(--cmcc-radius-md) var(--cmcc-radius-md) 0 0;
+  white-space: nowrap;
 }
 
 #cmcc-app .cmcc-tab:hover {
   color: var(--cmcc-primary);
+  background: var(--cmcc-primary-light);
+}
+
+#cmcc-app .cmcc-tab:active {
+  transform: scale(0.97);
 }
 
 #cmcc-app .cmcc-tab-active,
-#cmcc-app .cmcc-tab:focus {
+#cmcc-app .cmcc-tab:focus-visible {
   color: var(--cmcc-primary);
   border-bottom-color: var(--cmcc-primary);
+  background: var(--cmcc-primary-light);
+  font-weight: 600;
+}
+
+/* Focus-visible ring for tabs */
+#cmcc-app .cmcc-tab:focus-visible {
+  outline: 2px solid var(--cmcc-primary);
+  outline-offset: -2px;
 }
 
 /* ===========================================================
@@ -122,32 +202,40 @@
 /* ─── Tab Content ─────────────────────────────────────── */
 
 #cmcc-app .cmcc-tab-content {
-  background: #fff;
-  border: 1px solid #c3c4c7;
+  background: var(--cmcc-bg-card);
+  border: 1px solid var(--cmcc-border-card);
   border-top: none;
-  padding: 20px;
+  border-radius: 0 0 var(--cmcc-radius-xl) var(--cmcc-radius-xl);
+  padding: 24px;
   min-height: 400px;
+  box-shadow: var(--cmcc-shadow-sm);
 }
 
 #cmcc-app .cmcc-tab-panel {
-  animation: cmcc-fade-in 0.2s ease;
+  animation: cmcc-fade-in 0.25s ease;
 }
 
 @keyframes cmcc-fade-in {
   from {
     opacity: 0;
+    transform: translateY(4px);
   }
   to {
     opacity: 1;
+    transform: translateY(0);
   }
 }
 
-/* ─── Loading / Empty States ──────────────────────────────────────────── */
+/* ─── Loading / Empty States ──────────────────────────── */
 
 #cmcc-app .cmcc-loading,
 #cmcc-app .cmcc-empty {
   text-align: center;
-  padding: 40px 20px;
-  color: #757575;
-  font-size: 14px;
+  padding: 60px 20px;
+  color: var(--cmcc-text-tertiary);
+  font-size: var(--cmcc-body);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
 }

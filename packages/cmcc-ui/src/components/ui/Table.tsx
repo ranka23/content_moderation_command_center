@@ -91,42 +91,6 @@ export function useColumnResize(initialWidths: Record<string, string>): [
   return [columnWidths, getResizeHandlers]
 }
 
-// ─── Sort Icon ─────────────────────────────────────────────────────────────
-
-function SortIcon({
-  direction,
-}: {
-  direction?: 'asc' | 'desc' | undefined
-}): React.ReactElement {
-  return (
-    <span className="tw-inline-flex tw-flex-col tw-leading-none tw-ml-1 tw-opacity-40">
-      <svg
-        width="8"
-        height="4"
-        viewBox="0 0 8 4"
-        fill="currentColor"
-        className={cn(
-          direction === 'asc' ? 'tw-text-blue-600 tw-opacity-100' : '',
-        )}
-      >
-        <path d="M4 0L8 4H0z" />
-      </svg>
-      <svg
-        width="8"
-        height="4"
-        viewBox="0 0 8 4"
-        fill="currentColor"
-        className={cn(
-          'tw-mt-px',
-          direction === 'desc' ? 'tw-text-blue-600 tw-opacity-100' : '',
-        )}
-      >
-        <path d="M4 4L0 0h8z" />
-      </svg>
-    </span>
-  )
-}
-
 // ─── Table Component ───────────────────────────────────────────────────────
 
 function TableInner<T extends Record<string, unknown>>({
@@ -147,44 +111,64 @@ function TableInner<T extends Record<string, unknown>>({
   }
 }): React.ReactElement {
   return (
-    <div className="tw-w-full tw-overflow-x-auto tw-border tw-border-gray-200 tw-rounded-lg">
+    <div className="cmcc-queue-table-wrapper">
       <table
-        className={cn('tw-w-full tw-border-collapse tw-text-sm', className)}
-        style={{ tableLayout: 'fixed' }}
+        className={cn('cmcc-queue-table-inner', className)}
+        style={{ tableLayout: 'auto', width: '100%' }}
       >
         <thead>
-          <tr className="tw-border-b tw-border-gray-200 tw-bg-gray-50">
+          <tr>
             {columns.map((col) => {
               const handlers = getResizeHandlers(col.key)
               const width = columnWidths[col.key] ?? col.width
               const isSorted = sortConfig?.field === col.key
               const sortDir = isSorted ? sortConfig?.direction : undefined
 
+              const colStyle: React.CSSProperties = {}
+              if (width) colStyle.width = width
+              if (col.minWidth) colStyle.minWidth = col.minWidth
+
               return (
                 <th
                   key={col.key}
-                  className={cn(
-                    'tw-relative tw-h-11 tw-px-4 tw-text-xs tw-font-semibold tw-text-gray-600 tw-uppercase tw-tracking-wider',
-                    col.align === 'left' && 'tw-text-left',
-                    col.align === 'right' && 'tw-text-right',
-                    !col.align && 'tw-text-center',
-                    col.sortable &&
-                      'tw-cursor-pointer tw-select-none hover:tw-bg-gray-100',
-                  )}
-                  style={{ width: width ?? undefined, minWidth: col.minWidth }}
+                  className={`cmcc-th-${col.key} ${col.sortable ? 'cmcc-th-sortable' : ''}`}
+                  style={
+                    Object.keys(colStyle).length > 0 ? colStyle : undefined
+                  }
                   onClick={() => {
                     if (col.sortable && onSort) {
                       onSort(col.key)
                     }
                   }}
                 >
-                  <div className="tw-inline-flex tw-items-center tw-gap-1">
+                  <div className="cmcc-th-content">
                     <span>{col.label}</span>
-                    {col.sortable && <SortIcon direction={sortDir} />}
+                    {col.sortable && (
+                      <span className="cmcc-sort-icons">
+                        <span
+                          className={
+                            isSorted && sortDir === 'asc'
+                              ? 'cmcc-sort-active'
+                              : ''
+                          }
+                        >
+                          ▲
+                        </span>
+                        <span
+                          className={
+                            isSorted && sortDir === 'desc'
+                              ? 'cmcc-sort-active'
+                              : ''
+                          }
+                        >
+                          ▼
+                        </span>
+                      </span>
+                    )}
                   </div>
                   {/* Resize handle */}
                   <div
-                    className="tw-absolute tw-top-0 tw-right-0 tw-bottom-0 tw-w-1 tw-cursor-col-resize hover:tw-bg-blue-400 tw-opacity-0 hover:tw-opacity-100 tw-transition-opacity"
+                    className="cmcc-col-resize-handle"
                     onMouseDown={handlers.onMouseDown}
                   />
                 </th>
@@ -195,52 +179,47 @@ function TableInner<T extends Record<string, unknown>>({
         <tbody>
           {isLoading && data.length === 0 ? (
             <tr>
-              <td
-                colSpan={columns.length}
-                className="tw-h-32 tw-text-center tw-text-gray-400"
-              >
-                <div className="tw-flex tw-items-center tw-justify-center tw-gap-2">
-                  <svg
-                    className="tw-h-5 tw-w-5 tw-animate-spin"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="tw-opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    />
-                    <path
-                      className="tw-opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-                    />
-                  </svg>
+              <td colSpan={columns.length} className="cmcc-empty-row">
+                <div className="cmcc-empty-state">
+                  <span className="cmcc-empty-icon">
+                    <svg
+                      className="tw-h-5 tw-w-5 tw-animate-spin"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="tw-opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      />
+                      <path
+                        className="tw-opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                      />
+                    </svg>
+                  </span>
                   <span>Loading...</span>
                 </div>
               </td>
             </tr>
           ) : data.length === 0 ? (
             <tr>
-              <td
-                colSpan={columns.length}
-                className="tw-h-32 tw-text-center tw-text-gray-400"
-              >
-                {emptyMessage}
+              <td colSpan={columns.length} className="cmcc-empty-row">
+                <div className="cmcc-empty-state">
+                  <span>{emptyMessage}</span>
+                </div>
               </td>
             </tr>
           ) : (
             data.map((row, idx) => {
               const key = rowKey ? rowKey(row, idx) : idx
               return (
-                <tr
-                  key={key}
-                  className="tw-border-b tw-border-gray-100 hover:tw-bg-gray-50 tw-transition-colors last:tw-border-0"
-                >
+                <tr key={key} className="cmcc-table-row">
                   {columns.map((col) => {
                     const value = (row as Record<string, unknown>)[col.key]
                     const cellContent = col.cell
@@ -249,12 +228,14 @@ function TableInner<T extends Record<string, unknown>>({
                     return (
                       <td
                         key={col.key}
-                        className={cn(
-                          'tw-px-4 tw-py-3 tw-text-sm tw-text-gray-700',
-                          col.align === 'left' && 'tw-text-left',
-                          col.align === 'right' && 'tw-text-right',
-                          !col.align && 'tw-text-center',
-                        )}
+                        style={{
+                          textAlign:
+                            col.align === 'right'
+                              ? 'right'
+                              : col.align === 'center'
+                                ? 'center'
+                                : 'left',
+                        }}
                       >
                         {cellContent}
                       </td>

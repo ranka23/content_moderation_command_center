@@ -59,7 +59,7 @@ export default function App() {
         case 'reports':
           analytics.fetchAnalytics(analytics.analyticsDateRange)
           reports.fetchUserReputation()
-          reports.fetchActivityFeed()
+          reports.fetchActivityFeed(analytics.analyticsDateRange)
           break
         case 'settings':
           settings.fetchSettings()

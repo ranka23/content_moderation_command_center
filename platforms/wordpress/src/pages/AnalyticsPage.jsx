@@ -1,4 +1,4 @@
-import React, { useEffect, startTransition, useState } from 'react'
+import React, { useEffect, startTransition, useState, useMemo } from 'react'
 import {
   HeatmapChart,
   StatusPieChart,
@@ -33,6 +33,18 @@ export default function AnalyticsPage({ analytics }) {
   const [ctPage, setCtPage] = useState(1)
   const [ctPerPage, setCtPerPage] = useState(10)
 
+  // ── Sort state for content breakdown table ─────────────────────────
+  const [ctSortField, setCtSortField] = useState(null)
+  const [ctSortDir, setCtSortDir] = useState('asc')
+  const handleCtSort = (field) => {
+    if (ctSortField === field) {
+      setCtSortDir((prev) => (prev === 'asc' ? 'desc' : 'asc'))
+    } else {
+      setCtSortField(field)
+      setCtSortDir('asc')
+    }
+  }
+
   // Refetch when date range changes
   useEffect(() => {
     startTransition(() => {
@@ -46,7 +58,26 @@ export default function AnalyticsPage({ analytics }) {
   const ctbTotalPages = Math.max(1, Math.ceil(ctbTotal / ctPerPage))
   const ctbStart = (ctPage - 1) * ctPerPage
   const ctbEnd = Math.min(ctPage * ctPerPage, ctbTotal)
-  const ctbPaginated = ctbList.slice(ctbStart, ctbEnd)
+
+  // ── Sort content breakdown data ────────────────────────────────────────
+  const sortedCtbList = useMemo(() => {
+    if (!ctSortField) return ctbList
+    return [...ctbList].sort((a, b) => {
+      const aVal = a[ctSortField]
+      const bVal = b[ctSortField]
+      let cmp = 0
+      if (typeof aVal === 'number' && typeof bVal === 'number') {
+        cmp = aVal - bVal
+      } else {
+        cmp = String(aVal ?? '').localeCompare(String(bVal ?? ''), undefined, {
+          numeric: true,
+        })
+      }
+      return ctSortDir === 'asc' ? cmp : -cmp
+    })
+  }, [ctbList, ctSortField, ctSortDir])
+
+  const ctbPaginated = sortedCtbList.slice(ctbStart, ctbEnd)
 
   // ── Loading state ───────────────────────────────────────────────────
   if (isAnalyticsLoading && !analyticsData?.heatmap?.data) {
@@ -64,9 +95,9 @@ export default function AnalyticsPage({ analytics }) {
 
   return (
     <div className="cmcc-tab-panel" role="tabpanel">
-      {/* Date Range Picker */}
-      <div className="tw-flex tw-items-center tw-justify-between tw-mb-4">
-        <h2 className="tw-text-lg tw-font-semibold tw-m-0">Analytics</h2>
+      {/* Page Header */}
+      <div className="cmcc-page-header">
+        <h2>Analytics</h2>
         <DateRangePicker
           value={analyticsDateRange}
           onChange={(range) => {
@@ -77,7 +108,7 @@ export default function AnalyticsPage({ analytics }) {
       </div>
 
       {/* Stat Cards */}
-      <div className="tw-grid tw-grid-cols-2 md:tw-grid-cols-4 tw-gap-4 tw-mb-6">
+      <div className="cmcc-stats-grid cmcc-stats-grid-4">
         <div className="cmcc-stat-card">
           <span className="cmcc-stat-label">Pending</span>
           <span className="cmcc-stat-value cmcc-stat-pending">
@@ -180,12 +211,15 @@ export default function AnalyticsPage({ analytics }) {
       {/* Content Type Breakdown Table */}
       {ctbList.length > 0 && (
         <div className="cmcc-analytics-section">
-          <h3 className="tw-text-base tw-font-semibold tw-mb-3 tw-pb-2 tw-border-b tw-border-gray-200">
-            Content Breakdown
-          </h3>
+          <h3 className="cmcc-section-heading">Content Breakdown</h3>
           <Table
             columns={[
-              { key: 'content_type', label: 'Content Type', sortable: true, align: 'left' },
+              {
+                key: 'content_type',
+                label: 'Content Type',
+                sortable: true,
+                align: 'left',
+              },
               {
                 key: 'count',
                 label: 'Total (%)',
@@ -286,26 +320,34 @@ export default function AnalyticsPage({ analytics }) {
               },
             ]}
             data={ctbPaginated}
+            sortConfig={
+              ctSortField
+                ? { field: ctSortField, direction: ctSortDir }
+                : undefined
+            }
+            onSort={handleCtSort}
             rowKey={(row) => row.content_type}
           />
-          {/* Pagination */}
-          <div className="tw-flex tw-items-center tw-justify-between tw-py-4 tw-px-2">
-            <div className="tw-flex tw-items-center tw-gap-2">
-              <span className="tw-text-sm tw-text-gray-500">
+          {/* MUI Table Pagination */}
+          <div className="cmcc-table-pagination">
+            <div className="cmcc-table-pagination-left">
+              <span className="cmcc-pagination-info">
                 {ctbTotal > 0
-                  ? `${ctbStart + 1}\u2013${ctbEnd} of ${ctbTotal} types`
+                  ? `${ctbStart + 1}–${ctbEnd} of ${ctbTotal} types`
                   : 'No types'}
               </span>
-              <span className="tw-text-gray-300">|</span>
-              <label className="tw-flex tw-items-center tw-gap-1 tw-text-sm tw-text-gray-500">
+              <span className="cmcc-pagination-separator">|</span>
+              <label className="cmcc-pagination-rows-label">
                 Show
                 <select
+                  id="cmcc-ct-per-page"
+                  name="cmcc-ct-per-page"
+                  className="cmcc-pagination-rows-select"
                   value={String(ctPerPage)}
                   onChange={(e) => {
                     setCtPerPage(Number(e.target.value))
                     setCtPage(1)
                   }}
-                  className="tw-w-16 tw-h-8 tw-text-xs tw-border tw-border-gray-300 tw-rounded tw-px-1"
                 >
                   {CT_PER_PAGE_OPTIONS.map((n) => (
                     <option key={n} value={n}>
@@ -319,7 +361,7 @@ export default function AnalyticsPage({ analytics }) {
             {ctbTotal > ctPerPage && (
               <Pagination
                 currentPage={ctPage}
-                totalPages={ctbTotalPages}
+                totalPages={Math.ceil(ctbTotal / ctPerPage)}
                 onPageChange={(p) => setCtPage(p)}
               />
             )}

@@ -137,7 +137,16 @@ function cmcc_count_links( string $content ): int {
 /**
  * Check content for blacklisted keywords (one per line in settings).
  *
- * Supports wildcard patterns: *keyword*, keyword*, *keyword
+ * Supports:
+ * - Wildcard patterns: *keyword*, keyword*, *keyword
+ * - Regex patterns: /pattern/i (forward-slash delimited, uses preg_match)
+ * - Plain text: simple str_contains match (backward compatible)
+ *
+ * Words like "spam" or "buy" used in legitimate context (e.g. "spam detection",
+ * "buy now" button) can cause false positives with plain-text matching.
+ * Use regex patterns with word boundaries to avoid this, e.g.:
+ *   /\bspam\b/i   — matches "spam" as a whole word only
+ *   /\bbuy\s+now\b/i — matches "buy now" as a phrase
  *
  * @param string $content         The content to check.
  * @param string $keywords_text   Newline-separated list of keywords.
@@ -156,6 +165,21 @@ function cmcc_check_blacklisted_keywords( string $content, string $keywords_text
         if ( '' === $keyword ) {
             continue;
         }
+
+        // ── Regex pattern (e.g., /pattern/i) ───────────────────────────────
+        if ( preg_match( '/^\/(.+)\/[a-z]*$/i', $keyword, $regex_matches ) ) {
+            $pattern = '/' . $regex_matches[1] . '/';
+            // Ensure the pattern has delimiters; if not, wrap it
+            if ( @preg_match( $pattern, '' ) === false ) {
+                // Invalid regex — skip this keyword silently
+                continue;
+            }
+            if ( @preg_match( $pattern, $content ) ) {
+                return array( 'triggered' => true, 'matched_keyword' => $keyword );
+            }
+            continue;
+        }
+
         $lower_keyword = mb_strtolower( $keyword );
 
         // Wildcard matching
@@ -178,7 +202,7 @@ function cmcc_check_blacklisted_keywords( string $content, string $keywords_text
                 return array( 'triggered' => true, 'matched_keyword' => $keyword );
             }
         } else {
-            // Exact match or contains
+            // Plain text — contains match (backward compatible)
             if ( str_contains( $lower_content, $lower_keyword ) ) {
                 return array( 'triggered' => true, 'matched_keyword' => $keyword );
             }

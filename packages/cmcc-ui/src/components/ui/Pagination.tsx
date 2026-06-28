@@ -1,3 +1,4 @@
+import React from 'react'
 import { cn } from '../../lib/cn'
 
 export interface PaginationProps {
@@ -7,6 +8,11 @@ export interface PaginationProps {
   className?: string
 }
 
+/**
+ * MUI-inspired table pagination component.
+ * Compact layout with prev/next chevrons and page numbers.
+ * For use at the bottom of data tables.
+ */
 export function Pagination({
   currentPage,
   totalPages,
@@ -35,51 +41,73 @@ export function Pagination({
     return pages
   }
 
-  const btnBase =
-    'tw-inline-flex tw-items-center tw-justify-center tw-h-8 tw-w-8 tw-rounded-md tw-text-sm tw-transition-colors'
-  const btnActive = 'tw-bg-primary-600 tw-text-white'
-  const btnInactive =
-    'tw-text-gray-600 hover:tw-bg-gray-100 tw-border tw-border-gray-200'
-
   return (
-    <div
-      className={cn(
-        'tw-flex tw-items-center tw-justify-center tw-gap-1 tw-py-4 tw-flex-wrap',
-        className,
-      )}
-    >
+    <div className={cn('cmcc-pagination-mui', className)}>
+      {/* Previous button */}
       <button
-        className={`${btnBase} ${btnInactive}`}
+        type="button"
+        className="cmcc-pagination-mui-btn"
         disabled={currentPage <= 1}
         onClick={() => onPageChange(currentPage - 1)}
-        title="Previous page"
+        aria-label="Previous page"
       >
-        ‹
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <polyline points="15 18 9 12 15 6" />
+        </svg>
       </button>
 
+      {/* Page numbers */}
       {getPageNumbers().map((page, idx) =>
         page === '...' ? (
-          <span key={`ellipsis-${idx}`} className="tw-px-1 tw-text-gray-400">
+          <span
+            key={`ellipsis-${idx}`}
+            className="cmcc-pagination-mui-ellipsis"
+          >
             …
           </span>
         ) : (
           <button
             key={page}
-            className={`${btnBase} ${currentPage === page ? btnActive : btnInactive}`}
+            type="button"
+            className={`cmcc-pagination-mui-page ${currentPage === page ? 'cmcc-pagination-mui-active' : ''}`}
             onClick={() => onPageChange(page)}
+            aria-label={`Page ${page}`}
+            aria-current={currentPage === page ? 'page' : undefined}
           >
             {page}
           </button>
         ),
       )}
 
+      {/* Next button */}
       <button
-        className={`${btnBase} ${btnInactive}`}
+        type="button"
+        className="cmcc-pagination-mui-btn"
         disabled={currentPage >= totalPages}
         onClick={() => onPageChange(currentPage + 1)}
-        title="Next page"
+        aria-label="Next page"
       >
-        ›
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <polyline points="9 18 15 12 9 6" />
+        </svg>
       </button>
     </div>
   )

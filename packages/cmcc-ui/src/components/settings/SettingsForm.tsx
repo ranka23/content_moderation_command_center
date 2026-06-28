@@ -173,12 +173,11 @@ function renderFieldInput(
     case 'toggle': {
       const boolValue = Boolean(value)
       return (
-        <label
+        <div
           style={{
             display: 'inline-flex',
             alignItems: 'center',
             gap: '8px',
-            cursor: 'pointer',
           }}
         >
           <input
@@ -194,8 +193,10 @@ function renderFieldInput(
             }}
             aria-invalid={error !== null}
           />
-          <span>{field.label}</span>
-        </label>
+          <label htmlFor={fieldId} style={{ cursor: 'pointer' }}>
+            {field.label}
+          </label>
+        </div>
       )
     }
   }
@@ -222,6 +223,8 @@ export function SettingsForm({
   // After that, ignore re-fetches so the user's in-progress edits
   // are not discarded. The savedValuesRef tracks the canonical values
   // and is updated only on explicit save.
+  // When an external change (e.g., import) produces different data,
+  // the form re-initializes automatically.
   const savedValuesRef = useRef(initialValues)
   const initializedRef = useRef(false)
   useEffect(() => {
@@ -229,6 +232,19 @@ export function SettingsForm({
       initializedRef.current = true
       setValues(initialValues)
       savedValuesRef.current = initialValues
+    } else {
+      // Detect external changes (e.g., import) by comparing with
+      // last saved values. Background re-fetches with identical data
+      // won't overwrite user edits.
+      const savedStr = JSON.stringify(savedValuesRef.current)
+      const newStr = JSON.stringify(initialValues)
+      if (savedStr !== newStr) {
+        setValues(initialValues)
+        savedValuesRef.current = initialValues
+        setDirtyFields(new Set())
+        setErrors({})
+        setSubmitted(false)
+      }
     }
   }, [initialValues])
 
@@ -269,7 +285,7 @@ export function SettingsForm({
     )
   }
 
-  const handleSubmit = (e: React.FormEvent): void => {
+  const handleSubmit = (e: React.FormEvent | React.MouseEvent): void => {
     e.preventDefault()
     setSubmitted(true)
 
@@ -296,6 +312,17 @@ export function SettingsForm({
       savedValuesRef.current = { ...values }
       setDirtyFields(new Set())
     }
+  }
+
+  const handleButtonClick = (e: React.MouseEvent): void => {
+    // Only handle if the form's onSubmit didn't already fire.
+    // This guards against React synthetic event delegation gaps
+    // in browser automation contexts where the native submit event
+    // does not propagate to React's onSubmit handler.
+    e.preventDefault()
+    if (isSubmitting) return
+    const fakeEvent = { preventDefault: (): void => {} } as React.FormEvent
+    handleSubmit(fakeEvent)
   }
 
   const handleReset = (): void => {
@@ -525,7 +552,9 @@ export function SettingsForm({
           </button>
           <button
             type="submit"
+            data-testid="save-settings-button"
             disabled={isSubmitting}
+            onClick={handleButtonClick}
             style={{
               padding: '8px 20px',
               borderRadius: '6px',

@@ -1,12 +1,17 @@
 /* ===========================================================
-   SECTION: Analytics Dashboard
+   SECTION: Analytics Dashboard — 2027 Edition
+   Premium data visualization styling
    =========================================================== */
 
-/* ─── Analytics ────────────────────────────────────────── */
+/* ─── Stats Grid ────────────────────────────────────────── */
+
+#cmcc-app .cmcc-stats-wrapper {
+  margin-bottom: 24px;
+}
 
 #cmcc-app .cmcc-stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 16px;
   margin-bottom: 24px;
 }
@@ -16,47 +21,91 @@
   flex-direction: column;
   gap: 4px;
   padding: 20px;
-  background: #f6f7f7;
-  border: 1px solid #e2e4e7;
-  border-radius: 6px;
+  background: var(--cmcc-bg-card);
+  border: 1px solid var(--cmcc-border-card);
+  border-radius: var(--cmcc-radius-xl);
   text-align: center;
+  box-shadow: var(--cmcc-shadow-sm);
+  transition: all var(--cmcc-transition-normal);
+  position: relative;
+  overflow: hidden;
+}
+
+#cmcc-app .cmcc-stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--cmcc-gradient-primary);
+  opacity: 0.6;
+}
+
+#cmcc-app .cmcc-stat-card:hover {
+  box-shadow: var(--cmcc-shadow-md);
+  transform: translateY(-2px);
 }
 
 #cmcc-app .cmcc-stat-label {
-  font-size: 12px;
+  font-size: var(--cmcc-xs);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: #757575;
+  letter-spacing: 0.06em;
+  color: var(--cmcc-text-tertiary);
+  font-weight: 600;
 }
 
 #cmcc-app .cmcc-stat-value {
-  font-size: 30px;
-  font-weight: 700;
-  color: #1d2327;
+  font-size: var(--cmcc-font-size-3xl);
+  font-weight: 800;
+  color: var(--cmcc-text-heading);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
 }
 
 #cmcc-app .cmcc-stat-pending {
-  color: #f0ad4e;
+  color: var(--cmcc-warning);
 }
 #cmcc-app .cmcc-stat-spam {
-  color: #d9534f;
+  color: var(--cmcc-error);
 }
 #cmcc-app .cmcc-stat-flagged {
-  color: #f56e28;
+  color: var(--cmcc-spam);
 }
+
+/* ─── Analytics page heading ────────────────────────────── */
+
+#cmcc-app .cmcc-analytics-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+#cmcc-app .cmcc-analytics-header h2 {
+  font-size: var(--cmcc-h2);
+  font-weight: 700;
+  margin: 0;
+  color: var(--cmcc-text-heading);
+}
+
+/* ─── Analytics Sections ────────────────────────────────── */
 
 #cmcc-app .cmcc-analytics-section {
   margin-bottom: 24px;
 }
 
 #cmcc-app .cmcc-analytics-section h3 {
-  font-size: 16px;
-  font-weight: 600;
-  margin: 0 0 12px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid #f0f0f1;
-  color: #1d2327;
+  font-size: var(--cmcc-h3);
+  font-weight: 700;
+  margin: 0 0 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--cmcc-border-secondary);
+  color: var(--cmcc-text-heading);
+  letter-spacing: -0.01em;
 }
+
+/* ─── Spam Ratio ─────────────────────────────────────────── */
 
 #cmcc-app .cmcc-spam-ratio {
   display: flex;
@@ -68,47 +117,49 @@
 #cmcc-app .cmcc-spam-ratio-bar {
   flex: 1;
   min-width: 200px;
-  height: 24px;
-  background: #f0f0f1;
-  border-radius: 4px;
+  height: 10px;
+  background: var(--cmcc-bg-tertiary);
+  border-radius: var(--cmcc-radius-full);
   overflow: hidden;
 }
 
 #cmcc-app .cmcc-spam-ratio-fill {
   height: 100%;
-  background: linear-gradient(90deg, #f0ad4e, #d9534f);
-  border-radius: 4px;
-  transition: width 0.3s ease;
+  background: var(--cmcc-gradient-warm);
+  border-radius: var(--cmcc-radius-full);
+  transition: width var(--cmcc-transition-slow);
   min-width: 2px;
 }
 
 #cmcc-app .cmcc-spam-ratio-text {
-  font-size: 13px;
-  color: #50575e;
+  font-size: var(--cmcc-body);
+  color: var(--cmcc-text-secondary);
   white-space: nowrap;
 }
+
+/* ─── Breakdown Table ─────────────────────────────────────── */
 
 #cmcc-app .cmcc-breakdown-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 13px;
+  font-size: var(--cmcc-body);
 }
 
 #cmcc-app .cmcc-breakdown-table th {
   text-align: left;
-  padding: 8px 10px;
-  border-bottom: 1px solid #c3c4c7;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--cmcc-border-table);
   font-weight: 600;
-  color: #2c3338;
-  background: #f6f7f7;
+  color: var(--cmcc-text-secondary);
+  background: var(--cmcc-bg-table-header);
 }
 
 #cmcc-app .cmcc-breakdown-table td {
-  padding: 8px 10px;
-  border-bottom: 1px solid #f0f0f1;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--cmcc-border-table-row);
 }
 
-/* ─── Heatmap ──────────────────────────────────────────────────────────── */
+/* ─── Heatmap ──────────────────────────────────────────────── */
 
 #cmcc-app .cmcc-heatmap-chart {
   padding: 12px 0;
@@ -122,10 +173,9 @@
 
 #cmcc-app .cmcc-heatmap-hour-label {
   flex: 1;
-  font-size: 9px;
-  color: #757575;
+  font-size: var(--cmcc-xs);
+  color: var(--cmcc-text-muted);
   text-align: center;
-  /* Hide empty labels (every hour not divisible by 4) */
   visibility: visible;
 }
 
@@ -147,8 +197,8 @@
 
 #cmcc-app .cmcc-heatmap-day-label {
   height: 18px;
-  font-size: 10px;
-  color: #757575;
+  font-size: var(--cmcc-xs);
+  color: var(--cmcc-text-muted);
   line-height: 18px;
   text-align: right;
   padding-right: 6px;
@@ -173,19 +223,18 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 2px;
+  border-radius: var(--cmcc-radius-sm);
   color: #fff;
   font-weight: 600;
-  /* Subtle border for empty cells to distinguish them */
   border: 1px solid transparent;
   background-clip: padding-box;
-  transition: transform 0.1s ease;
+  transition: transform var(--cmcc-transition-fast);
 }
 
 #cmcc-app .cmcc-heatmap-cell:hover {
-  transform: scale(1.15);
+  transform: scale(1.2);
   z-index: 1;
-  border-color: #50575e;
+  border-color: var(--cmcc-text-secondary);
 }
 
 #cmcc-app .cmcc-heatmap-legend {
@@ -197,17 +246,17 @@
 }
 
 #cmcc-app .cmcc-heatmap-legend-label {
-  font-size: 11px;
-  color: #757575;
+  font-size: var(--cmcc-xs);
+  color: var(--cmcc-text-muted);
   white-space: nowrap;
 }
 
 #cmcc-app .cmcc-heatmap-legend-bar {
   width: 120px;
   height: 12px;
-  border-radius: 3px;
+  border-radius: var(--cmcc-radius-sm);
   overflow: hidden;
-  background: #f0f0f1;
+  background: var(--cmcc-bg-tertiary);
 }
 
 #cmcc-app .cmcc-heatmap-legend-gradient {
@@ -215,11 +264,11 @@
   width: 100%;
   background: linear-gradient(
     to right,
-    #e3f0fa 0%,
-    #abd0e6 25%,
-    #6fa8d1 50%,
-    #3b7cb8 75%,
-    #1a4d8f 100%
+    #eef2ff 0%,
+    #a5b4fc 25%,
+    #818cf8 50%,
+    #6366f1 75%,
+    #4f46e5 100%
   );
 }
 
@@ -228,11 +277,11 @@
   justify-content: space-between;
   flex: 1;
   min-width: 40px;
-  font-size: 10px;
-  color: #757575;
+  font-size: var(--cmcc-xs);
+  color: var(--cmcc-text-muted);
 }
 
-/* ─── Heatmap Empty State ──────────────────────────────────────────── */
+/* ─── Heatmap Empty State ───────────────────────────────── */
 
 #cmcc-app .cmcc-heatmap-empty {
   display: flex;
@@ -249,34 +298,53 @@
 }
 
 #cmcc-app .cmcc-heatmap-empty-text {
-  font-size: 14px;
+  font-size: var(--cmcc-font-size-md);
   font-weight: 500;
-  color: #50575e;
+  color: var(--cmcc-text-secondary);
   margin: 0 0 4px;
 }
 
 #cmcc-app .cmcc-heatmap-empty-hint {
-  font-size: 12px;
-  color: #8c8f94;
+  font-size: var(--cmcc-small);
+  color: var(--cmcc-text-muted);
   margin: 0;
 }
 
-/* ─── Charts ────────────────────────────────────────────────────────────── */
+/* ─── Charts ──────────────────────────────────────────────── */
+
+#cmcc-app .cmcc-charts-section {
+  margin-bottom: 24px;
+}
+
+#cmcc-app .cmcc-charts-section h3 {
+  font-size: var(--cmcc-h3);
+  font-weight: 600;
+  margin: 0 0 16px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--cmcc-border-secondary);
+  color: var(--cmcc-text-heading);
+}
 
 #cmcc-app .cmcc-charts-row {
   display: flex;
-  gap: var(--cmcc-space-4, 16px);
-  margin-bottom: 20px;
+  gap: 16px;
+  margin-bottom: 24px;
   flex-wrap: wrap;
 }
 
 #cmcc-app .cmcc-chart-card {
   flex: 1;
   min-width: 280px;
-  background: #fff;
-  border: 1px solid #e2e4e7;
-  border-radius: 6px;
-  padding: 16px;
+  background: var(--cmcc-bg-card);
+  border: 1px solid var(--cmcc-border-card);
+  border-radius: var(--cmcc-radius-xl);
+  padding: 20px;
+  box-shadow: var(--cmcc-shadow-sm);
+  transition: box-shadow var(--cmcc-transition-normal);
+}
+
+#cmcc-app .cmcc-chart-card:hover {
+  box-shadow: var(--cmcc-shadow-md);
 }
 
 #cmcc-app .cmcc-chart-card-half {
@@ -295,10 +363,10 @@
 }
 
 #cmcc-app .cmcc-chart-title {
-  font-size: 14px;
+  font-size: var(--cmcc-font-size-md);
   font-weight: 600;
   margin: 0 0 12px;
-  color: #1d2327;
+  color: var(--cmcc-text-heading);
 }
 
 #cmcc-app .cmcc-chart-wrapper {
@@ -311,44 +379,56 @@
   align-items: center;
   justify-content: center;
   padding: 40px 20px;
-  color: #8c8f94;
-  font-size: 13px;
+  color: var(--cmcc-text-muted);
+  font-size: var(--cmcc-body);
   text-align: center;
 }
 
-/* ─── Enhanced Content Breakdown Table ───────────────────────────────── */
+/* ─── Enhanced Content Breakdown Table ────────────────────── */
+/* ─── Content Type Breakdown Table ──────────────────── */
 
 #cmcc-app .cmcc-breakdown-wrapper {
   overflow-x: auto;
-  border: 1px solid #e2e4e7;
-  border-radius: 4px;
+  border: 1px solid var(--cmcc-border-card);
+  border-radius: var(--cmcc-radius-xl);
+  background: var(--cmcc-bg-card);
 }
 
 #cmcc-app .cmcc-breakdown-table-enhanced {
   width: 100%;
   border-collapse: collapse;
-  font-size: 12px;
+  font-size: var(--cmcc-small);
 }
 
 #cmcc-app .cmcc-breakdown-table-enhanced th {
   text-align: left;
-  padding: 8px 6px;
-  border-bottom: 1px solid #c3c4c7;
+  padding: 10px 8px;
+  border-bottom: 2px solid var(--cmcc-border-table);
   font-weight: 600;
-  color: #2c3338;
-  background: #f6f7f7;
+  color: var(--cmcc-text-secondary);
+  background: var(--cmcc-bg-table-header);
   white-space: nowrap;
-  font-size: 11px;
+  font-size: var(--cmcc-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 #cmcc-app .cmcc-breakdown-table-enhanced td {
-  padding: 6px;
-  border-bottom: 1px solid #f0f0f1;
+  padding: 10px 8px;
+  border-bottom: 1px solid var(--cmcc-border-table-row);
   vertical-align: middle;
 }
 
 #cmcc-app .cmcc-breakdown-table-enhanced tbody tr:hover td {
-  background: #f6f7f7;
+  background: var(--cmcc-bg-table-hover);
+}
+
+#cmcc-app .cmcc-breakdown-table-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 8px 8px;
+  border-top: 1px solid var(--cmcc-border-secondary);
 }
 
 #cmcc-app .cmcc-bd-type {
@@ -363,25 +443,25 @@
 }
 
 #cmcc-app .cmcc-bd-pct {
-  color: #8c8f94;
-  font-size: 10px;
+  color: var(--cmcc-text-muted);
+  font-size: var(--cmcc-xs);
 }
 
 #cmcc-app .cmcc-bd-approved {
-  color: #16a34a;
+  color: var(--cmcc-success);
 }
 #cmcc-app .cmcc-bd-pending {
-  color: #ca8a04;
+  color: var(--cmcc-warning);
 }
 #cmcc-app .cmcc-bd-spam {
-  color: #dc2626;
+  color: var(--cmcc-error);
 }
 #cmcc-app .cmcc-bd-flagged {
-  color: #ea580c;
+  color: var(--cmcc-spam);
 }
 #cmcc-app .cmcc-bd-rejected {
-  color: #6b7280;
+  color: var(--cmcc-text-tertiary);
 }
 #cmcc-app .cmcc-bd-deferred {
-  color: #0891b2;
+  color: var(--cmcc-info);
 }

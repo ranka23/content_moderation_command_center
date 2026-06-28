@@ -1,13 +1,20 @@
-import React, { useEffect, startTransition } from 'react'
+import React, {
+  useEffect,
+  startTransition,
+  useState,
+  useMemo,
+  useCallback,
+} from 'react'
 import { Button, Table, SkeletonTable, EmptyState, Pagination } from '@cmcc/ui'
-import { RefreshCw } from 'lucide-react'
+import { RefreshCw, Calendar } from 'lucide-react'
+import { DateRangePicker } from '../components/DateRangePicker'
 
 const LOG_PER_PAGE_OPTIONS = [10, 25, 50, 100]
 
 /**
  * Activity log tab page.
- * Renders a paginated table of moderation actions with per-page controls
- * and a refresh button.
+ * Renders a paginated table of moderation actions with per-page controls,
+ * date range filtering, and a refresh button. Consistent with Settings tab.
  */
 export default function ActivityLogPage({ activityLog }) {
   const {
@@ -20,6 +27,48 @@ export default function ActivityLogPage({ activityLog }) {
     isLogLoading,
     fetchActivityLog,
   } = activityLog
+
+  // ── Date range filter ────────────────────────────────────────────────
+  const [logDateRange, setLogDateRange] = useState(null)
+  const handleLogRangeChange = useCallback(
+    (range) => {
+      setLogDateRange(range)
+      setLogPage(1)
+      fetchActivityLog(1, range)
+    },
+    [fetchActivityLog, setLogPage],
+  )
+
+  // ── Sort state ──────────────────────────────────────────────────────
+  const [logSortField, setLogSortField] = useState(null)
+  const [logSortDir, setLogSortDir] = useState('asc')
+
+  const handleLogSort = (field) => {
+    if (logSortField === field) {
+      setLogSortDir((prev) => (prev === 'asc' ? 'desc' : 'asc'))
+    } else {
+      setLogSortField(field)
+      setLogSortDir('asc')
+    }
+  }
+
+  // ── Sort log entries locally ────────────────────────────────────────
+  const sortedLogEntries = useMemo(() => {
+    if (!logSortField) return logEntries
+    return [...logEntries].sort((a, b) => {
+      const aVal = a[logSortField]
+      const bVal = b[logSortField]
+      let cmp = 0
+      if (typeof aVal === 'number' && typeof bVal === 'number') {
+        cmp = aVal - bVal
+      } else {
+        cmp = String(aVal ?? '').localeCompare(String(bVal ?? ''), undefined, {
+          numeric: true,
+        })
+      }
+      return logSortDir === 'asc' ? cmp : -cmp
+    })
+  }, [logEntries, logSortField, logSortDir])
 
   // Reload on per-page change
   useEffect(() => {
@@ -85,16 +134,35 @@ export default function ActivityLogPage({ activityLog }) {
 
   return (
     <div className="cmcc-tab-panel" role="tabpanel">
-      {/* Header with Refresh */}
-      <div className="tw-flex tw-items-center tw-justify-between tw-mb-4">
-        <h2 className="tw-text-lg tw-font-semibold tw-m-0">Activity Log</h2>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => fetchActivityLog(logPage)}
-        >
-          <RefreshCw size={14} className="tw-inline tw-mr-1" /> Refresh
-        </Button>
+      {/* Header with Refresh + Date Range */}
+      <div className="cmcc-page-header">
+        <h2>Activity Log</h2>
+        <div className="tw-flex tw-items-center tw-gap-3">
+          <DateRangePicker
+            value={logDateRange}
+            onChange={handleLogRangeChange}
+          />
+          {logDateRange && (
+            <button
+              className="cmcc-text-btn cmcc-text-btn-sm"
+              onClick={() => {
+                setLogDateRange(null)
+                setLogPage(1)
+                fetchActivityLog(1)
+              }}
+              title="Clear date filter"
+            >
+              × Clear
+            </button>
+          )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => fetchActivityLog(logPage)}
+          >
+            <RefreshCw size={14} className="tw-inline tw-mr-1" /> Refresh
+          </Button>
+        </div>
       </div>
 
       {/* Table */}
@@ -175,28 +243,36 @@ export default function ActivityLogPage({ activityLog }) {
             cell: (row) => row.notes || '-',
           },
         ]}
-        data={logEntries}
+        data={sortedLogEntries}
+        sortConfig={
+          logSortField
+            ? { field: logSortField, direction: logSortDir }
+            : undefined
+        }
+        onSort={handleLogSort}
         rowKey={(row) => row.id}
       />
 
-      {/* Pagination */}
-      <div className="tw-flex tw-items-center tw-justify-between tw-py-4 tw-px-2">
-        <div className="tw-flex tw-items-center tw-gap-2">
-          <span className="tw-text-sm tw-text-gray-500">
+      {/* MUI Table Pagination */}
+      <div className="cmcc-table-pagination">
+        <div className="cmcc-table-pagination-left">
+          <span className="cmcc-pagination-info">
             {logTotal > 0
-              ? `${(logPage - 1) * logPerPage + 1}\u2013${Math.min(logPage * logPerPage, logTotal)} of ${logTotal} items`
+              ? `${(logPage - 1) * logPerPage + 1}–${Math.min(logPage * logPerPage, logTotal)} of ${logTotal} items`
               : 'No items'}
           </span>
-          <span className="tw-text-gray-300">|</span>
-          <label className="tw-flex tw-items-center tw-gap-1 tw-text-sm tw-text-gray-500">
+          <span className="cmcc-pagination-separator">|</span>
+          <label className="cmcc-pagination-rows-label">
             Show
             <select
+              id="cmcc-log-per-page"
+              name="cmcc-log-per-page"
+              className="cmcc-pagination-rows-select"
               value={String(logPerPage)}
               onChange={(e) => {
                 setLogPerPage(Number(e.target.value))
                 setLogPage(1)
               }}
-              className="tw-w-16 tw-h-8 tw-text-xs tw-border tw-border-gray-300 tw-rounded tw-px-1"
             >
               {LOG_PER_PAGE_OPTIONS.map((n) => (
                 <option key={n} value={n}>

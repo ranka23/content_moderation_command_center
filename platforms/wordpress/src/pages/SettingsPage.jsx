@@ -1,4 +1,10 @@
-import React, { useEffect, startTransition, useState, useCallback } from 'react'
+import React, {
+  useEffect,
+  startTransition,
+  useState,
+  useCallback,
+  useRef,
+} from 'react'
 import { Button, SettingsForm, AiSettingsForm } from '@cmcc/ui'
 import { Cpu, Download, Upload } from 'lucide-react'
 import { apiFetch } from '../lib/api'
@@ -42,6 +48,30 @@ export default function SettingsPage({ settings, addToast }) {
       enableSentimentAnalysis: false,
     }
   })
+
+  // Sync aiConfig when server settings finish loading
+  const prevInitialValuesRef = useRef({})
+  useEffect(() => {
+    // Only sync when settings have loaded with real data (engine from server)
+    if (
+      settingsInitialValues?.engine !== undefined &&
+      // Avoid re-syncing after user edits by checking if initial sync happened
+      prevInitialValuesRef.current !== settingsInitialValues
+    ) {
+      prevInitialValuesRef.current = settingsInitialValues
+      setAiConfig({
+        engine: settingsInitialValues.engine || 'none',
+        apiKey: settingsInitialValues.apiKey || '',
+        model: settingsInitialValues.model || '',
+        autoModerate: settingsInitialValues.autoModerate ?? false,
+        spamThreshold: settingsInitialValues.spamThreshold ?? 70,
+        enableLanguageDetection:
+          settingsInitialValues.enableLanguageDetection ?? true,
+        enableSentimentAnalysis:
+          settingsInitialValues.enableSentimentAnalysis ?? false,
+      })
+    }
+  }, [settingsInitialValues])
 
   // Update the default model when engine changes
   const handleAiConfigChange = useCallback((newConfig) => {
@@ -140,6 +170,8 @@ export default function SettingsPage({ settings, addToast }) {
             <Upload size={14} className="tw-inline tw-mr-1" /> Import Settings
             <input
               type="file"
+              id="cmcc-import-settings"
+              name="cmcc-import-settings"
               accept=".json"
               className="tw-hidden"
               onChange={handleImport}

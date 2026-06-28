@@ -356,11 +356,14 @@ export const QueueTable: React.FC<QueueTableProps> = ({
           <div className="tw-flex tw-items-center tw-gap-2">
             <Input
               type="text"
+              id="cmcc-queue-search"
+              name="cmcc-queue-search"
               placeholder="Search titles & excerpts..."
               value={searchInput}
               onChange={handleSearchChange}
               onKeyDown={handleSearchKeyDown}
               className="tw-w-64"
+              aria-label="Search queue items"
             />
             <Button variant="secondary" size="sm" onClick={handleSearchSubmit}>
               <Icon name="search" size={14} className="tw-inline tw-mr-1" />{' '}
@@ -382,25 +385,34 @@ export const QueueTable: React.FC<QueueTableProps> = ({
 
           {/* Status filter */}
           <Select
+            id="cmcc-filter-status"
+            name="cmcc-filter-status"
             className="tw-w-36"
             value={filters.status}
             onChange={(e) => handleFilterChange('status', e.target.value)}
             options={statusOptions}
+            aria-label="Filter by status"
           />
 
           {/* Content type filter */}
           <Select
+            id="cmcc-filter-content-type"
+            name="cmcc-filter-content-type"
             className="tw-w-40"
             value={filters.contentType}
             onChange={(e) => handleFilterChange('contentType', e.target.value)}
             options={contentTypeOptions}
+            aria-label="Filter by content type"
           />
 
           {/* Date range filter */}
           <Select
+            id="cmcc-filter-date-range"
+            name="cmcc-filter-date-range"
             className="tw-w-36"
             value={filters.dateRange}
             onChange={(e) => handleFilterChange('dateRange', e.target.value)}
+            aria-label="Filter by date range"
           >
             <option value="all">All Time</option>
             <option value="24h">Last 24 Hours</option>
@@ -423,10 +435,13 @@ export const QueueTable: React.FC<QueueTableProps> = ({
           </Button>
           {/* Bulk actions */}
           <Select
+            id="cmcc-bulk-action"
+            name="cmcc-bulk-action"
             value={bulkAction}
             onChange={handleBulkActionChange}
             disabled={selectedIds.size === 0}
             className="tw-w-52"
+            aria-label="Bulk actions"
           >
             <option value="">
               {selectedIds.size > 0
@@ -498,6 +513,7 @@ export const QueueTable: React.FC<QueueTableProps> = ({
                       if (el) el.indeterminate = someSelected
                     }}
                     onChange={handleSelectAll}
+                    aria-label="Select all items"
                   />
                   <span className="cmcc-checkbox-custom" />
                 </label>
@@ -749,37 +765,39 @@ export const QueueTable: React.FC<QueueTableProps> = ({
         </table>
       </div>
 
-      {/* ── Pagination ──────────────────────────────────────────────────── */}
-      <div className="tw-flex tw-items-center tw-justify-between tw-py-4 tw-px-2 tw-flex-wrap tw-gap-y-2">
-        <div className="tw-flex tw-items-center tw-gap-2">
-          <span className="tw-text-sm tw-text-gray-500">
+      {/* ── MUI Table Pagination ──────────────────────────────────── */}
+      <div className="cmcc-table-pagination">
+        <Pagination
+          currentPage={page}
+          totalPages={totalPages}
+          onPageChange={(p) => onPageChange?.(p)}
+        />
+
+        <div className="cmcc-table-pagination-right">
+          <span className="cmcc-pagination-info">
             {totalCount > 0
               ? `${(page - 1) * perPage + 1}–${Math.min(page * perPage, totalCount)} of ${totalCount} items`
               : 'No items'}
           </span>
-          <span className="tw-text-gray-300">|</span>
-          <label className="tw-flex tw-items-center tw-gap-1 tw-text-sm tw-text-gray-500">
+          <span className="cmcc-pagination-separator">|</span>
+          <label className="cmcc-pagination-rows-label">
             Show
-            <Select
+            <select
+              id="cmcc-per-page"
+              name="cmcc-per-page"
               value={String(perPage)}
               onChange={(e) => onPerPageChange?.(Number(e.target.value))}
-              className="tw-w-16 tw-h-8 tw-text-xs"
+              className="cmcc-pagination-rows-select"
             >
               {PER_PAGE_OPTIONS.map((n) => (
                 <option key={n} value={n}>
                   {n}
                 </option>
               ))}
-            </Select>
+            </select>
             per page
           </label>
         </div>
-
-        <Pagination
-          currentPage={page}
-          totalPages={totalPages}
-          onPageChange={(p) => onPageChange?.(p)}
-        />
       </div>
     </div>
   )

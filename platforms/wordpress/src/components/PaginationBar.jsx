@@ -3,6 +3,10 @@ import { Pagination } from '@cmcc/ui'
 
 const PER_PAGE_OPTIONS = [10, 25, 50, 100]
 
+/**
+ * Pagination bar with per-page selector and page navigation.
+ * 2026 refined design with consistent spacing and modern select styling.
+ */
 export function PaginationBar({
   total,
   page,
@@ -16,23 +20,25 @@ export function PaginationBar({
   const end = Math.min(page * perPage, total)
 
   return (
-    <div className="tw-flex tw-items-center tw-justify-between tw-py-4 tw-px-2">
-      <div className="tw-flex tw-items-center tw-gap-2">
-        <span className="tw-text-sm tw-text-gray-500">
+    <div className="cmcc-pagination-bar">
+      <div className="cmcc-pagination-left">
+        <span className="cmcc-pagination-info">
           {total > 0
             ? `${start}\u2013${end} of ${total} ${label}`
             : `No ${label}`}
         </span>
-        <span className="tw-text-gray-300">|</span>
-        <label className="tw-flex tw-items-center tw-gap-1 tw-text-sm tw-text-gray-500">
+        <span className="cmcc-pagination-separator">|</span>
+        <label className="cmcc-per-page-label">
           Show
           <select
+            id="cmcc-per-page-select"
+            name="cmcc-per-page-select"
             value={String(perPage)}
             onChange={(e) => {
               onPerPageChange(Number(e.target.value))
               onPageChange(1)
             }}
-            className="tw-w-16 tw-h-8 tw-text-xs tw-border tw-border-gray-300 tw-rounded tw-px-1"
+            className="cmcc-per-page-select"
           >
             {PER_PAGE_OPTIONS.map((n) => (
               <option key={n} value={n}>

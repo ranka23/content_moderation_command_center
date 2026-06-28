@@ -1,4 +1,5 @@
-import React, { useEffect, useRef } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Icon } from '../../lib/icons'
 
 export interface SlideOutPanelProps {
@@ -19,13 +20,40 @@ export function SlideOutPanel({
   side = 'right',
 }: SlideOutPanelProps): React.ReactElement | null {
   const panelRef = useRef<HTMLDivElement>(null)
+  const [closing, setClosing] = useState(false)
+  // entering state: true while the slide-in animation plays
+  const [entering, setEntering] = useState(false)
+  const mountedRef = useRef(false)
+
+  // When open becomes true, kick off the enter animation
+  useEffect(() => {
+    if (open) {
+      setEntering(true)
+      // After the animation completes (matches CSS duration), clear entering flag
+      const timer = setTimeout(() => {
+        setEntering(false)
+      }, 380) // slightly longer than CSS transition (350ms) for safety
+      mountedRef.current = true
+      return () => clearTimeout(timer)
+    }
+    setEntering(false)
+    return undefined
+  }, [open])
+
+  const handleClose = useCallback((): void => {
+    setClosing(true)
+    setTimeout(() => {
+      setClosing(false)
+      onClose()
+    }, 280) // matches the CSS transition duration
+  }, [onClose])
 
   useEffect(() => {
     if (!open) return
 
     function handleKeyDown(e: KeyboardEvent): void {
       if (e.key === 'Escape') {
-        onClose()
+        handleClose()
       }
     }
 
@@ -33,21 +61,35 @@ export function SlideOutPanel({
     return (): void => {
       document.removeEventListener('keydown', handleKeyDown)
     }
-  }, [open, onClose])
+  }, [open, handleClose])
 
-  if (!open) return null
+  if (!open && !closing) return null
 
-  const sideClasses =
-    side === 'right'
-      ? 'tw-top-0 tw-right-0 tw-h-full tw-border-l'
-      : 'tw-top-0 tw-left-0 tw-h-full tw-border-r'
+  // Guard against SSR — document.body is not available on the server
+  if (typeof document === 'undefined') return null
 
-  return (
+  const sideClasses = side === 'right' ? 'cmcc-panel-right' : 'cmcc-panel-left'
+
+  // Determine panel animation state
+  // When entering: animate from off-screen to visible
+  // When open and not entering/closing: fully visible
+  // When closing: animate from visible to off-screen
+  let animClass = 'cmcc-panel-open'
+  if (entering) {
+    animClass = 'cmcc-panel-entering'
+  } else if (closing) {
+    animClass = 'cmcc-panel-closing'
+  }
+
+  const backdropClass =
+    open && !closing ? 'cmcc-backdrop-visible' : 'cmcc-backdrop-hidden'
+
+  const panel = (
     <>
       {/* Backdrop */}
       <div
-        className="tw-fixed tw-inset-0 tw-bg-black/30 tw-z-40"
-        onClick={onClose}
+        className={`cmcc-slide-backdrop ${backdropClass}`}
+        onClick={handleClose}
         aria-hidden="true"
       />
       {/* Panel */}
@@ -56,25 +98,26 @@ export function SlideOutPanel({
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className={`tw-fixed tw-z-50 tw-bg-white tw-shadow-xl tw-overflow-y-auto tw-transition-transform tw-duration-300 tw-ease-in-out ${sideClasses} ${className}`}
-        style={{ width: '400px', maxWidth: '100vw' }}
+        className={`cmcc-slide-panel ${animClass} ${sideClasses} ${className}`}
       >
         {title && (
-          <div className="tw-flex tw-items-center tw-justify-between tw-px-4 tw-py-3 tw-border-b tw-border-gray-200">
-            <h2 className="tw-text-lg tw-font-semibold">{title}</h2>
+          <div className="cmcc-panel-header">
+            <h2 className="cmcc-panel-title">{title}</h2>
             <button
-              onClick={onClose}
-              className="tw-text-gray-400 hover:tw-text-gray-600"
+              onClick={handleClose}
+              className="cmcc-panel-close-btn"
               aria-label="Close panel"
             >
               <Icon name="close" size={20} />
             </button>
           </div>
         )}
-        <div className="tw-p-4">{children}</div>
+        <div className="cmcc-panel-body">{children}</div>
       </div>
     </>
   )
+
+  return createPortal(panel, document.body)
 }
 
 export default SlideOutPanel

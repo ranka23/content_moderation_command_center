@@ -22,13 +22,19 @@ export function useActivityLog({ addToast }) {
 
   // ── Fetch Activity Log ─────────────────────────────────────────────
   const fetchActivityLog = useCallback(
-    async (page = 1) => {
+    async (page = 1, dateRange) => {
       setIsLogLoading(true)
       try {
         const params = new URLSearchParams({
           page: String(page),
           per_page: String(logPerPage),
         })
+        if (dateRange?.from) {
+          params.set('start_date', dateRange.from.toISOString())
+        }
+        if (dateRange?.to) {
+          params.set('end_date', dateRange.to.toISOString())
+        }
         const data = await apiFetch('activity-log?' + params.toString())
 
         // U6 Fix: Map moderator ID to display name using available user info
@@ -54,8 +60,10 @@ export function useActivityLog({ addToast }) {
         setActivityLog(filtered)
         setLogTotal(data.total || 0)
       } catch (err) {
-        // eslint-disable-next-line no-console
-        console.error('Failed to fetch activity log:', err)
+        if (process.env.NODE_ENV !== 'production') {
+          // eslint-disable-next-line no-console
+          console.error('Failed to fetch activity log:', err)
+        }
         addToast('Failed to fetch activity log', 'error')
       } finally {
         setIsLogLoading(false)

@@ -28,8 +28,10 @@ export function useCollaboration({ addToast }) {
       const data = await apiFetch(`queue/${encodeURIComponent(itemId)}/history`)
       setItemHistory(data.items || [])
     } catch (err) {
-      // eslint-disable-next-line no-console
-      console.error('Failed to fetch item history:', err)
+      if (process.env.NODE_ENV !== 'production') {
+        // eslint-disable-next-line no-console
+        console.error('Failed to fetch item history:', err)
+      }
     } finally {
       setIsHistoryLoading(false)
     }
@@ -42,8 +44,10 @@ export function useCollaboration({ addToast }) {
       const data = await apiFetch(`queue/${encodeURIComponent(itemId)}/notes`)
       setItemNotes(data.notes || [])
     } catch (err) {
-      // eslint-disable-next-line no-console
-      console.error('Failed to fetch notes:', err)
+      if (process.env.NODE_ENV !== 'production') {
+        // eslint-disable-next-line no-console
+        console.error('Failed to fetch notes:', err)
+      }
     } finally {
       setIsNotesLoading(false)
     }
@@ -112,8 +116,10 @@ export function useCollaboration({ addToast }) {
       const data = await apiFetch('activity-feed?limit=20')
       setActivityFeed(data.events || [])
     } catch (err) {
-      // eslint-disable-next-line no-console
-      console.error('Failed to fetch activity feed:', err)
+      if (process.env.NODE_ENV !== 'production') {
+        // eslint-disable-next-line no-console
+        console.error('Failed to fetch activity feed:', err)
+      }
       setFeedError(err?.message || 'Failed to load activity feed')
     } finally {
       setIsFeedLoading(false)

@@ -126,6 +126,8 @@ export function ModerationNotes({
           className="tw-space-y-2 tw-pt-2 tw-border-t tw-border-gray-100"
         >
           <textarea
+            id="cmcc-note-text"
+            name="cmcc-note-text"
             value={newNote}
             onChange={(e) => setNewNote(e.target.value)}
             placeholder="Add a note for other moderators..."
@@ -137,6 +139,8 @@ export function ModerationNotes({
               <label className="tw-inline-flex tw-items-center tw-gap-1.5 tw-text-xs tw-text-gray-500 tw-cursor-pointer">
                 <input
                   type="checkbox"
+                  id="cmcc-note-internal"
+                  name="cmcc-note-internal"
                   checked={isInternal}
                   onChange={(e) => setIsInternal(e.target.checked)}
                   className="tw-rounded"
@@ -144,6 +148,8 @@ export function ModerationNotes({
                 Internal note
               </label>
               <select
+                id="cmcc-note-type"
+                name="cmcc-note-type"
                 value={noteType}
                 onChange={(e) => setNoteType(e.target.value as Note['type'])}
                 className="tw-text-xs tw-border tw-border-gray-200 tw-rounded tw-px-2 tw-py-1 tw-text-gray-500"
