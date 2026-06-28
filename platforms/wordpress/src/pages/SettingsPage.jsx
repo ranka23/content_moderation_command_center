@@ -21,6 +21,7 @@ export default function SettingsPage({ settings, addToast }) {
     settingsValidators,
     fetchSettings,
     handleSettingsSave,
+    settingsError,
   } = settings
 
   // ── AI Moderation config state (derived from server settings) ───────
@@ -124,8 +125,31 @@ export default function SettingsPage({ settings, addToast }) {
     e.target.value = ''
   }
 
-  // ── Loading state ──────────────────────────────────────────────────
+  // ── Loading / Error states ─────────────────────────────────────────
   if (settingsSections.length === 0) {
+    if (settingsError) {
+      return (
+        <div className="cmcc-tab-panel" role="tabpanel">
+          <div className="cmcc-loading tw-flex-col">
+            <span className="cmcc-error-icon tw-text-red-500 tw-text-2xl tw-mb-2">
+              !
+            </span>
+            <span className="tw-text-red-600 tw-mb-3">
+              Failed to load settings
+            </span>
+            <p className="tw-text-gray-500 tw-text-sm tw-mb-4">
+              {settingsError}
+            </p>
+            <button
+              className="tw-px-4 tw-py-2 tw-bg-blue-600 tw-text-white tw-rounded hover:tw-bg-blue-700 tw-text-sm"
+              onClick={() => fetchSettings()}
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      )
+    }
     return (
       <div className="cmcc-tab-panel" role="tabpanel">
         <div className="cmcc-loading">

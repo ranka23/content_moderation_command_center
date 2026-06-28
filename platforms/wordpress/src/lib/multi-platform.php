@@ -173,6 +173,7 @@ function cmcc_rest_platforms_sync_settings( WP_REST_Request $request ): WP_REST_
         ) );
 
         if ( is_wp_error( $response ) ) {
+            error_log( 'CMCC Platform Sync: Failed for ' . $platform_key . ' - ' . $response->get_error_message() );
             $results[ $platform_key ] = array(
                 'platform' => $label,
                 'success'  => false,
@@ -180,10 +181,14 @@ function cmcc_rest_platforms_sync_settings( WP_REST_Request $request ): WP_REST_
                 'synced_at' => null,
             );
         } else {
+            $http_code = wp_remote_retrieve_response_code( $response );
+            if ( $http_code >= 400 ) {
+                error_log( 'CMCC Platform Sync: HTTP ' . $http_code . ' for ' . $platform_key );
+            }
             $results[ $platform_key ] = array(
                 'platform'  => $label,
-                'success'   => true,
-                'http_code' => wp_remote_retrieve_response_code( $response ),
+                'success'   => $http_code < 400,
+                'http_code' => $http_code,
                 'synced_at' => current_time( 'mysql' ),
             );
         }

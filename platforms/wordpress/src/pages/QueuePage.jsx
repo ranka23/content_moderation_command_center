@@ -24,20 +24,33 @@ import {
 } from 'lucide-react'
 import ConfirmActionDialog from '../components/ConfirmActionDialog'
 
-const sb = (s) =>
+/**
+ * Get Tailwind classes for a status badge color.
+ *
+ * @param {string} status The moderation status.
+ * @returns {string} Tailwind class string.
+ */
+const statusBadgeColors = (status) =>
   ({
     approved: 'tw-bg-green-100 tw-text-green-800',
     spam: 'tw-bg-red-100 tw-text-red-800',
     flagged: 'tw-bg-orange-100 tw-text-orange-800',
     rejected: 'tw-bg-gray-100 tw-text-gray-800',
     deferred: 'tw-bg-cyan-100 tw-text-cyan-800',
-  })[s] || 'tw-bg-yellow-100 tw-text-yellow-800'
-const hb = (a) =>
+  })[status] || 'tw-bg-yellow-100 tw-text-yellow-800'
+
+/**
+ * Get Tailwind classes for a history action badge color.
+ *
+ * @param {string} action The history action.
+ * @returns {string} Tailwind class string.
+ */
+const historyBadgeColors = (action) =>
   ({
     approve: 'tw-bg-green-100 tw-text-green-800',
     reject: 'tw-bg-red-100 tw-text-red-800',
     spam: 'tw-bg-amber-100 tw-text-amber-800',
-  })[a] || 'tw-bg-gray-100 tw-text-gray-700'
+  })[action] || 'tw-bg-gray-100 tw-text-gray-700'
 
 export default function QueuePage({
   queue: h,
@@ -46,7 +59,7 @@ export default function QueuePage({
   addToast,
   theme = 'light',
 }) {
-  const [cba, scba] = useState(null)
+  const [confirmBulkAction, setConfirmBulkAction] = useState(null)
   const [aiEvalResult, setAiEvalResult] = useState(null)
   const [aiEvalLoading, setAiEvalLoading] = useState(false)
   const [aiEvalError, setAiEvalError] = useState(null)
@@ -55,7 +68,10 @@ export default function QueuePage({
   const [confirmAction, setConfirmAction] = useState(null) // { action, item }
   const [confirmLoading, setConfirmLoading] = useState(false)
 
-  const hbawc = useCallback((a, ids) => scba({ action: a, ids }), [])
+  const handleBulkActionWithConfirm = useCallback(
+    (action, ids) => setConfirmBulkAction({ action, ids }),
+    [],
+  )
 
   const handleConfirmAction = useCallback(async () => {
     if (!confirmAction) return
@@ -109,25 +125,67 @@ export default function QueuePage({
     },
     [addToast],
   )
-  const d = h.detailItem
+  const detailItem = h.detailItem
 
-  /* prettier-ignore */ const historyJsx = h.isHistoryLoading
-    ? <div className="tw-text-sm tw-text-gray-400 tw-py-4 tw-text-center">Loading history...</div>
-    : !h.itemHistory.length
-      ? <div className="tw-text-sm tw-text-gray-400 tw-py-4 tw-text-center">No history recorded yet</div>
-      : <div className="tw-space-y-3">{h.itemHistory.map((e) => (
-          <div key={e.id} className="tw-flex tw-gap-3 tw-items-start">
+  /**
+   * Render the history timeline for the selected item.
+   * Shows loading, empty, or populated states.
+   *
+   * @returns {React.ReactNode}
+   */
+  const renderHistoryTimeline = () => {
+    if (h.isHistoryLoading) {
+      return (
+        <div className="tw-text-sm tw-text-gray-400 tw-py-4 tw-text-center">
+          Loading history...
+        </div>
+      )
+    }
+    if (!h.itemHistory.length) {
+      return (
+        <div className="tw-text-sm tw-text-gray-400 tw-py-4 tw-text-center">
+          No history recorded yet
+        </div>
+      )
+    }
+    return (
+      <div className="tw-space-y-3">
+        {h.itemHistory.map((event) => (
+          <div key={event.id} className="tw-flex tw-gap-3 tw-items-start">
             <div className="tw-w-2 tw-h-2 tw-rounded-full tw-mt-1.5 tw-flex-shrink-0 tw-bg-blue-500" />
             <div className="tw-flex-1 tw-min-w-0">
               <div className="tw-flex tw-items-center tw-gap-2 tw-flex-wrap">
-                <span className="tw-text-xs tw-font-medium">{e.moderator_name || e.moderator || e.moderator_display_name || e.performedBy || (e.moderator_id ? `User #${e.moderator_id}` : 'Unknown user')}</span>
-                <span className={`tw-inline-flex tw-items-center tw-rounded-full tw-px-2 tw-py-0.5 tw-text-xs tw-font-medium ${hb(e.action)}`}>{e.action}</span>
+                <span className="tw-text-xs tw-font-medium">
+                  {event.moderator_name ||
+                    event.moderator ||
+                    event.moderator_display_name ||
+                    event.performedBy ||
+                    (event.moderator_id
+                      ? `User #${event.moderator_id}`
+                      : 'Unknown user')}
+                </span>
+                <span
+                  className={`tw-inline-flex tw-items-center tw-rounded-full tw-px-2 tw-py-0.5 tw-text-xs tw-font-medium ${historyBadgeColors(event.action)}`}
+                >
+                  {event.action}
+                </span>
               </div>
-              <p className="tw-text-xs tw-text-gray-400 tw-mt-0.5">{e.timestamp ? new Date(e.timestamp).toLocaleString() : ''}</p>
-              {e.notes && <p className="tw-text-xs tw-text-gray-500 tw-mt-0.5">{e.notes}</p>}
+              <p className="tw-text-xs tw-text-gray-400 tw-mt-0.5">
+                {event.timestamp
+                  ? new Date(event.timestamp).toLocaleString()
+                  : ''}
+              </p>
+              {event.notes && (
+                <p className="tw-text-xs tw-text-gray-500 tw-mt-0.5">
+                  {event.notes}
+                </p>
+              )}
             </div>
           </div>
-        ))}</div>
+        ))}
+      </div>
+    )
+  }
 
   return (
     <div className="cmcc-tab-panel" role="tabpanel">
@@ -175,10 +233,10 @@ export default function QueuePage({
               className="cmcc-filter-select"
               onChange={(e) => {
                 if (e.target.value) {
-                  const f = h.savedFilters.find(
+                  const savedFilter = h.savedFilters.find(
                     (s) => s.name === e.target.value,
                   )
-                  if (f) h.handleFilterChange(f.filters)
+                  if (savedFilter) h.handleFilterChange(savedFilter.filters)
                 }
               }}
               defaultValue=""
@@ -193,7 +251,7 @@ export default function QueuePage({
           )}
           <button
             className="cmcc-icon-btn"
-            onClick={() => scba({ action: '__shortcuts' })}
+            onClick={() => setConfirmBulkAction({ action: '__shortcuts' })}
             title="Keyboard shortcuts"
           >
             <Keyboard size={16} />
@@ -220,11 +278,13 @@ export default function QueuePage({
           variant="primary"
           size="sm"
           onClick={() => {
-            const inp = document.getElementById('cmcc-save-filter-input')
-            if (inp && inp.value.trim()) {
-              h.saveFilter(inp.value.trim(), h.filters)
-              addToast('Filter saved: ' + inp.value.trim(), 'success')
-              inp.value = ''
+            const filterInput = document.getElementById(
+              'cmcc-save-filter-input',
+            )
+            if (filterInput && filterInput.value.trim()) {
+              h.saveFilter(filterInput.value.trim(), h.filters)
+              addToast('Filter saved: ' + filterInput.value.trim(), 'success')
+              filterInput.value = ''
             }
           }}
         >
@@ -249,7 +309,7 @@ export default function QueuePage({
       ) : (
         <QueueTable
           items={h.queueItems}
-          onBulkAction={hbawc}
+          onBulkAction={handleBulkActionWithConfirm}
           onItemAction={h.handleItemAction}
           filters={h.filters}
           onFilterChange={h.handleFilterChange}
@@ -271,51 +331,53 @@ export default function QueuePage({
         />
       )}
       <SlideOutPanel
-        open={!!d}
+        open={!!detailItem}
         onClose={() => h.setDetailItem(null)}
-        title={d?.title || 'Item Details'}
+        title={detailItem?.title || 'Item Details'}
         side="right"
       >
-        {d && (
+        {detailItem && (
           <div className="tw-space-y-4">
             <div className="tw-flex tw-flex-wrap tw-gap-2">
               <span
-                className={`tw-inline-flex tw-items-center tw-rounded-full tw-px-2.5 tw-py-0.5 tw-text-xs tw-font-medium ${sb(d.status)}`}
+                className={`tw-inline-flex tw-items-center tw-rounded-full tw-px-2.5 tw-py-0.5 tw-text-xs tw-font-medium ${statusBadgeColors(detailItem.status)}`}
               >
-                {d.statusLabel || d.status}
+                {detailItem.statusLabel || detailItem.status}
               </span>
               <span className="tw-inline-flex tw-items-center tw-rounded-full tw-px-2.5 tw-py-0.5 tw-text-xs tw-font-medium tw-bg-gray-100 tw-text-gray-700">
-                {d.contentType || d.content_type}
+                {detailItem.contentType || detailItem.content_type}
               </span>
             </div>
             <div className="tw-text-sm tw-text-gray-500">
               <p>
                 <strong>Author:</strong>{' '}
-                {d.authorName || d.authorId || 'Unknown'}
+                {detailItem.authorName || detailItem.authorId || 'Unknown'}
               </p>
               <p>
                 <strong>Date:</strong>{' '}
-                {d.dateGmt ? new Date(d.dateGmt).toLocaleString() : 'N/A'}
+                {detailItem.dateGmt
+                  ? new Date(detailItem.dateGmt).toLocaleString()
+                  : 'N/A'}
               </p>
               <p>
                 <strong>Spam Score:</strong>{' '}
-                {typeof d.spamScore === 'number'
-                  ? (d.spamScore * 100).toFixed(0) + '%'
+                {typeof detailItem.spamScore === 'number'
+                  ? (detailItem.spamScore * 100).toFixed(0) + '%'
                   : 'N/A'}
               </p>
             </div>
-            {d.excerpt && (
+            {detailItem.excerpt && (
               <div>
                 <h4 className="tw-text-sm tw-font-semibold tw-mb-1">Content</h4>
                 <p className="tw-text-sm tw-text-gray-600 tw-bg-gray-50 tw-rounded tw-p-3">
-                  {d.excerpt}
+                  {detailItem.excerpt}
                 </p>
               </div>
             )}
             <div className="cmcc-slide-panel-actions">
-              {d.status !== 'approved' && (
+              {detailItem.status !== 'approved' && (
                 <button
-                  onClick={() => requestConfirmAction('approve', d)}
+                  onClick={() => requestConfirmAction('approve', detailItem)}
                   className="cmcc-sp-btn cmcc-sp-btn-approve"
                   title="Approve this item"
                 >
@@ -323,9 +385,9 @@ export default function QueuePage({
                   <span>Approve</span>
                 </button>
               )}
-              {d.status !== 'rejected' && (
+              {detailItem.status !== 'rejected' && (
                 <button
-                  onClick={() => requestConfirmAction('reject', d)}
+                  onClick={() => requestConfirmAction('reject', detailItem)}
                   className="cmcc-sp-btn cmcc-sp-btn-reject"
                   title="Reject this item"
                 >
@@ -334,7 +396,7 @@ export default function QueuePage({
                 </button>
               )}
               <button
-                onClick={() => requestConfirmAction('spam', d)}
+                onClick={() => requestConfirmAction('spam', detailItem)}
                 className="cmcc-sp-btn cmcc-sp-btn-spam"
                 title="Mark as spam"
               >
@@ -342,7 +404,7 @@ export default function QueuePage({
                 <span>Spam</span>
               </button>
               <button
-                onClick={() => handleAiEvaluate(d)}
+                onClick={() => handleAiEvaluate(detailItem)}
                 className="cmcc-sp-btn cmcc-sp-btn-ai"
                 disabled={aiEvalLoading}
                 title={aiEvalLoading ? 'Evaluating...' : 'Run AI evaluation'}
@@ -359,7 +421,7 @@ export default function QueuePage({
                   result={aiEvalResult}
                   isLoading={aiEvalLoading}
                   error={aiEvalError}
-                  onReEvaluate={() => handleAiEvaluate(d)}
+                  onReEvaluate={() => handleAiEvaluate(detailItem)}
                 />
               </div>
             )}
@@ -405,15 +467,17 @@ export default function QueuePage({
                 <button
                   className="cmcc-sp-btn cmcc-sp-btn-save"
                   onClick={() => {
-                    const a =
+                    const assignTo =
                       document.getElementById('cmcc-assign-input')?.value
-                    const dd = document.getElementById('cmcc-assign-due')?.value
-                    const p = document.getElementById(
+                    const assignDueDate =
+                      document.getElementById('cmcc-assign-due')?.value
+                    const assignPriority = document.getElementById(
                       'cmcc-assign-priority',
                     )?.value
-                    h.handleAssignItem(a, dd, p)
-                    const i = document.getElementById('cmcc-assign-input')
-                    if (i) i.value = ''
+                    h.handleAssignItem(assignTo, assignDueDate, assignPriority)
+                    const assignInput =
+                      document.getElementById('cmcc-assign-input')
+                    if (assignInput) assignInput.value = ''
                   }}
                 >
                   Save Assignment
@@ -427,7 +491,7 @@ export default function QueuePage({
                   Timeline
                 </>
               </h4>
-              {historyJsx}
+              {renderHistoryTimeline()}
             </div>
             <div className="tw-pt-4 tw-border-t tw-border-gray-100">
               <ModerationNotes
@@ -452,20 +516,20 @@ export default function QueuePage({
       />
 
       {/* ── Confirmation dialog for bulk actions ─────────────────────── */}
-      {cba && cba.action !== '__shortcuts' && (
+      {confirmBulkAction && confirmBulkAction.action !== '__shortcuts' && (
         <ConfirmationModal
           open={true}
           title="Confirm Bulk Action"
-          message={`Are you sure you want to apply "${cba.action}" to ${cba.ids.length} selected items? This action cannot be undone.`}
+          message={`Are you sure you want to apply "${confirmBulkAction.action}" to ${confirmBulkAction.ids.length} selected items? This action cannot be undone.`}
           confirmLabel="Confirm"
           cancelLabel="Cancel"
           confirmVariant="danger"
           destructive={true}
           onConfirm={() => {
-            h.handleBulkAction(cba.action, cba.ids)
-            scba(null)
+            h.handleBulkAction(confirmBulkAction.action, confirmBulkAction.ids)
+            setConfirmBulkAction(null)
           }}
-          onCancel={() => scba(null)}
+          onCancel={() => setConfirmBulkAction(null)}
         />
       )}
     </div>

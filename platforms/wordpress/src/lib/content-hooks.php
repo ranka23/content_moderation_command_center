@@ -69,6 +69,15 @@ function cmcc_hook_new_comment( int $comment_id, WP_Comment $comment ): void {
         return;
     }
 
+    // Derive a display title: use comment content excerpt, falling back to post title, then 'Untitled'.
+    $comment_title = mb_substr( wp_strip_all_tags( $comment->comment_content ), 0, 80 );
+    if ( '' === $comment_title ) {
+        $comment_title = get_the_title( $comment->comment_post_ID );
+    }
+    if ( '' === $comment_title ) {
+        $comment_title = 'Untitled';
+    }
+
     cmcc_add_to_queue(
         'comment',
         (string) $comment_id,
@@ -76,11 +85,7 @@ function cmcc_hook_new_comment( int $comment_id, WP_Comment $comment ): void {
         $comment->comment_author_email ?: '',
         $comment->comment_author_IP ?: '',
         $comment->comment_content ?: '',
-        esc_html(
-            mb_substr( wp_strip_all_tags( $comment->comment_content ), 0, 80 )
-            ?: get_the_title( $comment->comment_post_ID )
-            ?: 'Untitled'
-        )
+        esc_html( $comment_title )
     );
 }
 

@@ -11,7 +11,7 @@
  * Plugin Name: CMCC — Content Moderation Command Center
  * Plugin URI:  https://example.com/cmcc
  * Description: A comprehensive content moderation plugin for WordPress with queue management, analytics, collaboration, and multi-platform support.
- * Version:     1.0.0
+ * Version:     1.0.2
  * Author:      Your Name
  * Author URI:  https://example.com
  * Text Domain: cmcc
@@ -260,6 +260,7 @@ function cmcc_register_rest_routes(): void {
             'search'         => array( 'default' => '' ),
             'sort_field'     => array( 'default' => 'date_gmt' ),
             'sort_direction' => array( 'default' => 'desc' ),
+            'date_range'     => array( 'default' => '' ),
         ),
     ) );
 
@@ -394,6 +395,11 @@ function cmcc_register_rest_routes(): void {
         'methods'             => 'GET',
         'callback'            => 'cmcc_rest_get_activity_feed',
         'permission_callback' => 'cmcc_rest_permission_check',
+        'args'                => array(
+            'limit'      => array( 'default' => 50 ),
+            'start_date' => array( 'default' => '' ),
+            'end_date'   => array( 'default' => '' ),
+        ),
     ) );
 
     // GET /cmcc/v1/raw-events – Get raw moderation events for client-side analytics
@@ -421,6 +427,13 @@ function cmcc_register_rest_routes(): void {
         'permission_callback' => 'cmcc_rest_permission_check',
     ) );
 
+    // POST /cmcc/v1/reports/moderator-performance – Get moderator performance analytics
+    register_rest_route( 'cmcc/v1', '/reports/moderator-performance', array(
+        'methods'             => 'GET',
+        'callback'            => 'cmcc_rest_reports_moderator_performance',
+        'permission_callback' => 'cmcc_rest_permission_check',
+    ) );
+
     // POST /cmcc/v1/reports/scheduled – Schedule a report
     register_rest_route( 'cmcc/v1', '/reports/scheduled', array(
         'methods'             => 'POST',
@@ -428,10 +441,45 @@ function cmcc_register_rest_routes(): void {
         'permission_callback' => 'cmcc_rest_permission_check',
     ) );
 
+    // GET /cmcc/v1/reports/scheduled – List scheduled reports
+    register_rest_route( 'cmcc/v1', '/reports/scheduled', array(
+        'methods'             => 'GET',
+        'callback'            => 'cmcc_rest_get_scheduled_reports',
+        'permission_callback' => 'cmcc_rest_permission_check',
+    ) );
+
+    // DELETE /cmcc/v1/reports/scheduled – Delete a scheduled report
+    register_rest_route( 'cmcc/v1', '/reports/scheduled', array(
+        'methods'             => 'DELETE',
+        'callback'            => 'cmcc_rest_delete_scheduled_report',
+        'permission_callback' => 'cmcc_rest_permission_check',
+    ) );
+
     // POST /cmcc/v1/users/deactivate – Deactivate users
     register_rest_route( 'cmcc/v1', '/users/deactivate', array(
         'methods'             => 'POST',
         'callback'            => 'cmcc_rest_deactivate_users',
+        'permission_callback' => 'cmcc_rest_permission_check',
+    ) );
+
+    // GET /cmcc/v1/platforms/status – Get aggregated platform health status
+    register_rest_route( 'cmcc/v1', '/platforms/status', array(
+        'methods'             => 'GET',
+        'callback'            => 'cmcc_rest_get_platforms_status',
+        'permission_callback' => 'cmcc_rest_permission_check',
+    ) );
+
+    // POST /cmcc/v1/platforms/sync-settings – Sync firewall rules across platforms
+    register_rest_route( 'cmcc/v1', '/platforms/sync-settings', array(
+        'methods'             => 'POST',
+        'callback'            => 'cmcc_rest_platforms_sync_settings',
+        'permission_callback' => 'cmcc_rest_permission_check',
+    ) );
+
+    // GET /cmcc/v1/unified-queue – Get combined queue from all platforms
+    register_rest_route( 'cmcc/v1', '/unified-queue', array(
+        'methods'             => 'GET',
+        'callback'            => 'cmcc_rest_get_unified_queue',
         'permission_callback' => 'cmcc_rest_permission_check',
     ) );
 
@@ -619,15 +667,8 @@ function cmcc_rest_queue_action( WP_REST_Request $request ): WP_REST_Response {
         ), 400 );
     }
 
-    // Map action to new status
-    $status_map = array(
-        'approve' => 'approved',
-        'reject'  => 'rejected',
-        'spam'    => 'spam',
-        'flag'    => 'flagged',
-        'defer'   => 'deferred',
-    );
-
+    // Map action to new status (shared map)
+    $status_map = cmcc_get_action_status_map();
     $new_status = $status_map[ $action ] ?? '';
 
     if ( empty( $new_status ) ) {
@@ -676,14 +717,8 @@ function cmcc_rest_queue_action( WP_REST_Request $request ): WP_REST_Response {
         array( '%d', '%s', '%s', '%s', '%s', '%s', '%s' )
     );
 
-    // Map action to display message
-    $message_map = array(
-        'approve' => 'Item approved successfully.',
-        'reject'  => 'Item rejected successfully.',
-        'spam'    => 'Item marked as spam.',
-        'flag'    => 'Item flagged.',
-        'defer'   => 'Item deferred.',
-    );
+    // Map action to display message (shared map)
+    $message_map = cmcc_get_action_message_map();
     $message = $message_map[ $action ] ?? "Item {$action}d.";
 
     return new WP_REST_Response( array(
@@ -721,14 +756,7 @@ function cmcc_rest_bulk_action( WP_REST_Request $request ): WP_REST_Response {
         cmcc_handle_export_csv( $ids );
     }
 
-    $status_map = array(
-        'approve' => 'approved',
-        'reject'  => 'rejected',
-        'spam'    => 'spam',
-        'flag'    => 'flagged',
-        'defer'   => 'deferred',
-    );
-
+    $status_map = cmcc_get_action_status_map();
     $new_status = $status_map[ $action ] ?? '';
     if ( empty( $new_status ) ) {
         return new WP_REST_Response( array(
@@ -1163,18 +1191,24 @@ function cmcc_rest_import_settings( WP_REST_Request $request ): WP_REST_Response
     $body = json_decode( $request->get_body(), true );
     $settings = $body['settings'] ?? array();
 
-    if ( empty( $settings ) ) {
+    if ( empty( $settings ) || ! is_array( $settings ) ) {
         return new WP_REST_Response( array(
             'success' => false,
-            'message' => 'No settings data provided.',
+            'message' => 'No settings data provided or invalid format.',
         ), 400 );
     }
 
-    update_option( CMCC_SETTINGS_OPTION, $settings );
+    // Merge imported settings with existing defaults
+    $defaults = cmcc_get_default_settings();
+    $merged   = array_merge( $defaults, $settings );
+
+    update_option( CMCC_SETTINGS_OPTION, $merged );
+
+    error_log( 'CMCC Settings: Imported settings successfully' );
 
     return new WP_REST_Response( array(
         'success' => true,
-        'message' => 'Settings imported.',
+        'message' => 'Settings imported successfully.',
     ), 200 );
 }
 
@@ -1189,14 +1223,6 @@ function cmcc_get_default_settings(): array {
             'auto_moderate'        => false,
             'moderation_behavior'  => 'flag',
             'queue_page_size'      => 25,
-            'default_language'     => 'en',
-            'date_format'          => 'relative',
-            'notify_on_spam'       => true,
-        ),
-        'moderation' => array(
-            'auto_approve_trusted' => true,
-            'hold_for_review'      => true,
-            'max_links'            => 5,
         ),
         'spam_firewall' => array(
             'max_links'                  => 5,
@@ -1301,46 +1327,9 @@ function cmcc_get_default_settings(): array {
 }
 
 // ─── Additional REST Callbacks ─────────────────────────────────────────────
-
-
-
-if ( ! function_exists( 'cmcc_rest_get_activity_feed' ) ) {
-
-/**
- * GET /cmcc/v1/activity-feed – Return recent moderation activity.
- *
- * @return WP_REST_Response
- */
-function cmcc_rest_get_activity_feed(): WP_REST_Response {
-    global $wpdb;
-    $log_table = CMCC_ACTIVITY_LOG_TABLE;
-
-    $events = $wpdb->get_results(
-        "SELECT l.*, u.display_name as moderator_name
-         FROM {$log_table} l
-         LEFT JOIN {$wpdb->users} u ON l.moderator_id = u.ID
-         ORDER BY l.timestamp DESC
-         LIMIT 50"
-    );
-
-    $feed = array();
-    foreach ( $events as $event ) {
-        $feed[] = array(
-            'id'          => 'event_' . $event->id,
-            'type'        => 'action',
-            'actorId'     => $event->moderator_id,
-            'actorName'   => $event->moderator_name ?: 'User #' . $event->moderator_id,
-            'description' => $event->action . ' ' . $event->content_type . ' item: ' . $event->item_title,
-            'itemId'      => $event->item_id,
-            'itemTitle'   => $event->item_title,
-            'timestamp'   => $event->timestamp,
-        );
-    }
-
-    return new WP_REST_Response( array( 'events' => $feed ), 200 );
-}
-
-} // End function_exists guard
+// NOTE: cmcc_rest_get_activity_feed is defined in src/lib/collaboration.php
+// (the feature-rich version with limit/date params). That version takes
+// precedence because collaboration.php is loaded via cmcc_init().
 
 if ( ! function_exists( 'cmcc_rest_get_raw_events' ) ) {
 
@@ -1424,6 +1413,162 @@ function cmcc_rest_deactivate_users( WP_REST_Request $request ): WP_REST_Respons
 
 } // End function_exists guard
 
+// ─── Shared AI / Moderation Helpers ───────────────────────────────────────
+
+if ( ! function_exists( 'cmcc_get_spam_keywords' ) ) {
+
+/**
+ * Get the shared list of spam keywords used for local keyword analysis.
+ *
+ * Centralized to avoid duplication across multiple AI evaluation functions.
+ *
+ * @return string[] Array of spam keyword strings.
+ */
+function cmcc_get_spam_keywords(): array {
+    return array(
+        'viagra', 'casino', 'lottery', 'free money', 'click here',
+        'buy now', 'act now', 'limited time', 'congratulations',
+        'you won', 'prize', 'urgent', 'call now', 'subscribe',
+        'earn money', 'work from home', 'make money fast',
+    );
+}
+
+} // End function_exists guard
+
+if ( ! function_exists( 'cmcc_detect_language' ) ) {
+
+/**
+ * Detect language of a text using simple Unicode character heuristics.
+ *
+ * Checks for Cyrillic (Russian), German umlauts, French/Spanish accented
+ * characters to make a best-guess language identification.
+ *
+ * @param string $text The text to analyze.
+ * @return string Language code: 'en', 'ru', 'de', 'fr', 'es'.
+ */
+function cmcc_detect_language( string $text ): string {
+    $lang = 'en';
+    if ( preg_match( '/[а-яА-Я]/u', $text ) ) {
+        $lang = 'ru';
+    } elseif ( preg_match( '/[äöüß]/i', $text ) ) {
+        $lang = 'de';
+    } elseif ( preg_match( '/[éèêëàâùûç]/i', $text ) ) {
+        $lang = 'fr';
+    } elseif ( preg_match( '/[ñíóúé]/i', $text ) ) {
+        $lang = 'es';
+    }
+    return $lang;
+}
+
+} // End function_exists guard
+
+if ( ! function_exists( 'cmcc_analyze_sentiment' ) ) {
+
+/**
+ * Analyze sentiment of text using keyword matching.
+ *
+ * Counts occurrences of positive and negative words to determine
+ * whether the overall sentiment is positive, negative, or neutral.
+ *
+ * @param string $text The text to analyze.
+ * @return string 'positive', 'negative', or 'neutral'.
+ */
+function cmcc_analyze_sentiment( string $text ): string {
+    $positive_words = array( 'good', 'great', 'excellent', 'amazing', 'love', 'fantastic', 'nice', 'helpful' );
+    $negative_words = array( 'bad', 'terrible', 'awful', 'hate', 'worst', 'horrible', 'ugly', 'disgusting' );
+    $lower = strtolower( $text );
+    $positive_count = 0;
+    $negative_count = 0;
+    foreach ( $positive_words as $w ) {
+        if ( strpos( $lower, $w ) !== false ) {
+            $positive_count++;
+        }
+    }
+    foreach ( $negative_words as $w ) {
+        if ( strpos( $lower, $w ) !== false ) {
+            $negative_count++;
+        }
+    }
+    if ( $positive_count > $negative_count ) {
+        return 'positive';
+    }
+    if ( $negative_count > $positive_count ) {
+        return 'negative';
+    }
+    return 'neutral';
+}
+
+} // End function_exists guard
+
+if ( ! function_exists( 'cmcc_keyword_spam_analysis' ) ) {
+
+/**
+ * Run keyword-based spam analysis on text against the shared keyword list.
+ *
+ * @param string $text The text to analyze.
+ * @return array{score: float, found_keywords: string[]} Score between 0.0-1.0 and list of matched keywords.
+ */
+function cmcc_keyword_spam_analysis( string $text ): array {
+    $keywords = cmcc_get_spam_keywords();
+    $lower    = strtolower( $text );
+    $score    = 0.0;
+    $found    = array();
+    foreach ( $keywords as $keyword ) {
+        if ( strpos( $lower, $keyword ) !== false ) {
+            $found[] = $keyword;
+            $score += 0.15;
+        }
+    }
+    return array(
+        'score'          => min( $score, 1.0 ),
+        'found_keywords' => $found,
+    );
+}
+
+} // End function_exists guard
+
+if ( ! function_exists( 'cmcc_get_action_status_map' ) ) {
+
+/**
+ * Get the shared action-to-status mapping for queue item actions.
+ *
+ * Used by both single-item actions and bulk actions to ensure consistency.
+ *
+ * @return array<string, string> Mapping of action names to status values.
+ */
+function cmcc_get_action_status_map(): array {
+    return array(
+        'approve' => 'approved',
+        'reject'  => 'rejected',
+        'spam'    => 'spam',
+        'flag'    => 'flagged',
+        'defer'   => 'deferred',
+    );
+}
+
+} // End function_exists guard
+
+if ( ! function_exists( 'cmcc_get_action_message_map' ) ) {
+
+/**
+ * Get the shared action-to-message mapping for queue item action responses.
+ *
+ * @return array<string, string> Mapping of action names to success messages.
+ */
+function cmcc_get_action_message_map(): array {
+    return array(
+        'approve' => 'Item approved successfully.',
+        'reject'  => 'Item rejected successfully.',
+        'spam'    => 'Item marked as spam.',
+        'flag'    => 'Item flagged.',
+        'defer'   => 'Item deferred.',
+    );
+}
+
+} // End function_exists guard
+
+// ─── End Shared Helpers ───────────────────────────────────────────────────
+
 if ( ! function_exists( 'cmcc_rest_ai_evaluate' ) ) {
 
 /**
@@ -1456,24 +1601,11 @@ function cmcc_rest_ai_evaluate( WP_REST_Request $request ): WP_REST_Response {
         ), 404 );
     }
 
-    // Simple keyword-based spam analysis
-    $spam_keywords = array(
-        'viagra', 'casino', 'lottery', 'free money', 'click here',
-        'buy now', 'act now', 'limited time', 'congratulations',
-        'you won', 'prize', 'urgent', 'call now', 'subscribe',
-        'earn money', 'work from home', 'make money fast',
-    );
-
-    $text = strtolower( $item->title . ' ' . ( $item->excerpt ?? '' ) );
-    $score = 0.0;
-    $found_keywords = array();
-
-    foreach ( $spam_keywords as $keyword ) {
-        if ( strpos( $text, $keyword ) !== false ) {
-            $found_keywords[] = $keyword;
-            $score += 0.15;
-        }
-    }
+    // Keyword-based spam analysis using shared helper
+    $text = $item->title . ' ' . ( $item->excerpt ?? '' );
+    $analysis = cmcc_keyword_spam_analysis( $text );
+    $score = $analysis['score'];
+    $found_keywords = $analysis['found_keywords'];
 
     // Factor in spam_score from queue item if available
     if ( isset( $item->spam_score ) && $item->spam_score > 0 ) {
@@ -1704,47 +1836,22 @@ function cmcc_rest_ai_evaluate_ex( WP_REST_Request $request ): WP_REST_Response 
     }
 
     // Fallback: always do keyword analysis as baseline
-    $spam_keywords = array(
-        'viagra', 'casino', 'lottery', 'free money', 'click here',
-        'buy now', 'act now', 'limited time', 'congratulations',
-        'you won', 'prize', 'urgent', 'call now', 'subscribe',
-        'earn money', 'work from home', 'make money fast',
-    );
-    $lower_text = strtolower( $text );
-    $keyword_score = 0.0;
-    $found_keywords = array();
-    foreach ( $spam_keywords as $keyword ) {
-        if ( strpos( $lower_text, $keyword ) !== false ) {
-            $found_keywords[] = $keyword;
-            $keyword_score += 0.15;
-        }
-    }
-    $keyword_score = min( $keyword_score, 1.0 );
+    $analysis     = cmcc_keyword_spam_analysis( $text );
+    $keyword_score = $analysis['score'];
+    $found_keywords = $analysis['found_keywords'];
 
     // Combine AI score with keyword score
     $combined_score = $result ? max( $result['spam_score'], $keyword_score ) : $keyword_score;
 
-    // Language detection (heuristic)
-    $lang = 'en';
-    if ( preg_match( '/[а-яА-Я]/u', $text ) ) $lang = 'ru';
-    elseif ( preg_match( '/[äöüß]/i', $text ) ) $lang = 'de';
-    elseif ( preg_match( '/[éèêëàâùûç]/i', $text ) ) $lang = 'fr';
-    elseif ( preg_match( '/[ñíóúé]/i', $text ) ) $lang = 'es';
+    // Language detection (shared heuristic)
+    $lang = cmcc_detect_language( $text );
     // Use AI language if available
     if ( $result && isset( $result['language'] ) && 'unknown' !== $result['language'] ) {
         $lang = $result['language'];
     }
 
-    // Sentiment
-    $positive_words = array( 'good', 'great', 'excellent', 'amazing', 'love', 'fantastic', 'nice', 'helpful' );
-    $negative_words = array( 'bad', 'terrible', 'awful', 'hate', 'worst', 'horrible', 'ugly', 'disgusting' );
-    $positive_count = 0;
-    $negative_count = 0;
-    foreach ( $positive_words as $w ) { if ( strpos( $lower_text, $w ) !== false ) $positive_count++; }
-    foreach ( $negative_words as $w ) { if ( strpos( $lower_text, $w ) !== false ) $negative_count++; }
-    $sentiment = 'neutral';
-    if ( $positive_count > $negative_count ) $sentiment = 'positive';
-    elseif ( $negative_count > $positive_count ) $sentiment = 'negative';
+    // Sentiment (shared keyword-based)
+    $sentiment = cmcc_analyze_sentiment( $text );
     // Use AI sentiment if available
     if ( $result && isset( $result['sentiment'] ) && 'neutral' !== $result['sentiment'] ) {
         $sentiment = $result['sentiment'];
@@ -1808,26 +1915,12 @@ function cmcc_ai_evaluate_and_update_queue( string $item_id ): array {
     }
 
     if ( ! $result ) {
-        // Run local keyword analysis as fallback
-        $spam_keywords = array(
-            'viagra', 'casino', 'lottery', 'free money', 'click here',
-            'buy now', 'act now', 'limited time', 'congratulations',
-            'you won', 'prize', 'urgent', 'call now', 'subscribe',
-            'earn money', 'work from home', 'make money fast',
-        );
-        $lower_text = strtolower( $text );
-        $score = 0.0;
-        $found = array();
-        foreach ( $spam_keywords as $kw ) {
-            if ( strpos( $lower_text, $kw ) !== false ) {
-                $found[] = $kw;
-                $score += 0.15;
-            }
-        }
+        // Run local keyword analysis as fallback using shared helper
+        $analysis = cmcc_keyword_spam_analysis( $text );
         $result = array(
-            'spam_score' => min( $score, 1.0 ),
-            'label'      => $score > 0.5 ? 'spam' : 'safe',
-            'categories' => $found,
+            'spam_score' => $analysis['score'],
+            'label'      => $analysis['score'] > 0.5 ? 'spam' : 'safe',
+            'categories' => $analysis['found_keywords'],
         );
     }
 

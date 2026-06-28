@@ -267,7 +267,7 @@ function cmcc_rest_get_activity_feed( WP_REST_Request $request ): WP_REST_Respon
             'id'          => 'event_' . $row->id,
             'type'        => 'action',
             'actorId'     => $row->moderator_id,
-            'actorName'   => $row->moderator_name ?: 'User #' . $row->moderator_id,
+            'actorName'   => $row->moderator_name ?: ( (int) $row->moderator_id > 0 ? 'User #' . $row->moderator_id : 'System' ),
             'description' => sprintf(
                 '%s %s item: %s',
                 ucfirst( $row->action ),

@@ -169,12 +169,13 @@ function cmcc_check_blacklisted_keywords( string $content, string $keywords_text
         // ── Regex pattern (e.g., /pattern/i) ───────────────────────────────
         if ( preg_match( '/^\/(.+)\/[a-z]*$/i', $keyword, $regex_matches ) ) {
             $pattern = '/' . $regex_matches[1] . '/';
-            // Ensure the pattern has delimiters; if not, wrap it
-            if ( @preg_match( $pattern, '' ) === false ) {
+            // Validate the pattern: run a test match and check for errors
+            $test_result = preg_match( $pattern, '' );
+            if ( false === $test_result || PREG_NO_ERROR !== preg_last_error() ) {
                 // Invalid regex — skip this keyword silently
                 continue;
             }
-            if ( @preg_match( $pattern, $content ) ) {
+            if ( preg_match( $pattern, $content ) && PREG_NO_ERROR === preg_last_error() ) {
                 return array( 'triggered' => true, 'matched_keyword' => $keyword );
             }
             continue;

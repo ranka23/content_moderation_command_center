@@ -19,6 +19,7 @@ export function useSettings({ addToast }) {
   const [settingsSections, setSettingsSections] = useState([])
   const [settingsInitialValues, setSettingsInitialValues] = useState({})
   const [, setSettings] = useState({})
+  const [settingsError, setSettingsError] = useState(null)
 
   // ── Build settings sections from API data ──────────────────────────
   const buildSections = useCallback((data) => {
@@ -706,9 +707,11 @@ export function useSettings({ addToast }) {
   // ── Fetch Settings ─────────────────────────────────────────────────
   const fetchSettings = useCallback(async () => {
     try {
+      setSettingsError(null)
       const data = await apiFetch('settings')
       buildSections(data)
     } catch (err) {
+      setSettingsError(err?.message || 'Failed to load settings')
       if (process.env.NODE_ENV !== 'production') {
         // eslint-disable-next-line no-console
         console.error('Failed to fetch settings:', err)
@@ -875,5 +878,6 @@ export function useSettings({ addToast }) {
     settingsValidators,
     fetchSettings,
     handleSettingsSave,
+    settingsError,
   }
 }

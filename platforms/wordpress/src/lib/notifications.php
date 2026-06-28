@@ -143,6 +143,13 @@ function cmcc_send_webhook( string $type, array $data ): void {
     }
 
     $url = $webhooks[ $option_key ];
+
+    // Validate URL before sending
+    if ( ! wp_http_validate_url( $url ) ) {
+        error_log( 'CMCC Webhook: Invalid URL configured for type "' . $type . '": ' . $url );
+        return;
+    }
+
     $payload = array_merge( $data, array(
         'type'      => $type,
         'site_url'  => get_site_url(),

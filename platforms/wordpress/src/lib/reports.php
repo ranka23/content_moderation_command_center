@@ -16,6 +16,24 @@
 
 defined( 'ABSPATH' ) || exit;
 
+if ( ! function_exists( 'cmcc_csv_escape' ) ) :
+
+/**
+ * Escape a CSV value by wrapping in double quotes and escaping internal quotes.
+ *
+ * Per RFC 4180, CSV fields containing special characters (commas, newlines,
+ * double quotes) should be wrapped in double quotes. Internal double quotes
+ * are escaped by doubling them.
+ *
+ * @param string $value The raw value to escape.
+ * @return string The CSV-escaped value, wrapped in double quotes.
+ */
+function cmcc_csv_escape( string $value ): string {
+    return '"' . str_replace( '"', '""', $value ) . '"';
+}
+
+endif; // cmcc_csv_escape
+
 if ( ! function_exists( 'cmcc_rest_reports_moderation_activity' ) ) :
 
 /**
@@ -203,7 +221,7 @@ function cmcc_rest_reports_moderator_performance( WP_REST_Request $request ): WP
         $total = (int) $row->total_actions;
         $performance[] = array(
             'moderator_id'     => $row->moderator_id,
-            'moderator_name'   => $row->moderator_name ?: 'User #' . $row->moderator_id,
+            'moderator_name'   => $row->moderator_name ?: ( (int) $row->moderator_id > 0 ? 'User #' . $row->moderator_id : 'System' ),
             'total_actions'    => $total,
             'approvals'        => (int) $row->approvals,
             'rejections'       => (int) $row->rejections,
